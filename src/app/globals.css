@@ -1,0 +1,612 @@
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&display=swap');
+
+.material-icons-round {
+  font-family: 'Material Icons Round';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #0f0f0f;
+  --paper: #F9FAFB;
+  --primary: #135bec;
+  --accent: #135bec;
+  --mute: #6b6b6b;
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-lexend: 'Lexend', system-ui, sans-serif;
+  --font-material-serif: 'Lora', Georgia, serif;
+}
+
+/* Temas por curso: sobrescrevem --primary no material */
+.theme-geral { --theme-primary: #2A2A2A; --theme-primary-dark: #1a1a1a; --theme-accent: #55B8A1; }
+.theme-marketing { --theme-primary: #7c3aed; --theme-primary-dark: #5b21b6; --theme-accent: #a78bfa; }
+.theme-beleza { --theme-primary: #db2777; --theme-primary-dark: #be185d; --theme-accent: #f472b6; }
+.theme-saude { --theme-primary: #059669; --theme-primary-dark: #047857; --theme-accent: #34d399; }
+.theme-design { --theme-primary: #ea580c; --theme-primary-dark: #c2410c; --theme-accent: #fb923c; }
+.theme-tecnologia { --theme-primary: #0891b2; --theme-primary-dark: #0e7490; --theme-accent: #22d3ee; }
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 2.5s ease-in-out infinite;
+}
+
+/* Número editorial (estilo de revista) */
+.editorial-number {
+  font-size: 3rem;
+  line-height: 1;
+  font-weight: 200;
+  color: var(--primary);
+  opacity: 0.4;
+}
+
+/* Estilo “sketchy” para destaque em títulos (referência editorial) */
+.sketchy-circle {
+  position: relative;
+}
+.sketchy-circle::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: -10px;
+  right: -10px;
+  bottom: -5px;
+  border: 2px solid var(--primary);
+  border-radius: 48% 52% 50% 50% / 40% 40% 60% 60%;
+  transform: rotate(-2deg);
+  opacity: 0.7;
+  pointer-events: none;
+}
+.sketchy-underline {
+  position: relative;
+}
+.sketchy-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 100% 10% 80% 0%;
+  opacity: 0.6;
+  transform: scaleX(1.05);
+}
+
+/* Imagens editoriais: grayscale com hover para cor */
+.img-editorial {
+  filter: grayscale(100%);
+  transition: filter 0.7s ease;
+}
+.img-editorial:hover {
+  filter: grayscale(0);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-display), system-ui, sans-serif;
+  color: #0f172a;
+  background: var(--paper);
+}
+
+/* Canvas grid — fundo definido para destacar o conteúdo */
+.canvas-grid {
+  background-color: #e2e8f0; /* slate-200 */
+  background-image: radial-gradient(rgba(15, 23, 42, 0.12) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.dark .canvas-grid {
+  background-color: #0f172a;
+  background-image: radial-gradient(rgba(148, 163, 184, 0.15) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Contraste forçado: header e caixa de upload (evitar texto ilegível) */
+header .header-brand,
+header .header-brand-design {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+header .header-brand .header-brand-beleza {
+  color: #135bec !important;
+  font-weight: 700 !important;
+}
+.dark header .header-brand,
+.dark header .header-brand-design {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+.dark header .header-brand .header-brand-beleza {
+  color: #135bec !important;
+  font-weight: 700 !important;
+}
+.upload-card {
+  color: #0f172a !important;
+}
+.upload-card .upload-card-title,
+.upload-card .upload-card-desc,
+.upload-card .upload-card-features {
+  color: #0f172a !important;
+}
+.upload-card .upload-card-desc {
+  color: #1e293b !important;
+}
+/* Modo escuro: card com fundo escuro e texto claro para visibilidade */
+.dark .upload-card {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  color: #f1f5f9 !important;
+}
+.dark .upload-card .upload-card-title,
+.dark .upload-card .upload-card-desc,
+.dark .upload-card .upload-card-features {
+  color: #f1f5f9 !important;
+}
+.dark .upload-card .upload-card-desc {
+  color: #cbd5e1 !important;
+}
+.dark .upload-card .upload-card-icon-wrap {
+  background-color: rgba(59, 130, 246, 0.35) !important;
+  border-color: rgba(96, 165, 250, 0.5) !important;
+  color: #93c5fd !important;
+}
+.dark .upload-card .upload-card-icon-wrap .material-icons-round {
+  color: #93c5fd !important;
+}
+/* Pill do header no dark: mais visível */
+.dark .header-pill {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #f1f5f9 !important;
+}
+.dark .header-pill span {
+  color: inherit !important;
+}
+/* Checkmarks da lista no dark: verde mais claro */
+.dark .upload-card .upload-card-features .material-icons-round {
+  color: #4ade80 !important;
+}
+
+/* Material didático: usa tema do curso (--theme-primary) quando definido */
+.material-article .material-viewer-header .material-label,
+.material-article .material-label {
+  color: var(--theme-primary, #135bec) !important;
+}
+.dark .material-article .material-viewer-header .material-label,
+.dark .material-article .material-label {
+  color: var(--theme-primary, #135bec) !important;
+}
+.material-viewer-header .material-title,
+.material-viewer-header .material-subtitle,
+.material-viewer-header .material-summary {
+  color: #0a0a0a !important; /* preto */
+}
+.dark .material-viewer-header .material-title,
+.dark .material-viewer-header .material-subtitle,
+.dark .material-viewer-header .material-summary {
+  color: #0a0a0a !important;
+}
+/* Modo escuro: fundo claro no material para texto #0a0a0a legível */
+.dark .material-article,
+.dark .material-viewer-header,
+.dark .material-article .material-content,
+.dark .material-article .material-card,
+.dark .material-article footer {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+.dark .material-article .material-card {
+  border: 1px solid #e2e8f0 !important;
+}
+article .material-heading,
+article .material-paragraph,
+article .material-body {
+  color: #0a0a0a !important;
+}
+.dark .material-article .material-heading,
+.dark .material-article .material-paragraph,
+.dark .material-article .material-body {
+  color: #0a0a0a !important;
+}
+article .material-highlight {
+  color: var(--theme-primary, #135bec) !important;
+  font-weight: 600 !important;
+}
+.dark .material-article .material-highlight {
+  color: var(--theme-primary, #135bec) !important;
+}
+article .chart-title,
+article .chart-label,
+article .chart-value { color: #0a0a0a !important; }
+.dark .material-article .chart-title,
+.dark .material-article .chart-label,
+.dark .material-article .chart-value {
+  color: #0a0a0a !important;
+}
+
+/* Texto do material sempre preto (destaques em azul não mudam) */
+article .material-body,
+article .material-paragraph,
+article p:not(.material-highlight),
+article li,
+article blockquote {
+  color: #0a0a0a !important;
+}
+article .material-highlight {
+  color: #135bec !important;
+  font-weight: 600 !important;
+}
+.dark .material-article .material-body,
+.dark .material-article .material-paragraph,
+.dark .material-article p:not(.material-highlight),
+.dark .material-article li,
+.dark .material-article blockquote {
+  color: #0a0a0a !important;
+}
+.dark .material-article .material-highlight {
+  color: #135bec !important;
+}
+/* Caixas e gráficos: texto #0a0a0a no modo escuro */
+.dark .material-article .material-card p,
+.dark .material-article .material-card span,
+.dark .material-article .material-card li {
+  color: #0a0a0a !important;
+}
+.dark .material-article .material-card .material-highlight {
+  color: #135bec !important;
+}
+
+/* Capa: fundo e contraste em ambos os temas */
+.cover-page .material-subtitle {
+  color: #0a0a0a !important;
+}
+.dark .cover-page .material-subtitle {
+  color: #0a0a0a !important;
+}
+.dark .cover-page {
+  background: linear-gradient(135deg, #f8fafc 0%, #fff 50%, rgba(19, 91, 236, 0.06) 100%) !important;
+}
+
+/* Diagramação de livro: paleta creme + azul escuro */
+.book-layout {
+  --book-cream: #f8f6f2;
+  --book-blue: #1e3a5f;
+}
+.book-layout .cover-page,
+.book-layout .material-content,
+.book-layout footer {
+  background-color: var(--book-cream) !important;
+}
+.dark .book-layout .cover-page,
+.dark .book-layout .material-content,
+.dark .book-layout footer {
+  background-color: #f5f2ed !important;
+}
+.book-layout .material-card {
+  border-color: rgba(30, 58, 95, 0.2) !important;
+  background-color: #fff !important;
+}
+.book-layout .material-card[class*="border-l-"] {
+  border-left-color: var(--book-blue) !important;
+}
+.dark .book-layout .material-card {
+  background-color: #fcfbf9 !important;
+  border-color: rgba(30, 58, 95, 0.25) !important;
+}
+.book-layout .material-highlight,
+.book-layout .text-primary {
+  color: var(--theme-primary, var(--book-blue)) !important;
+}
+.book-layout .material-label,
+.book-layout .material-title {
+  color: var(--theme-primary-dark, var(--book-blue)) !important;
+}
+.material-article .material-card[class*="border-l-"] {
+  border-left-color: var(--theme-primary, #135bec) !important;
+}
+.material-article .text-primary {
+  color: var(--theme-primary, #135bec) !important;
+}
+.book-toc {
+  background-color: var(--book-blue) !important;
+}
+.dark .book-toc {
+  background-color: #1a3252 !important;
+}
+
+/* A4 deitada: conteúdo em 2 colunas (diagramação de livro) */
+.book-section-body {
+  column-fill: balance;
+  column-gap: 3rem;
+}
+@media (min-width: 1024px) {
+  .book-section-body {
+    column-count: 2;
+  }
+}
+.book-section-body > * {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Header: "Novo arquivo" e "Exportar PDF" sempre legíveis */
+.header-btn-new {
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+.dark .header-btn-new {
+  color: #0f172a !important;
+}
+.header-btn-export {
+  background-color: #135bec !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(19, 91, 236, 0.4) !important;
+}
+.dark .header-btn-export {
+  background-color: #135bec !important;
+  color: #ffffff !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #135bec;
+}
+
+/* PDF/Impressão: A4 deitada (landscape) — diagramação de livro */
+@page {
+  size: A4 landscape;
+  margin: 12mm 15mm 12mm 15mm;
+}
+
+@media print {
+  html {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Ocultar tudo que não é o material (libera espaço para paginação) */
+  .no-print {
+    display: none !important;
+  }
+  /* Container principal: em fluxo para o navegador paginar em A4 */
+  body > div {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  body > div > main {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  main > div {
+    display: block !important;
+    padding: 0 !important;
+    background: none !important;
+    background-image: none !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  .print-content {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+    box-sizing: border-box !important;
+  }
+  .print-content article {
+    width: 100% !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #fff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  /* Cada seção pode quebrar para nova página; evita cortar seção no meio */
+  .print-content section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .print-content .material-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  /* Permitir quebra entre parágrafos/listas se necessário */
+  .print-content p,
+  .print-content ul,
+  .print-content blockquote {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .editorial-number { opacity: 0.6; }
+  /* Garantir texto preto no PDF (exceto destaques) */
+  .print-content .material-body,
+  .print-content .material-title,
+  .print-content .material-subtitle,
+  .print-content .material-summary,
+  .print-content .material-heading,
+  .print-content .material-label,
+  .print-content .chart-title,
+  .print-content .chart-label,
+  .print-content .chart-value {
+    color: #0a0a0a !important;
+  }
+  .print-content .material-label {
+    color: var(--theme-primary, #135bec) !important;
+  }
+  .print-content .material-highlight {
+    color: var(--theme-primary, #135bec) !important;
+  }
+  /* Diagramação de livro no PDF: cor do tema para títulos e destaques */
+  .print-content .book-layout .material-label,
+  .print-content .book-layout .material-title,
+  .print-content .book-layout .material-heading,
+  .print-content .book-layout .book-section-num {
+    color: var(--theme-primary-dark, #1e3a5f) !important;
+  }
+  .print-content .book-layout .material-highlight {
+    color: var(--theme-primary-dark, #1e3a5f) !important;
+  }
+  .print-content .book-toc {
+    background: var(--theme-primary-dark, #1e3a5f) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Capa: quebra de página após + layout imagem à esquerda */
+  .cover-page {
+    display: flex !important;
+    flex-direction: row !important;
+    min-height: 0 !important;
+    padding: 12px 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  /* Sumário: quebra de página após (conteúdo inicia na próxima) */
+  .material-toc {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  /* A4 deitada: conteúdo em 2 colunas na impressão */
+  .book-section-body {
+    column-count: 2 !important;
+    column-gap: 2.5rem !important;
+  }
+  .book-content-landscape {
+    max-width: none !important;
+  }
+  .cover-image-column {
+    width: 38% !important;
+    min-width: 38% !important;
+    max-width: 38% !important;
+    flex-shrink: 0 !important;
+    padding: 8px 12px 8px 0 !important;
+  }
+  .cover-image-frame,
+  .cover-placeholder {
+    width: 100% !important;
+    max-width: 100% !important;
+    aspect-ratio: 1 !important;
+  }
+  .cover-text-column {
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 8px 0 8px 12px !important;
+  }
+  .cover-initial {
+    font-size: 3.5rem !important;
+  }
+  /* Sumário: título e texto em preto, números em azul no PDF */
+  .material-toc h2,
+  .material-toc li {
+    color: #0a0a0a !important;
+  }
+  .material-toc .text-primary {
+    color: #135bec !important;
+  }
+}
+
+/* Preview: impressão PDF — esconde sidebar, só páginas A4 com quebra */
+@media print {
+  .preview-sidebar {
+    display: none !important;
+  }
+  .preview-canvas {
+    padding: 0 !important;
+    background: #fff !important;
+    max-width: none !important;
+  }
+  .preview-page-wrap {
+    box-shadow: none !important;
+    margin: 0 !important;
+    page-break-after: always;
+    break-after: page;
+  }
+  .preview-page-wrap:last-child {
+    page-break-after: auto;
+  }
+  .preview-layout {
+    background: #fff !important;
+  }
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+}
+
+/* Classe base para páginas A4 */
+.page-a4 {
+  width: 595px;
+  min-height: 842px;
+  background: white;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Sora', sans-serif;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  margin: 0 auto;
+  page-break-after: always;
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .page-a4 {
+    box-shadow: none;
+    margin: 0;
+    width: 210mm;
+    min-height: 297mm;
+  }
+  @page {
+    size: A4;
+    margin: 0;
+  }
+}
