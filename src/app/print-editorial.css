@@ -1,0 +1,438 @@
+/**
+ * Web-to-Print — Corporate Editorial Design
+ * A4 (210mm × 297mm), Grid Assimétrico, Color Blocking, numeração com counter(page)
+ * Cada section.page inicia em nova folha na impressão.
+ */
+
+/* ========== Variáveis CSS (rebranding) ========== */
+:root {
+  --print-primary: #0f1823;
+  --print-primary-light: #1e293b;
+  --print-accent: #006eff;
+  --print-paper: #f8f9fa;
+  --print-ink: #1a1a1a;
+  --print-ink-muted: #64748b;
+  --print-font-sans: 'Lexend', system-ui, -apple-system, sans-serif;
+}
+
+/* ========== Base: página A4 + tipografia editorial ========== */
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  height: 297mm;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--print-font-sans);
+  font-size: 1rem;
+  background: var(--print-paper);
+  color: var(--print-ink);
+  page-break-after: always;
+  break-after: page;
+  text-rendering: optimizeLegibility;
+}
+
+/* Refinamento editorial: evita linhas órfãs/viúvas e legibilidade */
+.page p,
+.page li {
+  orphans: 3;
+  widows: 3;
+  text-rendering: optimizeLegibility;
+  hyphens: auto;
+  line-height: 1.6;
+}
+
+.page h1,
+.page h2 {
+  letter-spacing: 0.04em;
+}
+
+.page:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+/* ========== Grid utilitário 12 colunas ========== */
+.page-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0 1rem;
+  min-height: 100%;
+  align-content: start;
+}
+
+/* Colunas semânticas: alternar layout só trocando a classe na section */
+.col-sidebar { grid-column: span 4; }
+.col-main { grid-column: span 8; }
+.col-full { grid-column: span 12; }
+.col-half { grid-column: span 6; }
+
+/* Colunas numéricas (1–12) para controle fino */
+.col-1 { grid-column: span 1; }
+.col-2 { grid-column: span 2; }
+.col-3 { grid-column: span 3; }
+.col-4 { grid-column: span 4; }
+.col-5 { grid-column: span 5; }
+.col-6 { grid-column: span 6; }
+.col-7 { grid-column: span 7; }
+.col-8 { grid-column: span 8; }
+.col-9 { grid-column: span 9; }
+.col-10 { grid-column: span 10; }
+.col-11 { grid-column: span 11; }
+.col-12 { grid-column: span 12; }
+
+/* Rodapé fixo com numeração automática */
+.page-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 12mm;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8mm;
+  font-size: 10px;
+  color: var(--print-ink-muted);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--print-paper);
+}
+
+.page-footer .page-number::after {
+  content: counter(page);
+}
+
+/* Página par/ímpar: numeração alternada como em livro físico (ímpar = direita, par = esquerda) */
+.page:nth-of-type(odd) .page-footer {
+  flex-direction: row;
+  justify-content: space-between;
+}
+.page:nth-of-type(even) .page-footer {
+  flex-direction: row-reverse;
+  justify-content: space-between;
+}
+
+/* ========== Template: .page-summary — barra lateral colorida + lista numerada ========== */
+.page-summary {
+  display: grid;
+  grid-template-columns: 28mm 1fr;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "sidebar content"
+    "sidebar footer";
+  min-height: 297mm;
+}
+
+.page-summary .page-sidebar {
+  grid-area: sidebar;
+  background: var(--print-primary);
+  color: #fff;
+  padding: 12mm 6mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.page-summary .page-sidebar-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  margin: 0 auto;
+}
+
+.page-summary .page-body {
+  grid-area: content;
+  padding: 12mm 10mm 14mm 10mm;
+  overflow: hidden;
+}
+
+.page-summary .page-body h2 {
+  font-size: 1.25em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--print-primary);
+  margin: 0 0 6mm 0;
+}
+
+.page-summary .page-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.page-summary .page-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 4mm;
+  margin-bottom: 4mm;
+  font-size: 1rem;
+  line-height: 1.6;
+  orphans: 3;
+  widows: 3;
+  text-rendering: optimizeLegibility;
+  hyphens: auto;
+}
+
+.page-summary .page-list-num {
+  flex-shrink: 0;
+  width: 6mm;
+  height: 6mm;
+  background: var(--print-primary);
+  color: #fff;
+  font-size: 8pt;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-summary .page-footer {
+  grid-area: footer;
+}
+
+/* ========== Template: .page-intro — imagem de topo sangrada + bloco de cor lateral ========== */
+.page-intro {
+  display: grid;
+  grid-template-columns: 1fr 25mm;
+  grid-template-rows: 85mm 1fr auto;
+  grid-template-areas:
+    "image image"
+    "content sidebar"
+    "footer footer";
+  min-height: 297mm;
+}
+
+.page-intro .page-image {
+  grid-area: image;
+  background: var(--print-primary-light);
+  background-size: cover;
+  background-position: center;
+  width: 100%;
+  min-height: 85mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  overflow: hidden;
+}
+.page-intro .page-image img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+.page-intro .page-image {
+  position: relative;
+}
+
+.page-intro .page-body {
+  grid-area: content;
+  padding: 8mm 10mm 14mm 10mm;
+  overflow: hidden;
+}
+
+.page-intro .page-body h2 {
+  font-size: 1.5em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--print-primary);
+  margin: 0 0 4mm 0;
+}
+
+.page-intro .page-body p {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 4mm 0;
+  orphans: 3;
+  widows: 3;
+  text-rendering: optimizeLegibility;
+  hyphens: auto;
+}
+
+.page-intro .page-sidebar {
+  grid-area: sidebar;
+  background: var(--print-accent);
+  min-height: 0;
+}
+
+.page-intro .page-footer {
+  grid-area: footer;
+}
+
+/* ========== Template: .page-double-column — duas colunas + linha divisória superior ========== */
+.page-double-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "line line"
+    "col1 col2"
+    "footer footer";
+  gap: 0 8mm;
+  min-height: 297mm;
+}
+
+.page-double-column .page-divider {
+  grid-area: line;
+  height: 3px;
+  background: var(--print-primary);
+  margin: 0 10mm;
+}
+
+.page-double-column .page-col {
+  padding: 8mm 0 14mm 0;
+  overflow: hidden;
+}
+
+.page-double-column .page-col:first-of-type {
+  padding-left: 10mm;
+}
+
+.page-double-column .page-col:last-of-type {
+  padding-right: 10mm;
+}
+
+.page-double-column .page-body h2 {
+  font-size: 1.125em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--print-primary);
+  margin: 0 0 4mm 0;
+}
+
+.page-double-column .page-body p {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 3mm 0;
+  orphans: 3;
+  widows: 3;
+  text-rendering: optimizeLegibility;
+  hyphens: auto;
+}
+
+.page-double-column .page-footer {
+  grid-area: footer;
+  grid-column: 1 / -1;
+}
+
+/* ========== Capa simples (opcional) ========== */
+.page-cover {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20mm;
+}
+
+.page-cover .page-cover-title {
+  font-size: 2em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--print-primary);
+  margin: 0 0 4mm 0;
+}
+
+/* Imagens de fundo e conteúdo: preencher grid sem distorcer */
+.page .page-image,
+.page [class*="page-image"],
+.page [style*="background-image"] {
+  background-size: cover;
+  background-position: center;
+}
+.page img {
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Placeholders: imagem pendente (data-prompt) e bloco Mermaid */
+.page img[src="pending"] {
+  min-height: 80px;
+  background: var(--print-primary-light);
+  color: rgba(255, 255, 255, 0.5);
+}
+.page .mermaid {
+  font-family: var(--print-font-sans);
+  font-size: 0.7rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.page .content-block-image {
+  margin: 0.5rem 0;
+}
+
+.page-cover .page-cover-subtitle {
+  font-size: 1rem;
+  color: var(--print-ink-muted);
+}
+
+.page-cover .page-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+/* ========== Impressão: cada .page em nova folha ========== */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    height: auto !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Numeração automática: counter(page) é definido pelo navegador em @media print */
+  .page-footer .page-number::after {
+    content: counter(page);
+  }
+
+  /* Página par/ímpar na impressão: numeração alternada */
+  .page:nth-of-type(odd) .page-footer {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .page:nth-of-type(even) .page-footer {
+    flex-direction: row-reverse;
+    justify-content: space-between;
+  }
+
+  /* Container do preview: sem escala, fluxo normal para impressão */
+  .print-content {
+    display: block !important;
+    transform: none !important;
+  }
+}
