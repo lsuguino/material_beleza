@@ -1,6 +1,6 @@
-# Colocar o site no ar (Vercel) — opcional
+# Colocar o site no ar (Vercel)
 
-O projeto está configurado para **rodar no seu PC** (veja **RODAR-LOCAL.md**). Este guia é só para quem quiser publicar na internet usando a Vercel. O projeto já está no GitHub.
+O projeto já está no GitHub. Siga os passos para deixá-lo online na **Vercel** (grátis e ideal para Next.js).
 
 ## 1. Criar conta na Vercel
 

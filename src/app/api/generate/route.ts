@@ -5,7 +5,6 @@ import { parseVTT } from '@/lib/vtt-parser';
 import { generateContent } from '@/lib/content-agent';
 import { generateDesign } from '@/lib/design-agent';
 import { COURSE_THEMES, type CourseId } from '@/lib/courseThemes';
-import { getFriendlyErrorMessage } from '@/lib/anthropic-error';
 
 export const maxDuration = 300;
 
@@ -255,7 +254,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error('[api/generate]', err);
-    const message = getFriendlyErrorMessage(err);
+    const message = err instanceof Error ? err.message : 'Erro ao gerar material.';
     return NextResponse.json(
       { error: message },
       { status: 500 }

@@ -3,7 +3,6 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { TeachingMaterial } from '@/types/material';
 import type { CourseId, GenerationMode } from '@/lib/courseThemes';
 import { parseJsonFromAI } from '@/lib/parse-json-from-ai';
-import { getFriendlyErrorMessage } from '@/lib/anthropic-error';
 
 // Tempo máximo da rota (segundos). Aumentado para transcrições longas (ex.: Vercel Pro permite até 300).
 export const maxDuration = 300;
@@ -304,7 +303,7 @@ ${mindmapSchema}`;
   } catch (e) {
     console.error(e);
     return NextResponse.json(
-      { error: getFriendlyErrorMessage(e) },
+      { error: e instanceof Error ? e.message : 'Erro ao gerar material.' },
       { status: 500 }
     );
   }

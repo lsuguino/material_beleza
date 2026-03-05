@@ -7,16 +7,15 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
     const url = typeof body.url === 'string' ? body.url.trim() : '';
-    const data = body.data;
 
     if (!url) {
       return NextResponse.json(
-        { error: 'URL da página de prévia não informada. Envie { "url": "..." } e opcionalmente "data": { ... } no body.' },
+        { error: 'URL da página de prévia não informada. Envie { "url": "..." } no body.' },
         { status: 400 }
       );
     }
 
-    const buffer = await generatePDF(url, data);
+    const buffer = await generatePDF(url);
 
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,

@@ -12,7 +12,6 @@ export default function PreviewPage() {
   const router = useRouter();
   const [data, setData] = useState<PreviewData | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pdfLoading, setPdfLoading] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -60,34 +59,6 @@ export default function PreviewPage() {
     window.print();
   }, []);
 
-  const handleDownloadPDF = useCallback(async () => {
-    if (!data) return;
-    setPdfLoading(true);
-    try {
-      const url = typeof window !== 'undefined' ? `${window.location.origin}/preview` : '';
-      const res = await fetch('/api/pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, data }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err.error as string) || 'Falha ao gerar PDF');
-      }
-      const blob = await res.blob();
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'material.pdf';
-      link.click();
-      URL.revokeObjectURL(link.href);
-    } catch (e) {
-      console.error(e);
-      alert(e instanceof Error ? e.message : 'Erro ao gerar PDF. Rode o projeto localmente (npm run dev) para o PDF funcionar.');
-    } finally {
-      setPdfLoading(false);
-    }
-  }, [data]);
-
   const design = data?.design || data?.conteudo;
   const rawPaginas = design?.paginas ?? (design as { pages?: unknown[] })?.pages;
   const paginas = Array.isArray(rawPaginas) ? rawPaginas : [];
@@ -111,19 +82,12 @@ export default function PreviewPage() {
       <aside className="preview-sidebar no-print flex-shrink-0 w-56 bg-[#1a1a24] border-r border-white/10 flex flex-col p-4">
         <button
           type="button"
-          onClick={handleDownloadPDF}
-          disabled={pdfLoading || paginas.length === 0}
-          className="w-full py-2.5 rounded-xl font-semibold text-white mb-2 transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ backgroundColor: '#446EFF' }}
-        >
-          {pdfLoading ? 'Gerando PDF...' : 'Download PDF'}
-        </button>
-        <button
-          type="button"
           onClick={handlePrint}
-          className="w-full py-2 rounded-lg font-medium text-white/80 border border-white/20 mb-4 hover:bg-white/5 transition-colors text-sm"
+          className="w-full py-2.5 rounded-xl font-semibold text-white mb-4 transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#446EFF' }}
+
         >
-          Imprimir (navegador)
+          Download PDF
         </button>
         <Link
           href="/"

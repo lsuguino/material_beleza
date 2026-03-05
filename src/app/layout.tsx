@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { Inter, Lexend, Lora, Sora } from 'next/font/google';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 import './globals.css';
 import './print-editorial.css';
 
@@ -42,9 +41,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${inter.variable} ${lexend.variable} ${lora.variable} ${sora.variable}`}>
       <body className="font-display antialiased min-h-screen flex flex-col bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
-        <ErrorBoundary>
-          {children}
-        </ErrorBoundary>
+        {children}
       </body>
     </html>
   );

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
 import { MaterialPreviewBlocks, type PreviewData } from '@/components/MaterialPreviewBlocks';
 import { MermaidInit } from '@/components/MermaidInit';
-import { SAMPLE_PREVIEW_DATA } from '@/lib/sample-material';
 
 const STORAGE_KEY = 'rtg-preview-data';
 
@@ -205,14 +204,6 @@ export default function Home() {
     router.push('/preview');
   }, [router]);
 
-  const loadSampleMaterial = useCallback(() => {
-    setError(null);
-    setGeneratedData(SAMPLE_PREVIEW_DATA);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(SAMPLE_PREVIEW_DATA));
-    }
-  }, []);
-
   const progressLabel =
     progressStep < PROGRESS_MESSAGES.length
       ? PROGRESS_MESSAGES[progressStep]
@@ -223,19 +214,18 @@ export default function Home() {
       : '90%';
 
   return (
-    <div className="font-lexend bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col relative overflow-x-hidden">
-      <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden>
+    <div className="font-lexend bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen relative overflow-x-hidden">
+      <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-navy/60 dark:bg-navy/80 z-10" />
         <img
-          alt=""
-          role="presentation"
+          alt="Fundo decorativo"
           className="w-full h-full object-cover"
           src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1920&q=80"
         />
       </div>
 
-      <div className="relative z-20 flex flex-col flex-1 min-h-0 w-full">
-        <header className="w-full px-4 sm:px-6 py-4 flex items-center justify-between glass border-b-0 mt-4 mx-auto max-w-6xl rounded-xl shrink-0">
+      <div className="relative z-20 flex flex-col min-h-screen">
+        <header className="w-full px-6 py-4 flex items-center justify-between glass border-b-0 mt-4 mx-auto max-w-6xl rounded-xl">
           <div className="flex items-center gap-3">
             <div className="bg-primary p-2 rounded-lg flex items-center justify-center">
               <span className="material-symbols-outlined text-white text-xl">auto_awesome</span>
@@ -248,14 +238,17 @@ export default function Home() {
         </header>
 
         <main
-          className={`flex-1 flex p-4 sm:p-6 w-full max-w-7xl mx-auto box-border ${
+          className={`flex-1 flex p-6 overflow-hidden min-h-0 ${
             generatedData
-              ? 'flex-col md:flex-row gap-6 items-start overflow-hidden'
-              : 'flex-col items-center justify-center overflow-y-auto'
+              ? 'flex-col md:flex-row gap-6'
+              : 'flex-col items-center justify-center'
           }`}
         >
+          {/* Card do formulário */}
           <div
-            className={`w-full max-w-2xl glass rounded-xl p-8 shadow-2xl shrink-0 ${generatedData ? 'h-fit' : ''}`}
+            className={`w-full max-w-2xl glass rounded-xl p-8 shadow-2xl shrink-0 ${
+              generatedData ? 'h-fit' : ''
+            }`}
           >
             <div className="mb-8 text-center">
               <h2 className="text-3xl font-extrabold text-navy mb-2">Geração Inteligente</h2>
@@ -371,19 +364,6 @@ export default function Home() {
               Geração em lote
             </button>
 
-            <p className="mt-4 text-xs text-navy/60">
-              Só a <strong>Geração Inteligente</strong> usa créditos Anthropic. O <strong>Download PDF</strong> não usa. Sem créditos? Use o material de exemplo abaixo para testar o PDF.
-            </p>
-            <button
-              type="button"
-              onClick={loadSampleMaterial}
-              disabled={loading}
-              className="w-full py-3 rounded-xl border-2 border-dashed border-primary/50 text-primary/90 font-semibold hover:bg-primary/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
-            >
-              <span className="material-symbols-outlined text-xl">description</span>
-              Usar material de exemplo (testar PDF sem Anthropic)
-            </button>
-
             <div className="mt-6">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs font-semibold text-navy/50 uppercase tracking-wider">Status do Processamento</span>
@@ -408,9 +388,10 @@ export default function Home() {
             </AnimatePresence>
           </div>
 
+          {/* Painel de preview ao lado quando há material gerado */}
           <AnimatePresence>
             {generatedData && (
-              <div className="flex-1 min-w-0 min-h-0 flex flex-col glass rounded-xl shadow-2xl overflow-hidden">
+              <div className="flex-1 min-w-0 flex flex-col glass rounded-xl shadow-2xl overflow-hidden">
                 <div className="p-4 border-b border-white/20 flex flex-wrap items-center justify-between gap-3">
                   <span className="text-navy font-semibold">Preview do documento</span>
                   <div className="flex flex-wrap gap-2">
@@ -470,7 +451,7 @@ export default function Home() {
           </AnimatePresence>
         </main>
 
-        <footer className="p-6 text-center text-white/40 text-xs">
+        <footer className="p-6 text-center text-white/40 text-xs shrink-0">
           © {new Date().getFullYear()} Design Beleza. Todos os direitos reservados.
         </footer>
       </div>

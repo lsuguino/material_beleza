@@ -73,13 +73,6 @@ function chooseEditorialTemplate(
 }
 
 export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, renderPageWrapper }: MaterialPreviewBlocksProps) {
-  if (!data || typeof data !== 'object') {
-    return (
-      <div className={`rounded-xl bg-white/10 border border-white/20 p-8 text-center text-white/70 min-h-[200px] flex items-center justify-center ${className}`}>
-        Nenhum dado de material. Gere um material na página inicial.
-      </div>
-    );
-  }
   const design = data.design || data.conteudo;
   const tema = data.tema || {
     name: 'Curso',
@@ -119,7 +112,6 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
       }}
     >
       {paginas.map((pagina, index) => {
-        if (!pagina || typeof pagina !== 'object') return null;
         const tipo = pagina.tipo || 'conteudo';
         const contentBlocks = pagina.content_blocks as ContentBlockItem[] | undefined;
         const paragrafos = pagina.bloco_principal

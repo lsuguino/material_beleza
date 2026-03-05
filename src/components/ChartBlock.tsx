@@ -27,7 +27,6 @@ export function ChartBlock({ content, className = '' }: ChartBlockProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (content == null || typeof content !== 'string') return;
     let chart: import('chart.js').Chart | null = null;
 
     const run = async () => {
