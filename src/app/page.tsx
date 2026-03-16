@@ -273,7 +273,7 @@ export default function Home() {
             <div className="bg-white rounded-lg shadow-lg overflow-hidden h-10 w-10 flex items-center justify-center">
               <span className="material-symbols-outlined text-primary text-2xl">auto_awesome</span>
             </div>
-            <h2 className="text-xl font-black tracking-tighter text-white uppercase italic">Material <span className="text-neon-cyan">Beleza</span></h2>
+            <h2 className="text-xl font-black tracking-tighter text-white uppercase italic">Design <span className="text-neon-cyan">Beleza</span></h2>
           </div>
           <nav className="hidden md:flex items-center gap-10">
             <a className="text-sm font-semibold text-slate-400 hover:text-neon-cyan transition-colors" href="#">Painel</a>
@@ -562,7 +562,7 @@ export default function Home() {
         </main>
 
         <footer className="mt-auto py-10 px-6 border-t border-white/5 glass-panel text-center shrink-0">
-          <p className="text-slate-500 text-sm">© {new Date().getFullYear()} Material Beleza - Powered by Advanced Machine Learning. Desenvolvido para o futuro da educação.</p>
+          <p className="text-slate-500 text-sm">© {new Date().getFullYear()} Design Beleza - Powered by Advanced Machine Learning. Desenvolvido para o futuro da educação.</p>
         </footer>
       </div>
     </div>
