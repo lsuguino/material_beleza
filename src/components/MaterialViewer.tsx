@@ -8,6 +8,11 @@ interface MaterialViewerProps {
   courseId?: CourseId;
 }
 
+function extractLessonNumber(title: string): string {
+  const m = title.match(/\b(\d{1,3})\b/);
+  return m?.[1] ?? '01';
+}
+
 /** Renderiza texto com **palavra** em cor de destaque (azul) */
 function renderWithHighlights(text: string) {
   if (!text || typeof text !== 'string') return text;
@@ -273,6 +278,9 @@ function CoverPlaceholderIllustration() {
 export function MaterialViewer({ material, courseId = 'geral' }: MaterialViewerProps) {
   const hasCoverImage = Boolean(material.coverImageUrl);
   const theme = COURSE_THEMES[courseId];
+  const isVtsd = courseId === 'geral';
+  const lessonNumber = extractLessonNumber(material.title || '');
+  const moduleName = material.subtitle?.trim() || theme.name;
 
   return (
     <article
@@ -284,68 +292,113 @@ export function MaterialViewer({ material, courseId = 'geral' }: MaterialViewerP
         ['--book-blue' as string]: theme.primaryDark,
       }}
     >
-      {/* Capa — diagramação de livro: fundo creme, faixa azul opcional */}
-      <header className="relative min-h-[420px] md:min-h-[480px] print:min-h-0 print:py-8 flex flex-col md:flex-row print:flex-row print:break-after-page overflow-hidden material-viewer-header cover-page bg-book-cream">
-        <div className="absolute inset-0 bg-book-cream" aria-hidden />
-        <div className="absolute top-0 left-0 w-1.5 md:w-2 h-full bg-book-blue" aria-hidden />
-        <CoverPlaceholderIllustration />
-
-        <div className="cover-image-column relative flex-shrink-0 w-full md:w-[42%] min-h-[200px] md:min-h-0 flex items-center justify-center p-6 md:p-10 print:p-4">
-          {hasCoverImage ? (
-            <div className="cover-image-frame relative w-full max-w-[240px] md:max-w-xs aspect-[4/5] md:aspect-square rounded-sm overflow-hidden shadow-lg border border-book-blue/20 print:shadow-md">
-              <img
-                src={material.coverImageUrl}
-                alt=""
-                className="w-full h-full object-cover img-editorial"
-              />
-            </div>
-          ) : (
-            <div className="cover-placeholder relative w-full max-w-[240px] md:max-w-xs aspect-[4/5] md:aspect-square rounded-sm overflow-hidden bg-book-blue/10 border border-book-blue/30 flex items-center justify-center print:border-book-blue/40">
-              <span className="cover-initial font-display font-black text-6xl md:text-7xl text-book-blue/40 select-none" aria-hidden>
-                {(material.title.trim()[0] || 'A').toUpperCase()}
+      {/* Capa — curso VTSD com arte base e só textos variáveis */}
+      {isVtsd && hasCoverImage ? (
+        <header className="relative min-h-[720px] print:min-h-0 print:break-after-page overflow-hidden cover-page">
+          <img src={material.coverImageUrl} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 p-8 md:p-10 flex flex-col text-[#202020]">
+            <div className="flex items-start justify-between text-[20px] md:text-[26px] font-light tracking-tight">
+              <span>{moduleName}</span>
+              <span className="text-right leading-tight">
+                <span className="block">Aula</span>
+                <span className="block font-semibold text-[26px] md:text-[40px]">Numero da aula {lessonNumber}</span>
               </span>
             </div>
-          )}
-        </div>
+            <h1 className="mt-4 text-[36px] md:text-[54px] font-bold leading-[1.05] tracking-tight max-w-[90%]">
+              {material.title}
+            </h1>
+          </div>
+        </header>
+      ) : (
+        <header className="relative min-h-[420px] md:min-h-[480px] print:min-h-0 print:py-8 flex flex-col md:flex-row print:flex-row print:break-after-page overflow-hidden material-viewer-header cover-page bg-book-cream">
+          <div className="absolute inset-0 bg-book-cream" aria-hidden />
+          <div className="absolute top-0 left-0 w-1.5 md:w-2 h-full bg-book-blue" aria-hidden />
+          <CoverPlaceholderIllustration />
 
-        <div className="cover-text-column relative flex-1 flex flex-col justify-center px-6 py-8 md:px-12 md:py-16 lg:px-16 print:px-6 print:py-4 min-w-0">
-          <span className="material-label inline-block font-display font-bold tracking-[0.2em] uppercase text-[10px] mb-4 text-book-blue">
-            Apostila de estudos
-          </span>
-          <h1 className="material-title font-display text-3xl sm:text-4xl md:text-5xl lg:text-[2.75rem] font-black leading-[1.12] tracking-tight mb-5 text-book-blue">
-            {material.title}
-          </h1>
-          {material.subtitle && (
-            <p className="material-subtitle text-base sm:text-lg font-material leading-relaxed text-slate-700 mb-6">
-              {renderWithHighlights(material.subtitle)}
-            </p>
-          )}
-          {material.summary && (
-            <p className="material-summary text-sm sm:text-base leading-[1.7] max-w-xl text-slate-700">
-              {renderWithHighlights(material.summary)}
-            </p>
-          )}
-        </div>
-      </header>
-
-      {/* Sumário — painel azul escuro (estilo livro); página seguinte à capa */}
-      <nav className="material-toc book-toc print:break-after-page bg-book-blue text-white py-12 md:py-16 print:py-12" aria-label="Sumário">
-        <div className="max-w-4xl mx-auto px-8 md:px-16 flex flex-col md:flex-row md:items-stretch gap-8 md:gap-12">
-          <h2 className="book-toc-title font-display text-lg font-bold tracking-[0.35em] uppercase shrink-0 flex items-center justify-center md:justify-start md:py-4 md:border-r md:border-white/30 md:pr-10">
-            <span className="md:[writing-mode:vertical-rl] md:inline-block md:py-4">Sumário</span>
-          </h2>
-          <ol className="list-none space-y-3 flex-1 py-2">
-            {material.sections?.map((section, idx) => (
-              <li key={idx} className="flex items-baseline gap-3 font-display text-base md:text-lg">
-                <span className="font-semibold text-white/90 shrink-0 w-7">
-                  {(String(idx + 1).padStart(2, '0'))}
+          <div className="cover-image-column relative flex-shrink-0 w-full md:w-[42%] min-h-[200px] md:min-h-0 flex items-center justify-center p-6 md:p-10 print:p-4">
+            {hasCoverImage ? (
+              <div className="cover-image-frame relative w-full max-w-[240px] md:max-w-xs aspect-[4/5] md:aspect-square rounded-sm overflow-hidden shadow-lg border border-book-blue/20 print:shadow-md">
+                <img
+                  src={material.coverImageUrl}
+                  alt=""
+                  className="w-full h-full object-cover img-editorial"
+                />
+              </div>
+            ) : (
+              <div className="cover-placeholder relative w-full max-w-[240px] md:max-w-xs aspect-[4/5] md:aspect-square rounded-sm overflow-hidden bg-book-blue/10 border border-book-blue/30 flex items-center justify-center print:border-book-blue/40">
+                <span className="cover-initial font-display font-black text-6xl md:text-7xl text-book-blue/40 select-none" aria-hidden>
+                  {(material.title.trim()[0] || 'A').toUpperCase()}
                 </span>
-                <span className="text-white/95">{section.title}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </nav>
+              </div>
+            )}
+          </div>
+
+          <div className="cover-text-column relative flex-1 flex flex-col justify-center px-6 py-8 md:px-12 md:py-16 lg:px-16 print:px-6 print:py-4 min-w-0">
+            <span className="material-label inline-block font-display font-bold tracking-[0.2em] uppercase text-[10px] mb-4 text-book-blue">
+              Apostila de estudos
+            </span>
+            <h1 className="material-title font-display text-3xl sm:text-4xl md:text-5xl lg:text-[2.75rem] font-black leading-[1.12] tracking-tight mb-5 text-book-blue">
+              {material.title}
+            </h1>
+            {material.subtitle && (
+              <p className="material-subtitle text-base sm:text-lg font-material leading-relaxed text-slate-700 mb-6">
+                {renderWithHighlights(material.subtitle)}
+              </p>
+            )}
+            {material.summary && (
+              <p className="material-summary text-sm sm:text-base leading-[1.7] max-w-xl text-slate-700">
+                {renderWithHighlights(material.summary)}
+              </p>
+            )}
+          </div>
+        </header>
+      )}
+
+      {/* Página fixa de introdução após a capa (VTSD) */}
+      {isVtsd && (
+        <section className="print:break-after-page bg-book-cream">
+          <img
+            src="/images/Introducao-padrao-vtsd.png"
+            alt="Introdução"
+            className="w-full h-auto object-cover"
+          />
+        </section>
+      )}
+
+      {/* Sumário — VTSD usa arte base; demais cursos usam layout padrão */}
+      {isVtsd ? (
+        <nav className="relative print:break-after-page min-h-[720px] overflow-hidden" aria-label="Sumário">
+          <img src="/images/sumario-vtsd.png" alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="relative z-10 px-12 md:px-16 pt-40 md:pt-48 pb-16">
+            <ol className="list-none space-y-3 max-w-3xl ml-auto">
+              {material.sections?.map((section, idx) => (
+                <li key={idx} className="flex items-baseline gap-4 font-display text-lg md:text-2xl text-[#0c8f8a]">
+                  <span className="font-semibold w-10 shrink-0">{String(idx + 1).padStart(2, '0')}</span>
+                  <span className="font-semibold">{section.title}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </nav>
+      ) : (
+        <nav className="material-toc book-toc print:break-after-page bg-book-blue text-white py-12 md:py-16 print:py-12" aria-label="Sumário">
+          <div className="max-w-4xl mx-auto px-8 md:px-16 flex flex-col md:flex-row md:items-stretch gap-8 md:gap-12">
+            <h2 className="book-toc-title font-display text-lg font-bold tracking-[0.35em] uppercase shrink-0 flex items-center justify-center md:justify-start md:py-4 md:border-r md:border-white/30 md:pr-10">
+              <span className="md:[writing-mode:vertical-rl] md:inline-block md:py-4">Sumário</span>
+            </h2>
+            <ol className="list-none space-y-3 flex-1 py-2">
+              {material.sections?.map((section, idx) => (
+                <li key={idx} className="flex items-baseline gap-3 font-display text-base md:text-lg">
+                  <span className="font-semibold text-white/90 shrink-0 w-7">
+                    {(String(idx + 1).padStart(2, '0'))}
+                  </span>
+                  <span className="text-white/95">{section.title}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </nav>
+      )}
 
       {/* Conteúdo — seções em diagramação de livro A4 deitada (layout largo, 2 colunas) */}
       <div className="material-content book-content book-content-landscape px-6 md:px-12 lg:px-16 py-10 md:py-14 max-w-6xl mx-auto print:py-8 print:max-w-none bg-book-cream">

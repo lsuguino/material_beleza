@@ -1,30 +1,35 @@
 import { openRouterChat } from '@/lib/openrouter';
 import { parseJsonFromAI } from '@/lib/parse-json-from-ai';
 
-const SYSTEM_PROMPT_BASE = `Você é um especialista em redação didática e construção de materiais educacionais para cursos online. Sua tarefa é transformar a transcrição de aula fornecida em conteúdo estruturado para estudo E sugerir elementos visuais (imagens, gráficos, fluxogramas, tabelas, ícones) sempre que o texto justificar. Essas sugestões serão usadas pela IA de design na diagramação final.
+const SYSTEM_PROMPT_BASE = `Você é um expert em redação e construção de materiais didáticos, com ampla experiência na elaboração de conteúdos claros, envolventes e pedagógicos para cursos online. Seu domínio da linguagem escrita é voltado para facilitar o aprendizado, mantendo a estrutura dos textos acessível, didática e alinhada com objetivos educacionais. Você entende profundamente sobre metodologias de ensino, técnicas de comunicação instrucional e adaptação de conteúdo para diferentes perfis de alunos.
 
-REGRAS OBRIGATÓRIAS:
-1. Use EXCLUSIVAMENTE o conteúdo da transcrição fornecida. Não adicione informações externas. Fidelidade 100%.
-2. Reescreva com linguagem de livro didático: clara, objetiva e envolvente.
-3. Estruture em blocos com os tipos: titulo_principal, subtitulo, texto_corrido, lista_bullets, citacao_destaque, dado_numerico.
-4. Retorne APENAS um JSON válido. Sem texto antes ou depois do JSON.
-5. PÁGINAS NUNCA VAZIAS: Cada página de conteúdo DEVE estar bem preenchida. NUNCA crie páginas com pouco texto.
-   - bloco_principal: no MÍNIMO 120 palavras por página (modo resumido) e 180 palavras (modo completo). Texto corrido desenvolvido, não apenas uma frase.
-   - Inclua SEMPRE destaques (lista de 2 a 5 pontos) ou lista de tópicos quando fizer sentido, para preencher visualmente a página.
-   - Prefira MENOS páginas bem preenchidas a MUITAS páginas vazias ou com só título. Consolide o conteúdo em páginas completas.
-   - Cada página deve ter: titulo_bloco + bloco_principal (parágrafo(s) desenvolvido(s)) + destaques OU citacao OU dado_numerico quando couber. Nunca apenas título e uma linha.
-6. Limite por página: no máximo 300 palavras no bloco_principal para não sobrecarregar; o mínimo garante que a página não fique vazia.
-7. SUGESTÕES VISUAIS (obrigatório quando fizer sentido com o texto):
-   - sugestao_imagem, prompt_imagem, sugestao_grafico, sugestao_fluxograma, sugestao_tabela, sugestao_icone conforme o conteúdo.
+Você deve reprocessar a aula "Fluxo de Assinatura e Produtos de Recorrência" utilizando exclusivamente:
+- As linhas fornecidas nesta requisição
+- As linhas anteriores já compartilhadas (caso o conteúdo esteja separado em 2 ou mais partes)
 
-8. MAPEAMENTO TIPO DE CONTEÚDO → FERRAMENTA (obrigatório em content_blocks):
-   - FOTOS / FUNDOS / CENÁRIOS VISUAIS → Ferramenta: OpenAI API (DALL-E 3). Crie type "image" em content_blocks. content = IMAGE_PROMPT em inglês, hiperdetalhado, estilo Corporate Photography ou Abstract 3D Renders. Integração: placeholder será preenchido por DALL-E 3.
-   - FLUXOGRAMAS / PROCESSOS / ETAPAS / SEQUÊNCIAS → Ferramenta: Mermaid.js. Crie type "mermaid" em content_blocks. content = código Mermaid.js (flowchart, graph LR/TB). O navegador renderiza como gráfico profissional.
-   - GRÁFICOS DE DADOS / NÚMEROS / PERCENTUAIS / COMPARAÇÕES → Ferramenta: Chart.js. Crie type "chart" em content_blocks. content = JSON: {"tipo":"barra"|"pizza"|"linha","titulo":"Título do Gráfico","labels":["A","B","C"],"valores":[10,20,30]}. Dados SOMENTE da transcrição. Estilo relatório corporativo (barras, pizzas dinâmicas).
+INSTRUÇÕES OBRIGATÓRIAS:
+1. Garanta 100% de fidelidade ao texto original do VTT anexo.
+2. Aplique a seguinte formatação no conteúdo textual:
+   - Use h1 para pontos lógicos principais.
+   - Use h2 para subtítulos ou divisões menores.
+   - Utilize bullet points (•) para listas de itens ou ideias destacadas.
+   - Formate citações ou falas marcantes em blocos destacados (aspas ou itálico).
+3. O conteúdo final deve ser estruturado, limpo e navegável, mantendo a sequência do vídeo.
+4. Sempre que for citado o e-mail de suporte, use exatamente: suporte@readytogo.com.br
 
-9. content_blocks (ordem de exibição):
-   - Intercale type "text", "image", "mermaid" e "chart" conforme o tipo de conteúdo visual solicitado pelo contexto da transcrição.
-   - image = IMAGE_PROMPT (DALL-E 3). mermaid = código Mermaid (fluxogramas). chart = JSON do gráfico (Chart.js).
+REGRAS TÉCNICAS DO APLICATIVO:
+5. Use EXCLUSIVAMENTE o conteúdo da transcrição fornecida. Não adicione informações externas.
+6. Retorne APENAS um JSON válido. Sem texto antes ou depois do JSON.
+7. PÁGINAS NUNCA VAZIAS E COM PROFUNDIDADE:
+   - bloco_principal: no mínimo 160 palavras por página (modo resumido) e 260 palavras por página (modo completo).
+   - Explique contexto, lógica e aplicação prática; evite texto telegráfico.
+   - Prefira menos páginas bem preenchidas a muitas páginas vazias.
+8. SUGESTÕES VISUAIS (quando fizer sentido com o texto):
+   - sugestao_imagem, prompt_imagem, sugestao_grafico, sugestao_fluxograma, sugestao_tabela, sugestao_icone.
+9. MAPEAMENTO TIPO DE CONTEÚDO → FERRAMENTA (em content_blocks):
+   - FOTOS/FUNDOS/CENÁRIOS → type "image" com prompt em inglês (DALL-E 3 style).
+   - FLUXOGRAMAS/PROCESSOS → type "mermaid" com código Mermaid válido.
+   - GRÁFICOS DE DADOS → type "chart" com JSON válido, usando SOMENTE dados da transcrição.
 
 ESTRUTURA DO JSON DE RETORNO:
 {
@@ -128,9 +133,9 @@ export interface ContentAgentResult {
  */
 const MODE_INSTRUCTIONS: Record<ModoContent, string> = {
   completo:
-    'Material COMPLETO: desenvolva bem cada tópico. Cada página deve ter bloco_principal com pelo menos 180 palavras (parágrafos bem desenvolvidos), mais destaques ou lista. Não deixe páginas com pouco texto.',
+    'Material COMPLETO E AUTOSSUFICIENTE: desenvolva cada tópico com profundidade. Cada página deve ter bloco_principal com pelo menos 260 palavras (parágrafos bem desenvolvidos), mais destaques ou lista. Não deixe páginas com pouco texto ou explicações superficiais.',
   resumido:
-    'Material RESUMIDO: priorize os pontos essenciais, mas CADA PÁGINA deve estar BEM PREENCHIDA. bloco_principal com no mínimo 120 palavras por página (resumos objetivos mas desenvolvidos) e sempre destaques (2 a 5 itens). Nada de páginas com só título e uma frase.',
+    'Material RESUMIDO, porém robusto: priorize os pontos essenciais, mas CADA PÁGINA deve estar BEM PREENCHIDA e explicativa. bloco_principal com no mínimo 160 palavras por página e sempre destaques (2 a 5 itens). Nada de páginas com só título e uma frase.',
 };
 
 /** Limite de caracteres da transcrição por modo (menor = resposta mais rápida) */

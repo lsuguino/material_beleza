@@ -8,6 +8,48 @@ import { openRouterChat } from '@/lib/openrouter';
 // Tempo máximo da rota (segundos). Aumentado para transcrições longas (ex.: Vercel Pro permite até 300).
 export const maxDuration = 300;
 
+const VTSD_COVER_IMAGE = '/images/capa-vtsd.jpg';
+const VTSD_INTRO_IMAGE = '/images/Introducao-padrao-vtsd.png';
+const VTSD_SUMMARY_IMAGE = '/images/sumario-vtsd.png';
+
+function normalizeText(input: string): string {
+  return input
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+/**
+ * Aplica imagens de referência locais para o curso "Venda Todo Santo Dia" (courseId: geral).
+ * Essas referências têm prioridade; o gerador por IA fica como fallback.
+ */
+function applyVtsdReferenceImages(material: TeachingMaterial, courseId?: CourseId): void {
+  if (courseId !== 'geral') return;
+
+  if (!material.coverImageUrl) {
+    material.coverImageUrl = VTSD_COVER_IMAGE;
+  }
+
+  if (!material.sections) return;
+  for (const section of material.sections) {
+    const sectionTitle = normalizeText(section.title || '');
+    for (const block of section.blocks || []) {
+      if (block.type !== 'image_placeholder' || block.imageUrl) continue;
+
+      const rawContext = `${sectionTitle} ${block.content || ''} ${block.caption || ''} ${block.imagePrompt || ''}`;
+      const context = normalizeText(rawContext);
+
+      if (context.includes('sumario')) {
+        block.imageUrl = VTSD_SUMMARY_IMAGE;
+        continue;
+      }
+      if (context.includes('introducao') || context.includes('apresentacao') || context.includes('boas vindas')) {
+        block.imageUrl = VTSD_INTRO_IMAGE;
+      }
+    }
+  }
+}
+
 /** Refina o prompt de imagem via LLM (OpenRouter): mais detalhado e adequado para material didático. */
 async function refineImagePromptWithLlm(originalPrompt: string): Promise<string> {
   try {
@@ -114,6 +156,7 @@ async function fillImagePlaceholders(material: TeachingMaterial): Promise<void> 
 
 /** Gera imagem da capa temática (ex.: tráfego pago = workspace, ads, gráficos). */
 async function generateCoverImage(material: TeachingMaterial): Promise<void> {
+  if (material.coverImageUrl) return;
   const theme = [material.title, material.subtitle, material.summary].filter(Boolean).join('. ').slice(0, 500);
   if (!theme.trim()) return;
   try {
@@ -211,7 +254,7 @@ export async function POST(request: NextRequest) {
     const isMindmap = (mode as string) === 'mindmap';
     const isSummary = mode === 'summary';
 
-    const systemPromptFull = `Você é um expert em didática e design instrucional. Sua tarefa é transformar a transcrição de uma aula (arquivo .vtt) em uma APOSTILA DE ESTUDOS para alunos.
+    const systemPromptFull = `Você é um expert em didática e design instrucional. Sua tarefa é transformar a transcrição de uma aula (arquivo .vtt) em uma APOSTILA DE ESTUDOS COMPLETA para alunos.
 
 REGRA CRÍTICA — USE SOMENTE O VTT:
 - Todo o conteúdo deve vir EXCLUSIVAMENTE da transcrição do arquivo .vtt que você recebe.
@@ -219,22 +262,25 @@ REGRA CRÍTICA — USE SOMENTE O VTT:
 - Se algo não estiver no VTT, não inclua no material.
 
 OBJETIVO DA APOSTILA:
-- O aluno deve conseguir aplicar o ensino e estudar apenas com este material — ou seja, o conteúdo deve ser completo o suficiente para aprender e revisar sem precisar reassistir à aula.
-- O texto pode e deve ser resumido em relação à fala (mais direto e organizado), mas sem perder conceitos essenciais, definições e conclusões.
+- O aluno deve conseguir aprender, aplicar e revisar apenas com este material, sem precisar reassistir à aula.
+- O texto deve ser didático e organizado, porém com PROFUNDIDADE: explique conceitos, contexto, lógica e implicações práticas.
+- Evite excesso de síntese. Prefira conteúdo mais desenvolvido a frases curtas e superficiais.
 - Inclua SEMPRE os exemplos citados pelo professor em aula: casos práticos, exercícios comentados, ilustrações e situações que ele mencionou. Esses exemplos são fundamentais para o estudo.
 
 Regras obrigatórias:
-1. CONTEÚDO: Resuma de forma didática — conceitos claros, definições, passos quando houver, e conclusões. O aluno lendo a apostila deve conseguir entender e aplicar o que foi ensinado.
+1. CONTEÚDO: Reescreva de forma didática e abrangente — conceitos claros, definições completas, passos, justificativas e conclusões. O aluno lendo a apostila deve conseguir entender e aplicar o que foi ensinado sem depender do vídeo.
 2. EXEMPLOS DO PROFESSOR: Toda vez que o professor citar um exemplo, caso, exercício ou situação na aula, inclua no material com o tipo de block "example". Transcreva o exemplo de forma completa (números, nomes, contexto), para o aluno poder estudar e revisar como foi dado em aula.
 3. ESTRUTURA: Organize em seções com títulos. Use "key_point" para ideias centrais, listas para enumerações e "quote" para citações literais do professor quando relevante.
 4. MAPA MENTAL: Em seções que forem um "resumo da estratégia completa", "visão geral", "síntese" ou equivalente, inclua SEMPRE um block "mind_map" com "center" e "items" (4 a 8 ramos). Os "items" devem ser os pontos realmente abordados na aula, não inventados.
+5. DENSIDADE MÍNIMA (OBRIGATÓRIA): cada seção deve conter explicação suficiente, evitando blocos rasos. Prefira parágrafos mais desenvolvidos com contexto e transições. Não gere seções com conteúdo telegráfico.
+6. COBERTURA INTEGRAL (OBRIGATÓRIA): ao final, confira mentalmente a transcrição completa e garanta que todos os tópicos relevantes foram contemplados em alguma seção.
 
 DADOS FIDEDIGNOS — NADA INVENTADO (CRÍTICO):
-5. GRÁFICOS (chart): Só use "chart" quando a transcrição mencionar EXPLICITAMENTE números, percentuais, etapas com quantidades ou comparações. chartLabels e chartValues devem ser EXATAMENTE os dados citados na aula (ex.: se o professor disse "100% no topo, 30% consideram comprar, 10% fecham", use ["Topo", "Consideram", "Fecham"] e [100, 30, 10]). PROIBIDO inventar números ou rótulos. Se não houver dados numéricos na fala, NÃO inclua gráfico.
-6. FLUXOGRAMAS (flowchart): Só use "flowchart" quando a aula descrever uma sequência real de passos ou etapas. "steps" deve ser a ordem EXATA e as frases MENCIONADAS na aula (ex.: se o professor listou "conhecer, considerar, decidir, comprar", use esses termos). PROIBIDO inventar etapas. diagramTitle e content devem refletir o que foi dito.
-7. IMAGENS (image_placeholder): Use apenas quando a aula descrever algo visual concreto (esquema, exemplo visual, cenário). "content" e "imagePrompt" devem descrever O QUE FOI DITO na aula, não conceitos genéricos. Para processos ou dados numéricos, prefira flowchart ou chart (com dados reais) em vez de imagem. Não crie image_placeholder para "funil", "ciclo" ou "gráfico" — use chart/flowchart com dados da transcrição.
-8. LINGUAGEM: Clara, objetiva e em português.
-9. DESTAQUE: Para dar ênfase visual a termos importantes (conceitos, nomes de etapas, metodologias), envolva-os em **termo** no content — ex.: "os **4 tipos** de anúncio", "**descoberta**, **relacionamento**, **conversão** e **remarketing**". Use com moderação (2 a 5 termos por parágrafo quando fizer sentido). Esses termos aparecerão em azul na apostila.
+7. GRÁFICOS (chart): Só use "chart" quando a transcrição mencionar EXPLICITAMENTE números, percentuais, etapas com quantidades ou comparações. chartLabels e chartValues devem ser EXATAMENTE os dados citados na aula (ex.: se o professor disse "100% no topo, 30% consideram comprar, 10% fecham", use ["Topo", "Consideram", "Fecham"] e [100, 30, 10]). PROIBIDO inventar números ou rótulos. Se não houver dados numéricos na fala, NÃO inclua gráfico.
+8. FLUXOGRAMAS (flowchart): Só use "flowchart" quando a aula descrever uma sequência real de passos ou etapas. "steps" deve ser a ordem EXATA e as frases MENCIONADAS na aula (ex.: se o professor listou "conhecer, considerar, decidir, comprar", use esses termos). PROIBIDO inventar etapas. diagramTitle e content devem refletir o que foi dito.
+9. IMAGENS (image_placeholder): Use apenas quando a aula descrever algo visual concreto (esquema, exemplo visual, cenário). "content" e "imagePrompt" devem descrever O QUE FOI DITO na aula, não conceitos genéricos. Para processos ou dados numéricos, prefira flowchart ou chart (com dados reais) em vez de imagem. Não crie image_placeholder para "funil", "ciclo" ou "gráfico" — use chart/flowchart com dados da transcrição.
+10. LINGUAGEM: Clara, objetiva e em português.
+11. DESTAQUE: Para dar ênfase visual a termos importantes (conceitos, nomes de etapas, metodologias), envolva-os em **termo** no content — ex.: "os **4 tipos** de anúncio", "**descoberta**, **relacionamento**, **conversão** e **remarketing**". Use com moderação (2 a 5 termos por parágrafo quando fizer sentido). Esses termos aparecerão em azul na apostila.
 
 Resumo executivo (summary): 4 a 6 frases com os principais pontos da aula, para o aluno ter uma visão geral antes de estudar cada seção. Pode usar **termo** para destacar conceitos-chave.
 
@@ -283,6 +329,7 @@ ${mindmapSchema}`;
     };
 
     if (!isMindmap) {
+      applyVtsdReferenceImages(material, courseId);
       await fillImagePlaceholders(material);
       await generateCoverImage(material);
     }
