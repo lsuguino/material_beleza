@@ -14,6 +14,8 @@ export interface PageIntroProps {
   /** IMAGE_PROMPT em inglês para o topo (ou primeiro bloco image de content_blocks) */
   imagePrompt?: string;
   nomeCurso: string;
+  pageNumber?: number;
+  showPageNumber?: boolean;
   primary?: string;
   accent?: string;
 }
@@ -25,12 +27,15 @@ export function PageIntro({
   imagePlaceholder = 'Imagem',
   imagePrompt,
   nomeCurso,
+  pageNumber,
+  showPageNumber = true,
   primary = 'var(--print-primary)',
   accent = 'var(--print-accent)',
 }: PageIntroProps) {
   const hasContentBlocks = contentBlocks && contentBlocks.length > 0;
   const firstImageIndex = hasContentBlocks ? contentBlocks.findIndex((b) => b.type === 'image') : -1;
   const firstImageBlock = firstImageIndex >= 0 && contentBlocks ? contentBlocks[firstImageIndex] : null;
+  // Neste fluxo, "image" é só prompt (não há imagem real), então não reservamos área de imagem.
   const topPrompt = imagePrompt ?? firstImageBlock?.content;
   const bodyBlocks =
     hasContentBlocks && contentBlocks
@@ -52,13 +57,7 @@ export function PageIntro({
         } as React.CSSProperties
       }
     >
-      <div className="page-image">
-        {topPrompt ? (
-          <img src="pending" data-prompt={topPrompt} alt="" className="w-full h-full object-cover" />
-        ) : (
-          imagePlaceholder
-        )}
-      </div>
+      {/* Removido bloco de imagem (era só prompt), para não aparecer vazio */}
       <div className="page-body">
         <h2>{title}</h2>
         {bodyBlocks && bodyBlocks.length > 0 ? <ContentBlocksRenderer blocks={bodyBlocks} /> : null}
@@ -67,7 +66,9 @@ export function PageIntro({
       <div className="page-sidebar" aria-hidden />
       <footer className="page-footer">
         <span>{nomeCurso}</span>
-        <span className="page-number">Página </span>
+        {showPageNumber && typeof pageNumber === 'number' ? (
+          <span>Página {pageNumber}</span>
+        ) : null}
       </footer>
     </section>
   );

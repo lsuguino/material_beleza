@@ -4,12 +4,16 @@
 
 export interface PageContraCapaProps {
   nomeCurso: string;
+  pageNumber?: number;
+  showPageNumber?: boolean;
   primary?: string;
   accent?: string;
 }
 
 export function PageContraCapa({
   nomeCurso,
+  pageNumber,
+  showPageNumber = true,
   primary = 'var(--print-primary)',
   accent = 'var(--print-accent)',
 }: PageContraCapaProps) {
@@ -30,7 +34,9 @@ export function PageContraCapa({
       </div>
       <footer className="page-footer">
         <span>{nomeCurso}</span>
-        <span className="page-number">Página </span>
+        {showPageNumber && typeof pageNumber === 'number' ? (
+          <span>Página {pageNumber}</span>
+        ) : null}
       </footer>
     </section>
   );

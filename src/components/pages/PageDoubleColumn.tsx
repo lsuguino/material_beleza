@@ -14,6 +14,8 @@ export interface PageDoubleColumnProps {
   /** Texto da página (bloco_principal etc.) quando os blocos não trazem texto suficiente */
   afterBlocksContent?: React.ReactNode;
   nomeCurso: string;
+  pageNumber?: number;
+  showPageNumber?: boolean;
   primary?: string;
 }
 
@@ -24,6 +26,8 @@ export function PageDoubleColumn({
   contentBlocks,
   afterBlocksContent,
   nomeCurso,
+  pageNumber,
+  showPageNumber = true,
   primary = 'var(--print-primary)',
 }: PageDoubleColumnProps) {
   const left = (
@@ -48,7 +52,9 @@ export function PageDoubleColumn({
       </div>
       <footer className="page-footer">
         <span>{nomeCurso}</span>
-        <span className="page-number">Página </span>
+        {showPageNumber && typeof pageNumber === 'number' ? (
+          <span>Página {pageNumber}</span>
+        ) : null}
       </footer>
     </section>
   );

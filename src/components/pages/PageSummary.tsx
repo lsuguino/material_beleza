@@ -7,6 +7,8 @@ export interface PageSummaryProps {
   items: string[];
   sidebarLabel?: string;
   nomeCurso: string;
+  pageNumber?: number;
+  showPageNumber?: boolean;
   /** Cores para rebrand (aplicadas como variáveis no container) */
   primary?: string;
   accent?: string;
@@ -17,6 +19,8 @@ export function PageSummary({
   items,
   sidebarLabel = 'Conteúdo',
   nomeCurso,
+  pageNumber,
+  showPageNumber = true,
   primary = 'var(--print-primary)',
   accent = 'var(--print-accent)',
 }: PageSummaryProps) {
@@ -46,7 +50,9 @@ export function PageSummary({
       </div>
       <footer className="page-footer">
         <span>{nomeCurso}</span>
-        <span className="page-number">Página </span>
+        {showPageNumber && typeof pageNumber === 'number' ? (
+          <span>Página {pageNumber}</span>
+        ) : null}
       </footer>
     </section>
   );

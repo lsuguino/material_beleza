@@ -100,9 +100,7 @@
   background: var(--print-paper);
 }
 
-.page-footer .page-number::after {
-  content: counter(page);
-}
+/* Numeração via counter(page) apenas em impressão (em tela mostraremos número explícito) */
 
 /* Página par/ímpar: numeração alternada como em livro físico (ímpar = direita, par = esquerda) */
 .page:nth-of-type(odd) .page-footer {
@@ -112,6 +110,15 @@
 .page:nth-of-type(even) .page-footer {
   flex-direction: row-reverse;
   justify-content: space-between;
+}
+
+/* Preview em tela: tamanho A4 em px (igual capa 595×842) */
+@media screen {
+  .page {
+    width: 595px;
+    min-height: 842px;
+    height: 842px;
+  }
 }
 
 /* ========== Template: .page-summary — barra lateral colorida + lista numerada ========== */
@@ -200,40 +207,14 @@
 .page-intro {
   display: grid;
   grid-template-columns: 1fr 25mm;
-  grid-template-rows: 85mm 1fr auto;
+  grid-template-rows: 1fr auto;
   grid-template-areas:
-    "image image"
     "content sidebar"
     "footer footer";
   min-height: 297mm;
 }
 
-.page-intro .page-image {
-  grid-area: image;
-  background: var(--print-primary-light);
-  background-size: cover;
-  background-position: center;
-  width: 100%;
-  min-height: 85mm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 10px;
-  overflow: hidden;
-}
-.page-intro .page-image img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  display: block;
-}
-.page-intro .page-image {
-  position: relative;
-}
+/* page-image removido: neste fluxo não há imagem real */
 
 .page-intro .page-body {
   grid-area: content;

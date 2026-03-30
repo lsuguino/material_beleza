@@ -322,6 +322,8 @@ Regras:
 - Texto corrido para conceitos. "list" só para **exemplos citados** na aula (um item por exemplo), não para resumir teoria.
 - No mínimo 85% "paragraph" nas seções; listas restritas a exemplos.
 - Inclua os conceitos essenciais, definições e conclusões, com contexto suficiente para entendimento (mesmo no resumido).
+- DENSIDADE MÍNIMA: cada seção deve ter pelo menos 2 a 4 parágrafos desenvolvidos (evite texto telegráfico).
+- Expanda os porquês e o contexto prático de cada conceito; não apenas "o que é".
 - Use **termo** para destacar conceitos-chave.
 - NÃO inclua image_placeholder, chart ou flowchart a menos que seja essencial e esteja explícito na transcrição.
 - Resumo executivo (summary): 2 a 4 frases.
@@ -341,7 +343,7 @@ ${mindmapSchema}`;
     const minCharsTarget = isMindmap
       ? 0
       : isSummary
-        ? Math.floor(transcriptForModel.length * 0.6)
+        ? Math.floor(transcriptForModel.length * 0.72)
         : Math.min(Math.floor(transcriptForModel.length * 0.75), 42000);
 
     let parsed: Omit<TeachingMaterial, 'createdAt'> | null = null;

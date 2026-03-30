@@ -8,10 +8,66 @@ import { MermaidInit } from '@/components/MermaidInit';
 
 const STORAGE_KEY = 'rtg-preview-data';
 
+function buildPlainTextFromPreview(data: PreviewData): string {
+  const source = data.conteudo || data.design;
+  const titulo = source?.titulo || 'Material';
+  const subtitulo = source?.subtitulo_curso || data.tema?.name || '';
+  const rawPaginas = source?.paginas ?? (source as { pages?: unknown[] })?.pages;
+  const paginas = Array.isArray(rawPaginas) ? rawPaginas as Array<Record<string, unknown>> : [];
+
+  const lines: string[] = [];
+  lines.push(titulo);
+  if (subtitulo) lines.push(subtitulo);
+  lines.push('');
+
+  let section = 0;
+  for (const p of paginas) {
+    const tipo = String(p.tipo || '');
+    if (tipo !== 'conteudo') continue;
+    section += 1;
+    const heading = String(p.titulo_bloco || p.titulo || `Seção ${section}`);
+    lines.push(`## ${heading}`);
+
+    const blocoPrincipal = String(p.bloco_principal || '').trim();
+    if (blocoPrincipal) {
+      lines.push(blocoPrincipal);
+      lines.push('');
+    }
+
+    const blocks = Array.isArray(p.content_blocks) ? p.content_blocks as Array<Record<string, unknown>> : [];
+    for (const b of blocks) {
+      const type = String(b.type || '');
+      const content = String(b.content || '').trim();
+      if (!content) continue;
+      if (type === 'text') lines.push(content);
+      if (type === 'chart') lines.push(`[Gráfico sugerido] ${content}`);
+      if (type === 'mermaid') lines.push(`[Fluxograma sugerido] ${content}`);
+      if (type === 'image') lines.push(`[Imagem sugerida] ${content}`);
+    }
+    if (blocks.length) lines.push('');
+
+    const destaques = Array.isArray(p.destaques) ? p.destaques as string[] : [];
+    if (destaques.length) {
+      lines.push('Exemplos citados:');
+      for (const d of destaques) lines.push(`- ${d}`);
+      lines.push('');
+    }
+
+    const citacao = String(p.citacao || '').trim();
+    if (citacao) {
+      lines.push(`Citação: ${citacao}`);
+      lines.push('');
+    }
+  }
+
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
 export default function PreviewPage() {
   const router = useRouter();
   const [data, setData] = useState<PreviewData | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [scale, setScale] = useState(1);
   const canvasRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -59,9 +115,52 @@ export default function PreviewPage() {
     window.print();
   }, []);
 
+  const handleDownloadText = useCallback(() => {
+    if (!data) return;
+    const text = buildPlainTextFromPreview(data);
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const title = (data.conteudo?.titulo || data.design?.titulo || 'material')
+      .toLowerCase()
+      .replace(/[^a-z0-9\u00C0-\u017F]+/gi, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'material';
+    a.href = url;
+    a.download = `${title}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, [data]);
+
   const design = data?.design || data?.conteudo;
   const rawPaginas = design?.paginas ?? (design as { pages?: unknown[] })?.pages;
   const paginas = Array.isArray(rawPaginas) ? rawPaginas : [];
+
+  // Responsivo: escala as páginas (595px) para caber no canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const compute = () => {
+      // canvas tem padding p-8 (32px) dos dois lados
+      const available = Math.max(280, canvas.clientWidth - 64);
+      const next = Math.min(1, available / 595);
+      setScale(next);
+    };
+
+    compute();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(() => compute());
+      ro.observe(canvas);
+      return () => ro.disconnect();
+    }
+
+    window.addEventListener('resize', compute);
+    return () => window.removeEventListener('resize', compute);
+  }, []);
 
   // Manter refs alinhados ao número de páginas (após ter paginas definido)
   useEffect(() => {
@@ -88,6 +187,14 @@ export default function PreviewPage() {
 
         >
           Download PDF
+        </button>
+        <button
+          type="button"
+          onClick={handleDownloadText}
+          className="w-full py-2.5 rounded-xl font-semibold text-white mb-4 transition-opacity hover:opacity-90 border border-white/20"
+          style={{ backgroundColor: '#1f8f6f' }}
+        >
+          Download TXT
         </button>
         <Link
           href="/"
@@ -128,7 +235,7 @@ export default function PreviewPage() {
           ) : (
             <MaterialPreviewBlocks
               data={data}
-              scale={1}
+              scale={scale}
               renderPageWrapper={(pageNode, index) => (
                 <div
                   ref={(el) => { pageRefs.current[index] = el; }}

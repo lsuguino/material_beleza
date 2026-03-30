@@ -5,6 +5,7 @@ import { PageCoverEditorial } from '@/components/pages/PageCoverEditorial';
 import { PageContraCapa } from '@/components/pages/PageContraCapa';
 import { PageIntro } from '@/components/pages/PageIntro';
 import { PageDoubleColumn } from '@/components/pages/PageDoubleColumn';
+import { PageSummary } from '@/components/pages/PageSummary';
 import { renderParagraphParts, type ContentBlockItem } from '@/components/ContentBlocksRenderer';
 import {
   normalizeContentBlocks,
@@ -120,6 +121,12 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
     .map((p) => (p.titulo_bloco ?? p.titulo ?? 'Conteúdo').toString());
   const tocStartPages = computeTocStartPages(paginas);
 
+  // Numeração: mostrar apenas a partir da página seguinte ao Sumário
+  const sumarioIndex = paginas.findIndex((p) => {
+    const tipo = (p?.tipo || '').toString();
+    return tipo === 'sumario_ref' || tipo === 'sumario';
+  });
+
   if (paginas.length === 0) {
     return (
       <div className={`rounded-xl bg-white/10 border border-white/20 p-8 text-center text-white/70 min-h-[200px] flex items-center justify-center ${className}`}>
@@ -175,6 +182,9 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
         if (tipo === 'conteudo') contentPageIndex += 1;
 
         const wrap = (node: React.ReactNode) => wrapByKey(node, pageKeyCounter++);
+        const showPageNumber = sumarioIndex >= 0 ? index > sumarioIndex : index > 0;
+        // Exibir numeração real do documento (mesma referência usada no sumário).
+        const pageNumber = showPageNumber ? index + 1 : undefined;
 
         if (tipo === 'capa') {
           if (isVtsd) {
@@ -204,6 +214,8 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
               subtitle={pagina.subtitulo}
               nomeCurso={nomeCurso}
               primary={primary}
+              pageNumber={pageNumber}
+              showPageNumber={showPageNumber}
             />
           );
         }
@@ -214,6 +226,8 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
               nomeCurso={nomeCurso}
               primary={primary}
               accent={accent}
+              pageNumber={pageNumber}
+              showPageNumber={showPageNumber}
             />
           );
         }
@@ -261,6 +275,20 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
           );
         }
 
+        if (tipo === 'sumario' && !isVtsd) {
+          return wrap(
+            <PageSummary
+              title="Sumário"
+              items={tocItems}
+              nomeCurso={nomeCurso}
+              primary={primary}
+              accent={accent}
+              pageNumber={pageNumber}
+              showPageNumber={showPageNumber}
+            />
+          );
+        }
+
         const template = chooseEditorialTemplate(pagina, isFirstContent);
 
         if (template === 'intro') {
@@ -274,6 +302,8 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
               nomeCurso={nomeCurso}
               primary={primary}
               accent={accent}
+              pageNumber={pageNumber}
+              showPageNumber={showPageNumber}
             />
           );
         }
@@ -306,6 +336,8 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
               }
               nomeCurso={nomeCurso}
               primary={primary}
+              pageNumber={pageNumber}
+              showPageNumber={showPageNumber}
             />
           );
         }
@@ -331,6 +363,8 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
               }
               nomeCurso={nomeCurso}
               primary={primary}
+              pageNumber={pageNumber}
+              showPageNumber={showPageNumber}
             />
           );
         }
@@ -345,6 +379,8 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
             rightContent={<>{renderParagraphParts(rightParas, `pg-${index}-R`)}</>}
             nomeCurso={nomeCurso}
             primary={primary}
+            pageNumber={pageNumber}
+            showPageNumber={showPageNumber}
           />
         );
       })}

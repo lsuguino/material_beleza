@@ -90,7 +90,7 @@ export function renderParagraphParts(parts: string[], keyPrefix: string): React.
 /**
  * Renderiza content_blocks do content-agent (mapeamento tipo → ferramenta):
  * - text → <p>
- * - image → DALL-E 3: <img src="pending" data-prompt="[IMAGE_PROMPT]">
+ * - image → placeholder (prompt em data-prompt; sem imagem real ainda)
  * - mermaid → Mermaid.js: <div class="mermaid">[código]</div>
  * - chart → Chart.js: gráfico barras/pizza/linha (relatório corporativo)
  */
@@ -116,16 +116,9 @@ export function ContentBlocksRenderer({ blocks, className = '' }: ContentBlocksR
           );
         }
         if (block.type === 'image') {
-          return (
-            <figure key={i} className="content-block-image my-4">
-              <img
-                src="pending"
-                data-prompt={block.content}
-                alt=""
-                className="w-full min-h-[120px] bg-slate-200 object-cover"
-              />
-            </figure>
-          );
+          // Imagens do content-agent aqui são apenas prompts (não geramos imagem nesse fluxo).
+          // Para não poluir o layout, não renderizamos nada.
+          return null;
         }
         if (block.type === 'mermaid') {
           return (

@@ -24,7 +24,7 @@ REGRAS TÉCNICAS DO APLICATIVO:
 5. Use EXCLUSIVAMENTE o conteúdo da transcrição fornecida. Não adicione informações externas.
 6. Retorne APENAS um JSON válido. Sem texto antes ou depois do JSON.
 7. PÁGINAS NUNCA VAZIAS E COM PROFUNDIDADE:
-   - bloco_principal: no mínimo 160 palavras por página (modo resumido) e 260 palavras por página (modo completo).
+   - bloco_principal: no mínimo 220 palavras por página (modo resumido) e 300 palavras por página (modo completo).
    - Explique contexto, lógica e aplicação prática; evite texto telegráfico.
    - Prefira menos páginas bem preenchidas a muitas páginas vazias.
    - PROPORÇÃO: **no mínimo 85%** do texto de cada página de conteúdo deve ser **parágrafos** (conteúdo em bloco_principal / type "text" sem formato de lista). No máximo ~15% pode ser lista — **e essa lista deve ser só exemplos citados**, em "destaques".
@@ -144,14 +144,14 @@ export interface ContentAgentResult {
  */
 const MODE_INSTRUCTIONS: Record<ModoContent, string> = {
   completo:
-    'Material COMPLETO: cada página com bloco_principal denso em TEXTO CORRIDO (mín. 260 palavras de conceito e explicação). Bullets/destaques APENAS para exemplos que o professor citou (um item por exemplo). Nunca use lista para substituir parágrafos teóricos.',
+    'Material COMPLETO: cada página com bloco_principal denso em TEXTO CORRIDO (mín. 300 palavras de conceito, explicação, contexto e aplicação). Bullets/destaques APENAS para exemplos que o professor citou (um item por exemplo). Nunca use lista para substituir parágrafos teóricos.',
   resumido:
-    'Material RESUMIDO: mín. 160 palavras por página em parágrafos (conceitos em texto corrido). Só use destaques/bullets para exemplos citados na fala. Proibido condensar teoria em tópicos.',
+    'Material RESUMIDO: mín. 220 palavras por página em parágrafos (conceitos em texto corrido, com contexto e explicação prática). Só use destaques/bullets para exemplos citados na fala. Proibido condensar teoria em tópicos.',
 };
 
 /** Limite de caracteres da transcrição por modo (menor = resposta mais rápida) */
 const TRANSCRIPTION_LIMIT: Record<ModoContent, number> = {
-  resumido: 55000,
+  resumido: 70000,
   completo: 75000,
 };
 
@@ -188,7 +188,7 @@ export async function generateContent(
     : '';
 
   const minCharsTarget = modo === 'resumido'
-    ? Math.floor(transcricaoEnviada.length * 0.6)
+    ? Math.floor(transcricaoEnviada.length * 0.72)
     : Math.min(Math.floor(transcricaoEnviada.length * 0.75), 42000);
 
   const userContentBase = `Transcrição da aula (use EXCLUSIVAMENTE este conteúdo):
@@ -256,8 +256,12 @@ const PROMPT_RESUMO_ORGANIZADO = `Você é um especialista em redação didátic
 Sua tarefa: CONDENSAR o conteúdo em um resumo. Mantenha a estrutura (títulos, seções) mas resuma cada bloco para os pontos essenciais.
 Use EXCLUSIVAMENTE o conteúdo fornecido. Não adicione informações externas.
 Retorne APENAS um JSON válido. Sem texto antes ou depois.
-Estrutura JSON: { "titulo": "...", "subtitulo_curso": "nome do curso", "paginas": [ { "tipo": "capa", "titulo": "...", "subtitulo": "..." }, { "tipo": "conteudo", "titulo_bloco": "...", "bloco_principal": "texto resumido...", "destaques": ["ponto 1", "ponto 2"] } ] }
-Cada página de conteúdo deve ter bloco_principal com pelo menos 80 palavras (resumo objetivo) e destaques quando fizer sentido.`;
+Estrutura JSON: { "titulo": "...", "subtitulo_curso": "nome do curso", "paginas": [ { "tipo": "capa", "titulo": "...", "subtitulo": "..." }, { "tipo": "conteudo", "titulo_bloco": "...", "bloco_principal": "texto resumido em PARÁGRAFOS (texto corrido)...", "destaques": ["exemplo 1 citado", "exemplo 2 citado"] } ] }
+REGRAS IMPORTANTES:
+- Conceitos/teoria/explicações: SEMPRE em texto corrido no "bloco_principal" (parágrafos).
+- "destaques" é OPCIONAL e só deve ser usado para EXEMPLOS concretos citados pelo professor, variações listadas explicitamente, ou passos enumerados na fala. Se não houver, omita o campo ou use [].
+- PROIBIDO transformar o resumo em bullet points.
+Cada página de conteúdo deve ter "bloco_principal" com pelo menos 140 palavras (resumo objetivo, mas didático e explicativo).`;
 
 /**
  * Condensa texto já organizado em resumo (usa IA para resumir mantendo estrutura).

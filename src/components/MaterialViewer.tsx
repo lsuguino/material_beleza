@@ -126,30 +126,8 @@ function Block({ block }: { block: MaterialBlock }) {
           </figure>
         );
       }
-      return (
-        <figure className={`my-16 ${layout === 'side' ? 'max-w-md' : layout === 'grid' ? 'inline-block w-[48%] align-top' : ''}`}>
-          <div className={`overflow-hidden rounded-sm bg-neutral-cream dark:bg-slate-800 border border-slate-200 dark:border-border-dark flex items-center justify-center ${layout === 'full' ? 'aspect-[4/5]' : 'aspect-[4/5]'}`}>
-            <div className="text-center px-6 py-8">
-              <div className="w-14 h-14 mx-auto mb-3 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-2xl">
-                🖼
-              </div>
-              <p className="font-material text-slate-500 dark:text-slate-400 text-sm max-w-xs leading-relaxed">
-                {block.content}
-              </p>
-              {block.imagePrompt && (
-                <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-2 font-display uppercase tracking-tight font-medium">
-                  {block.imagePrompt}
-                </p>
-              )}
-            </div>
-          </div>
-          {caption && (
-            <figcaption className="text-[10px] uppercase tracking-tighter text-slate-600 dark:text-slate-400 mt-2 text-right font-display font-medium">
-              {caption}
-            </figcaption>
-          )}
-        </figure>
-      );
+      // Sem imagem real: não renderizar placeholder.
+      return null;
     }
     case 'flowchart': {
       const steps = block.steps || [];

@@ -6,6 +6,8 @@ export interface PageCoverEditorialProps {
   title: string;
   subtitle?: string;
   nomeCurso: string;
+  pageNumber?: number;
+  showPageNumber?: boolean;
   primary?: string;
 }
 
@@ -13,6 +15,8 @@ export function PageCoverEditorial({
   title,
   subtitle,
   nomeCurso,
+  pageNumber,
+  showPageNumber = true,
   primary = 'var(--print-primary)',
 }: PageCoverEditorialProps) {
   return (
@@ -27,7 +31,9 @@ export function PageCoverEditorial({
       </p>
       <footer className="page-footer">
         <span>{nomeCurso}</span>
-        <span className="page-number">Página </span>
+        {showPageNumber && typeof pageNumber === 'number' ? (
+          <span>Página {pageNumber}</span>
+        ) : null}
       </footer>
     </section>
   );
