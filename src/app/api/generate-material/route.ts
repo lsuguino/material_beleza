@@ -3,7 +3,7 @@ import type { TeachingMaterial } from '@/types/material';
 import type { CourseId, GenerationMode } from '@/lib/courseThemes';
 import { parseJsonFromAI } from '@/lib/parse-json-from-ai';
 import { ensureOpenRouterKey } from '@/lib/ensure-env';
-import { openRouterChat } from '@/lib/openrouter';
+import { openRouterChatByTask } from '@/lib/openrouter';
 
 // Tempo máximo da rota (segundos). Aumentado para transcrições longas (ex.: Vercel Pro permite até 300).
 export const maxDuration = 300;
@@ -74,7 +74,7 @@ function materialTextChars(material: Omit<TeachingMaterial, 'createdAt'>): numbe
 /** Refina o prompt de imagem via LLM (OpenRouter): mais detalhado e adequado para material didático. */
 async function refineImagePromptWithLlm(originalPrompt: string): Promise<string> {
   try {
-    const text = await openRouterChat({
+    const text = await openRouterChatByTask('text_material', {
       system: `You are an expert at writing prompts for AI image generation. Given a short prompt for an educational or didactic illustration, return ONLY one improved, detailed prompt in English (1-2 sentences). The result must be professional, clear, suitable for study handouts. Style: clean, illustrative, easy to understand. No explanation or quotes—output only the prompt.`,
       user: originalPrompt.slice(0, 500),
       max_tokens: 256,
@@ -181,7 +181,7 @@ async function generateCoverImage(material: TeachingMaterial): Promise<void> {
   const theme = [material.title, material.subtitle, material.summary].filter(Boolean).join('. ').slice(0, 500);
   if (!theme.trim()) return;
   try {
-    const text = await openRouterChat({
+    const text = await openRouterChatByTask('text_material', {
       system: `You write a single, detailed prompt in English for an AI image generator. The image will be the COVER of a study handout (apostila).
 
 Rules:
@@ -359,7 +359,7 @@ ATENÇÃO: a tentativa anterior ficou curta para estudo autossuficiente.
 - Preserve 100% de fidelidade ao VTT.
 - Garanta no mínimo ${minCharsTarget} caracteres de conteúdo textual no JSON final.`;
 
-      const raw = await openRouterChat({
+      const raw = await openRouterChatByTask('text_material', {
         system: systemPrompt,
         user: userPrompt,
         max_tokens: isMindmap ? 2048 : 12000,

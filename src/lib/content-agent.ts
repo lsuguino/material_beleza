@@ -1,4 +1,4 @@
-import { openRouterChat } from '@/lib/openrouter';
+import { openRouterChatByTask } from '@/lib/openrouter';
 import { parseJsonFromAI } from '@/lib/parse-json-from-ai';
 
 const SYSTEM_PROMPT_BASE = `Você é um expert em redação e construção de materiais didáticos, com ampla experiência na elaboração de conteúdos claros, envolventes e pedagógicos para cursos online. Seu domínio da linguagem escrita é voltado para facilitar o aprendizado, mantendo a estrutura dos textos acessível, didática e alinhada com objetivos educacionais. Você entende profundamente sobre metodologias de ensino, técnicas de comunicação instrucional e adaptação de conteúdo para diferentes perfis de alunos.
@@ -216,7 +216,7 @@ ATENÇÃO: a tentativa anterior ficou curta para estudo autossuficiente.
 - Mantenha fidelidade absoluta ao VTT (sem inventar nada).
 - Garanta no mínimo ${minCharsTarget} caracteres de conteúdo textual total no JSON.`;
     try {
-      const raw = await openRouterChat({
+      const raw = await openRouterChatByTask('text_material', {
         system: systemPrompt,
         user: userContent,
         max_tokens: maxTokens,
@@ -281,7 +281,7 @@ ${textoEnviado}
 Curso: ${nomeCurso}.
 Retorne APENAS o JSON puro, sem cercas de código (sem \`\`\`json ou \`\`\`). Nenhuma página vazia.`;
 
-  const raw = await openRouterChat({
+  const raw = await openRouterChatByTask('text_material', {
     system: PROMPT_RESUMO_ORGANIZADO,
     user: userContent,
     max_tokens: 4096,

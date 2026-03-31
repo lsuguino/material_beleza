@@ -1,5 +1,5 @@
 import type { CourseTheme } from '@/lib/courseThemes';
-import { openRouterChat } from '@/lib/openrouter';
+import { openRouterChatByTask } from '@/lib/openrouter';
 import { parseJsonFromAI } from '@/lib/parse-json-from-ai';
 
 /** Tipos de layout que o agente de design pode atribuir a uma página */
@@ -30,6 +30,13 @@ export interface DesignPagina {
 export type ConteudoEstruturado = Record<string, unknown>;
 
 const SYSTEM_PROMPT = `Você é um designer gráfico especializado em materiais didáticos visuais. Siga uma diagramação limpa e moderna: blocos de cor bem definidos, hierarquia clara e contraste de leitura.
+
+DESIGN SYSTEM (obrigatório):
+- Estética editorial premium, sem aparência "template genérico de IA".
+- Priorize grade consistente, espaçamento amplo, alinhamentos precisos e ritmo visual entre páginas.
+- Tipografia com hierarquia forte (título/subtítulo/corpo), evitando excesso de ornamentos.
+- Use poucos elementos decorativos, sempre funcionais para leitura e escaneabilidade.
+- Mantenha consistência visual entre páginas (mesmo sistema de cor, ícones e blocos), variando apenas o layout.
 
 REGRAS OBRIGATÓRIAS DE DIAGRAMAÇÃO:
 
@@ -64,6 +71,24 @@ CAMPOS DE DESIGN EM CADA PÁGINA:
 - usar_faixa_decorativa: true/false (linha chevron no rodapé)
 PRESERVE: sugestao_imagem, prompt_imagem, sugestao_grafico, sugestao_fluxograma, sugestao_tabela, sugestao_icone.`;
 
+const VTSD_REFERENCE_DESIGN_SYSTEM = `
+CURSO "VENDA TODO SANTO DIA" (tema.id = "geral" OU nome contém "venda todo santo dia") — alinhar ao design system:
+https://claude.ai/public/artifacts/93176494-a46d-42b3-a249-1048e4b12099
+
+Objetivo visual (alinhar a documentos tipo Claude Artifact / apostila limpa — NÃO cartão escuro atrás da folha, NÃO faixa vertical de cor em 100% da altura):
+- Folha branca ou off-white uniforme; acento só em traço ESQUERDO fino (4px) ou linha curta sob o título — proibido barra lateral colorida de capa a rodapé.
+- Tipografia sans moderna, hierarquia por peso e tamanho (não misturar serif no título e sans no corpo, salvo exceção pontual).
+- Editorial premium, muito espaço em branco; traços e boxes discretos.
+- cor_fundo_principal: preferir #FFFFFF (folha cheia); se usar backgroundColor do tema, mantenha claro e uniforme (sem “cartão” sobre fundo escuro).
+- cor_fundo_destaque: prefira accent para destaques; primary só para detalhes pontuais (títulos/caixas pequenas).
+- cor_texto_principal: cinza escuro legível (#1a1a1a–#2A2A2A) sobre fundo claro; cor_texto_destaque: #FFFFFF apenas dentro de blocos escuros.
+- usar_faixa_decorativa: false na maioria das páginas; true só em no máximo 1 página especial se fizer sentido.
+- usar_barra_lateral: false com frequência; quando true, manter apoio visual leve (evitar barra ocupando 30% com texto vertical pesado).
+- Layouts preferidos: header_destaque ou dois_colunas com respiração; dados_grafico / imagem_lateral / imagem_top apenas quando o conteúdo tiver sugestao_* correspondente.
+- proporção e ritmo: alternar layout_tipo entre páginas para variedade controlada, sem quebrar a consistência de cor e tipografia implícita do design system de referência.
+- Não invente campos fora da lista permitida neste prompt.
+`;
+
 /**
  * Gera o layout visual (campos de design) para cada página do conteúdo,
  * usando o tema (cores e tipografia) do curso.
@@ -82,15 +107,19 @@ export async function generateDesign(
     backgroundColor: tema.backgroundColor ?? '#F8F7E8',
   });
   const conteudoJson = JSON.stringify(conteudo);
+  const isVTSD = tema.id === 'geral' || tema.name.toLowerCase().includes('venda todo santo dia');
+  const vtsdInstruction = isVTSD ? VTSD_REFERENCE_DESIGN_SYSTEM : '';
 
   const userContent = `Tema: ${temaJson}
 
 Conteúdo (adicione em cada página: layout_tipo, cor_fundo_principal, cor_fundo_destaque, cor_texto_principal, cor_texto_destaque, icone_sugerido, proporcao_colunas, usar_barra_lateral, usar_faixa_decorativa). Preserve sugestao_*.
 ${conteudoJson}
 
+${vtsdInstruction}
+
 Retorne o mesmo JSON com os campos de design em cada página. Apenas JSON, sem markdown.`;
 
-  const raw = await openRouterChat({
+  const raw = await openRouterChatByTask('design', {
     system: SYSTEM_PROMPT,
     user: userContent,
     max_tokens: 3072,

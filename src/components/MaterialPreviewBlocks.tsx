@@ -113,7 +113,9 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
   const tituloGeral = design?.titulo || 'Material gerado';
   const primary = tema.primary ?? '#0f1823';
   const accent = tema.accent ?? tema.primary ?? '#006eff';
-  const isVtsd = data.curso_id === 'geral';
+  const isVtsd =
+    data.curso_id === 'geral' ||
+    (tema.name || '').toLowerCase().includes('venda todo santo dia');
   const moduleName = (design as { subtitulo_curso?: string })?.subtitulo_curso || nomeCurso;
   const lessonNumber = extractLessonNumber(tituloGeral);
   const tocItems = paginas
@@ -143,7 +145,13 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
   let pageKeyCounter = 0;
   const wrapByKey = (node: React.ReactNode, key: number) => {
     const inner = (
-      <div className="shadow-xl rounded-sm overflow-hidden border border-white/10 print-editorial-page">
+      <div
+        className={
+          isVtsd
+            ? 'shadow-sm rounded-sm overflow-hidden border border-neutral-200/90 bg-white print-editorial-page'
+            : 'shadow-xl rounded-sm overflow-hidden border border-white/10 print-editorial-page'
+        }
+      >
         {node}
       </div>
     );
@@ -304,6 +312,7 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
               accent={accent}
               pageNumber={pageNumber}
               showPageNumber={showPageNumber}
+              variant={isVtsd ? 'vtsd' : 'default'}
             />
           );
         }
@@ -336,8 +345,10 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
               }
               nomeCurso={nomeCurso}
               primary={primary}
+              accent={accent}
               pageNumber={pageNumber}
               showPageNumber={showPageNumber}
+              variant={isVtsd ? 'vtsd' : 'default'}
             />
           );
         }
@@ -363,8 +374,10 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
               }
               nomeCurso={nomeCurso}
               primary={primary}
+              accent={accent}
               pageNumber={pageNumber}
               showPageNumber={showPageNumber}
+              variant={isVtsd ? 'vtsd' : 'default'}
             />
           );
         }
@@ -379,8 +392,10 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
             rightContent={<>{renderParagraphParts(rightParas, `pg-${index}-R`)}</>}
             nomeCurso={nomeCurso}
             primary={primary}
+            accent={accent}
             pageNumber={pageNumber}
             showPageNumber={showPageNumber}
+            variant={isVtsd ? 'vtsd' : 'default'}
           />
         );
       })}

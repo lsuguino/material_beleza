@@ -549,7 +549,14 @@ export default function Home() {
                     )}
                   </div>
                 </div>
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-[400px]">
+                <div
+                  className={`flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-[400px] ${
+                    generatedData.curso_id === 'geral' ||
+                    (generatedData.tema?.name || '').toLowerCase().includes('venda todo santo dia')
+                      ? 'bg-[#e6e6e4]'
+                      : ''
+                  }`}
+                >
                   <SafeArea>
                     <MermaidInit className="flex flex-col items-center">
                       <MaterialPreviewBlocks data={generatedData} scale={0.35} />

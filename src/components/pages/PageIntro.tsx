@@ -18,6 +18,8 @@ export interface PageIntroProps {
   showPageNumber?: boolean;
   primary?: string;
   accent?: string;
+  /** Venda Todo Santo Dia: diagramação alinhada ao design system de referência (artifact) */
+  variant?: 'default' | 'vtsd';
 }
 
 export function PageIntro({
@@ -31,6 +33,7 @@ export function PageIntro({
   showPageNumber = true,
   primary = 'var(--print-primary)',
   accent = 'var(--print-accent)',
+  variant = 'default',
 }: PageIntroProps) {
   const hasContentBlocks = contentBlocks && contentBlocks.length > 0;
   const firstImageIndex = hasContentBlocks ? contentBlocks.findIndex((b) => b.type === 'image') : -1;
@@ -46,9 +49,11 @@ export function PageIntro({
     paragraphs.length > 0 &&
     (!bodyBlocks?.length || bodyTextChars < MIN_CHARS_TEXT_IN_BLOCKS);
 
+  const pageClass = variant === 'vtsd' ? 'page page-intro vtsd-editorial' : 'page page-intro';
+
   return (
     <section
-      className="page page-intro"
+      className={pageClass}
       style={
         {
           '--print-primary': primary,

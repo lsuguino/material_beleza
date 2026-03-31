@@ -17,6 +17,9 @@ export interface PageDoubleColumnProps {
   pageNumber?: number;
   showPageNumber?: boolean;
   primary?: string;
+  accent?: string;
+  /** Venda Todo Santo Dia: diagramação alinhada ao design system de referência */
+  variant?: 'default' | 'vtsd';
 }
 
 export function PageDoubleColumn({
@@ -29,6 +32,8 @@ export function PageDoubleColumn({
   pageNumber,
   showPageNumber = true,
   primary = 'var(--print-primary)',
+  accent = 'var(--print-accent)',
+  variant = 'default',
 }: PageDoubleColumnProps) {
   const left = (
     <>
@@ -37,10 +42,13 @@ export function PageDoubleColumn({
     </>
   );
 
+  const pageClass =
+    variant === 'vtsd' ? 'page page-double-column vtsd-editorial' : 'page page-double-column';
+
   return (
     <section
-      className="page page-double-column"
-      style={{ '--print-primary': primary } as React.CSSProperties}
+      className={pageClass}
+      style={{ '--print-primary': primary, '--print-accent': accent } as React.CSSProperties}
     >
       <div className="page-divider" aria-hidden />
       <div className="page-col page-body">

@@ -137,6 +137,9 @@ export default function PreviewPage() {
   const design = data?.design || data?.conteudo;
   const rawPaginas = design?.paginas ?? (design as { pages?: unknown[] })?.pages;
   const paginas = Array.isArray(rawPaginas) ? rawPaginas : [];
+  const isVtsdPreview =
+    data.curso_id === 'geral' ||
+    (data.tema?.name || '').toLowerCase().includes('venda todo santo dia');
 
   // Responsivo: escala as páginas (595px) para caber no canvas
   useEffect(() => {
@@ -176,9 +179,17 @@ export default function PreviewPage() {
   }
 
   return (
-    <div className="preview-layout flex h-screen bg-[#2d2d3a] overflow-hidden">
+    <div
+      className={`preview-layout flex h-screen overflow-hidden ${isVtsdPreview ? 'bg-[#e6e6e4]' : 'bg-[#2d2d3a]'}`}
+    >
       {/* Barra lateral fixa */}
-      <aside className="preview-sidebar no-print flex-shrink-0 w-56 bg-[#1a1a24] border-r border-white/10 flex flex-col p-4">
+      <aside
+        className={`preview-sidebar no-print flex-shrink-0 w-56 border-r flex flex-col p-4 ${
+          isVtsdPreview
+            ? 'bg-[#f2f2f0] border-black/10 text-neutral-800'
+            : 'bg-[#1a1a24] border-white/10'
+        }`}
+      >
         <button
           type="button"
           onClick={handlePrint}
@@ -198,11 +209,15 @@ export default function PreviewPage() {
         </button>
         <Link
           href="/"
-          className="w-full py-2.5 rounded-xl font-medium text-white/90 border border-white/20 flex items-center justify-center gap-2 mb-6 hover:bg-white/5 transition-colors"
+          className={`w-full py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 mb-6 transition-colors ${
+            isVtsdPreview
+              ? 'text-neutral-800 border border-black/10 hover:bg-black/[0.04]'
+              : 'text-white/90 border border-white/20 hover:bg-white/5'
+          }`}
         >
           ← Gerar Novo Material
         </Link>
-        <p className="text-white/60 text-sm mb-3">
+        <p className={`text-sm mb-3 ${isVtsdPreview ? 'text-neutral-600' : 'text-white/60'}`}>
           Página {Math.min(Math.max(1, currentPage), paginas.length || 1)} de {paginas.length || 1}
         </p>
         <div className="flex-1 overflow-auto space-y-2">
@@ -212,11 +227,19 @@ export default function PreviewPage() {
               type="button"
               onClick={() => scrollToPage(i)}
               className={`w-full aspect-[595/842] max-h-24 rounded border-2 overflow-hidden transition-all ${
-                currentPage === i + 1 ? 'border-[#446EFF] opacity-100' : 'border-white/20 opacity-70 hover:opacity-90'
+                currentPage === i + 1
+                  ? 'border-[#446EFF] opacity-100'
+                  : isVtsdPreview
+                    ? 'border-black/15 opacity-80 hover:opacity-100'
+                    : 'border-white/20 opacity-70 hover:opacity-90'
               }`}
-              style={{ backgroundColor: '#2d2d3a' }}
+              style={{ backgroundColor: isVtsdPreview ? '#d8d8d5' : '#2d2d3a' }}
             >
-              <span className="text-white/50 text-xs p-1 block text-center">{i + 1}</span>
+              <span
+                className={`text-xs p-1 block text-center ${isVtsdPreview ? 'text-neutral-500' : 'text-white/50'}`}
+              >
+                {i + 1}
+              </span>
             </button>
           ))}
         </div>
@@ -225,11 +248,19 @@ export default function PreviewPage() {
       {/* Área central: páginas em sequência (Web-to-Print Corporate Editorial) */}
       <div
         ref={canvasRef}
-        className="preview-canvas flex-1 overflow-y-auto overflow-x-hidden p-8 flex flex-col items-center gap-8 min-h-0 print-content"
+        className={`preview-canvas flex-1 overflow-y-auto overflow-x-hidden p-8 flex flex-col items-center gap-8 min-h-0 print-content ${
+          isVtsdPreview ? 'bg-[#e6e6e4]' : ''
+        }`}
       >
         <MermaidInit className="flex flex-col items-center gap-8 w-full">
           {paginas.length === 0 ? (
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-12 text-center text-white/70">
+            <div
+              className={`rounded-2xl p-12 text-center ${
+                isVtsdPreview
+                  ? 'bg-white border border-black/10 text-neutral-600'
+                  : 'bg-white/5 border border-white/10 text-white/70'
+              }`}
+            >
               Nenhuma página no material. Gere um novo material na página inicial.
             </div>
           ) : (

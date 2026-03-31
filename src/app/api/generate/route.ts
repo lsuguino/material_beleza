@@ -210,7 +210,8 @@ function mergeDesignIntoContent(
 /** Aplica design padrão (cores do tema + layout) quando o design-agent falha. */
 function applyDefaultDesign(
   conteudo: Record<string, unknown>,
-  tema: TemaPayload
+  tema: TemaPayload,
+  cursoId: string
 ): Record<string, unknown> {
   const paginas = conteudo.paginas as Array<Record<string, unknown>> | undefined;
   if (!Array.isArray(paginas)) return conteudo;
@@ -218,6 +219,7 @@ function applyDefaultDesign(
   const bg = tema.backgroundColor ?? '#F8F7E8';
   const primary = tema.primary ?? '#1a1a1a';
   const accent = tema.accent ?? primary;
+  const isVtsd = cursoId === 'geral' || (tema.name || '').toLowerCase().includes('venda todo santo dia');
 
   const paginasComDesign = paginas.map((p, i) => {
     const tipo = p.tipo as string | undefined;
@@ -240,8 +242,8 @@ function applyDefaultDesign(
       cor_texto_destaque: '#FFFFFF',
       icone_sugerido: 'article',
       proporcao_colunas: '60/40' as const,
-      usar_barra_lateral: true,
-      usar_faixa_decorativa: true,
+      usar_barra_lateral: !isVtsd,
+      usar_faixa_decorativa: !isVtsd,
     };
   });
 
@@ -394,7 +396,7 @@ export async function POST(request: NextRequest) {
       conteudoComDesign = mergeDesignIntoContent(conteudoRecord, designRetorno);
     } catch (designErr) {
       console.warn('[api/generate] Design-agent falhou, aplicando design padrão:', designErr);
-      conteudoComDesign = applyDefaultDesign(conteudoRecord, tema);
+      conteudoComDesign = applyDefaultDesign(conteudoRecord, tema, cursoId);
     }
 
     // Garantir que design e conteudo tenham "paginas" (normalizar se a IA retornar "pages")

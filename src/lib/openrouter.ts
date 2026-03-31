@@ -1,5 +1,12 @@
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
+export const OPENROUTER_MODELS = {
+  textMaterial: 'openai/gpt-4o',
+  design: 'anthropic/claude-sonnet-4',
+} as const;
+
+export type OpenRouterTask = 'text_material' | 'design';
+
 function messageFromUnknownBody(data: unknown): string | null {
   if (data && typeof data === 'object') {
     const o = data as Record<string, unknown>;
@@ -13,6 +20,13 @@ function messageFromUnknownBody(data: unknown): string | null {
 /** Slug do modelo no OpenRouter (ex.: anthropic/claude-3.5-sonnet). Configure OPENROUTER_MODEL no .env.local. */
 export function getOpenRouterModel(): string {
   return process.env.OPENROUTER_MODEL?.trim() || 'anthropic/claude-3.5-sonnet';
+}
+
+export function getOpenRouterModelForTask(task: OpenRouterTask): string {
+  const envModelText = process.env.OPENROUTER_MODEL_TEXT_MATERIAL?.trim();
+  const envModelDesign = process.env.OPENROUTER_MODEL_DESIGN?.trim();
+  if (task === 'text_material') return envModelText || OPENROUTER_MODELS.textMaterial;
+  return envModelDesign || OPENROUTER_MODELS.design;
 }
 
 /**
@@ -88,4 +102,19 @@ export async function openRouterChat(params: {
   }
 
   throw new Error('Resposta vazia do OpenRouter');
+}
+
+export async function openRouterChatByTask(
+  task: OpenRouterTask,
+  params: {
+    system?: string;
+    user: string;
+    max_tokens?: number;
+    temperature?: number;
+  }
+): Promise<string> {
+  return openRouterChat({
+    ...params,
+    model: getOpenRouterModelForTask(task),
+  });
 }
