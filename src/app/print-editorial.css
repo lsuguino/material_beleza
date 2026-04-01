@@ -12,7 +12,7 @@
   --print-paper: #f8f9fa;
   --print-ink: #1a1a1a;
   --print-ink-muted: #64748b;
-  --print-font-sans: 'Lexend', system-ui, -apple-system, sans-serif;
+  --print-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 /* ========== Base: página A4 + tipografia editorial ========== */
@@ -251,16 +251,16 @@
   grid-area: footer;
 }
 
-/* ========== VTSD (Venda Todo Santo Dia) — Design System de referência ========== */
+/* ========== VTSD (Venda Todo Santo Dia) — Design System Figma A4 ========== */
 .vtsd-editorial {
-  background: #dedede;
-  color: #2a2a2a;
+  background: #ffffff;
+  color: #383838;
 }
 
 .vtsd-editorial .page-body h2 {
   font-family: 'Sora', var(--print-font-sans);
   font-weight: 700;
-  color: #0c8492;
+  color: #0599a8;
   letter-spacing: -0.02em;
   text-transform: uppercase;
 }
@@ -268,9 +268,9 @@
 .vtsd-editorial .page-body p,
 .vtsd-editorial .page-body li {
   font-family: 'Inter', var(--print-font-sans);
-  color: #595959;
-  line-height: 1.45;
-  font-size: 0.9rem;
+  color: #717171;
+  line-height: 15px;
+  font-size: 14px;
 }
 
 .vtsd-editorial.page-intro {
@@ -278,29 +278,29 @@
 }
 
 .vtsd-editorial.page-intro .page-sidebar {
-  background: #05a7b5;
+  background: #0599a8;
 }
 
 .vtsd-editorial.page-double-column .page-divider {
   height: 4px;
   margin: 0;
-  background: #0c8492;
+  background: #025468;
 }
 
 .vtsd-editorial .page-footer {
-  border-top: 1px solid #b5b5b5;
-  background: #dedede;
-  color: #595959;
+  border-top: 1px solid rgba(56, 56, 56, 0.12);
+  background: #ffffff;
+  color: #717171;
   font-family: 'Inter', var(--print-font-sans);
   font-weight: 600;
 }
 
 .vtsd-editorial .page-footer span:last-child {
-  color: #0c8492;
+  color: #0599a8;
 }
 
 .vtsd-editorial.page-cover {
-  background: #dedede;
+  background: #ffffff;
   align-items: flex-start;
   justify-content: flex-start;
   text-align: left;
@@ -310,9 +310,9 @@
 .vtsd-editorial.page-cover .page-cover-title {
   font-family: 'Sora', var(--print-font-sans);
   font-size: 40px;
-  line-height: 1.2;
+  line-height: 48px;
   font-weight: 700;
-  color: #0c8492;
+  color: #0599a8;
   letter-spacing: -0.02em;
   text-transform: none;
   max-width: 92%;
@@ -322,21 +322,21 @@
 .vtsd-editorial.page-cover .page-cover-subtitle {
   font-family: 'Sora', var(--print-font-sans);
   font-size: 20px;
-  line-height: 1.35;
+  line-height: 24px;
   font-weight: 600;
-  color: #05a7b5;
+  color: #03dfe6;
 }
 
 .vtsd-editorial.page-summary .page-sidebar {
-  background: #0c8492;
+  background: #025468;
 }
 
 .vtsd-editorial.page-summary .page-sidebar-title {
-  color: #adf8ff;
+  color: #b4f8fb;
 }
 
 .vtsd-editorial.page-summary .page-list-num {
-  background: #05a7b5;
+  background: #0599a8;
 }
 
 /* ========== Template: .page-double-column — duas colunas + linha divisória superior ========== */
@@ -532,12 +532,12 @@
 }
 
 .page-intro.vtsd-editorial .page-body h2 {
-  font-family: var(--font-lexend), 'Lexend', system-ui, sans-serif;
+  font-family: 'Sora', var(--print-font-sans);
   font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: -0.035em;
   line-height: 1.25;
-  color: #1a1a1b;
+  color: #0d0d0d;
   margin: 0 0 3mm 0;
   padding-bottom: 0;
   border-bottom: none;
@@ -555,11 +555,11 @@
 }
 
 .page-intro.vtsd-editorial .page-body p {
-  font-family: var(--font-lexend), 'Lexend', system-ui, sans-serif;
-  font-size: 0.9375rem;
+  font-family: 'Inter', var(--print-font-sans);
+  font-size: 14px;
   font-weight: 400;
-  line-height: 1.72;
-  color: #3f3f46;
+  line-height: 15px;
+  color: #383838;
 }
 
 /* Duas colunas: mesma lógica — sem tarja lateral; traço esquerdo na página */
@@ -590,11 +590,11 @@
 }
 
 .page-double-column.vtsd-editorial .page-body h2 {
-  font-family: var(--font-lexend), 'Lexend', system-ui, sans-serif;
+  font-family: 'Sora', var(--print-font-sans);
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: -0.025em;
-  color: #1a1a1b;
+  color: #0d0d0d;
   margin: 0 0 2mm 0;
   padding-bottom: 0;
   border-bottom: none;
@@ -613,10 +613,10 @@
 
 .page-double-column.vtsd-editorial .page-body p,
 .page-double-column.vtsd-editorial .page-col li {
-  font-family: var(--font-lexend), 'Lexend', system-ui, sans-serif;
-  font-size: 0.9rem;
-  line-height: 1.68;
-  color: #3f3f46;
+  font-family: 'Inter', var(--print-font-sans);
+  font-size: 14px;
+  line-height: 15px;
+  color: #383838;
 }
 
 .page.vtsd-editorial .page-footer {

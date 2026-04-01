@@ -1,8 +1,7 @@
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@24,400,0&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&display=swap');
 
 .material-icons-round {
   font-family: 'Material Icons Round';
@@ -68,6 +67,31 @@
   --font-display: 'Inter', system-ui, sans-serif;
   --font-lexend: 'Lexend', system-ui, sans-serif;
   --font-material-serif: 'Lora', Georgia, serif;
+  /* VTSD / Figma — materiais A4 */
+  --cor-primary: #03DFE6;
+  --cor-primary-dark: #0599A8;
+  --cor-primary-darker: #025468;
+  --cor-primary-light: #5DECF2;
+  --cor-primary-lighter: #B4F8FB;
+  --cor-texto-900: #0D0D0D;
+  --cor-texto-800: #383838;
+  --cor-texto-700: #717171;
+  --cor-fundo-page: #FFFFFF;
+  --cor-fundo-box: #E8E8E8;
+  --cor-fundo-subtle: #F6F6F6;
+  --cor-fundo-externo: #C4C4C4;
+  --fonte-body: 14px;
+  --entrelinha-body: 15px;
+  --fonte-h1: 40px;
+  --entrelinha-h1: 48px;
+  --fonte-h2: 28px;
+  --entrelinha-h2: 40px;
+  /* Margens A4 — Book DS (área útil y 50–792; badge y 812) */
+  --pg-top: 50px;
+  --pg-bottom: 50px;
+  --pg-side: 50px;
+  --area-util-h: 742px;
+  --area-util-w: 495px;
 }
 
 /* Garantir que a página principal ocupe e mostre o conteúdo */
@@ -75,7 +99,7 @@ html, body { min-height: 100%; }
 body { display: flex; flex-direction: column; }
 
 /* Temas por curso: sobrescrevem --primary no material */
-.theme-geral { --theme-primary: #2A2A2A; --theme-primary-dark: #1a1a1a; --theme-accent: #55B8A1; }
+.theme-geral { --theme-primary: #0599A8; --theme-primary-dark: #025468; --theme-accent: #B4F8FB; }
 .theme-marketing { --theme-primary: #7c3aed; --theme-primary-dark: #5b21b6; --theme-accent: #a78bfa; }
 .theme-beleza { --theme-primary: #db2777; --theme-primary-dark: #be185d; --theme-accent: #f472b6; }
 .theme-saude { --theme-primary: #059669; --theme-primary-dark: #047857; --theme-accent: #34d399; }

@@ -1,6 +1,11 @@
 'use client';
 
 import type { LayoutTipo } from '@/lib/design-agent';
+import { VTSD_COLOR, VTSD_MARGENS_A4 } from '@/lib/vtsd-design-system';
+
+const PG = VTSD_MARGENS_A4.margens.topo_px;
+const SIDE = VTSD_MARGENS_A4.margens.lateral_px;
+const AREA_W = VTSD_MARGENS_A4.area_util.largura_px;
 
 /** Objeto tema com cores (ex.: CourseTheme) */
 export interface TemaPagina {
@@ -51,6 +56,8 @@ export interface PaginaComDesign {
   /** Sugestões visuais da IA de conteúdo (preservadas pelo design) */
   sugestao_imagem?: string;
   prompt_imagem?: string;
+  /** Data URL — etapa 3 (Gemini Nano Banana) */
+  imagem_url?: string;
   sugestao_grafico?: SugestaoGraficoPagina;
   sugestao_fluxograma?: SugestaoFluxogramaPagina;
   sugestao_tabela?: SugestaoTabelaPagina;
@@ -92,6 +99,28 @@ function FaixaChevron({ cor }: { cor: string }) {
   );
 }
 
+/** Badge de numeração — fora da área útil (y=812), Book DS */
+function BadgePagina({ numero, bg = VTSD_COLOR.primary_dark }: { numero: number; bg?: string }) {
+  const b = VTSD_MARGENS_A4.badge_pagina;
+  return (
+    <div
+      className="absolute z-[2] flex items-center justify-center font-display font-semibold text-[11px] leading-[14px] text-white pointer-events-none"
+      style={{
+        left: b.x_px,
+        top: b.y_px,
+        width: b.largura_px,
+        height: b.altura_px,
+        backgroundColor: b.cor_bg,
+        color: b.cor_texto,
+        borderRadius: b.border_radius,
+      }}
+      aria-hidden
+    >
+      {numero}
+    </div>
+  );
+}
+
 export function PageConteudo({
   pagina,
   tema,
@@ -111,14 +140,356 @@ export function PageConteudo({
     itens = [],
     sugestao_imagem,
     prompt_imagem,
+    imagem_url: imagemUrlPagina,
     sugestao_grafico,
     sugestao_fluxograma,
     sugestao_tabela,
     usar_barra_lateral,
     usar_faixa_decorativa,
+    subtitulo,
   } = pagina;
 
+  const imagemGerada =
+    typeof imagemUrlPagina === 'string' && imagemUrlPagina.startsWith('data:') ? imagemUrlPagina : undefined;
+
   const proporcao = getProporcaoClasses(pagina.proporcao_colunas);
+  const blocoEscuro = tema.primaryDark || VTSD_COLOR.primary_darker;
+  const blocoMedio = tema.primary || VTSD_COLOR.primary_dark;
+  const cyanMarca = tema.primaryLight || VTSD_COLOR.primary;
+
+  // ——— Layouts A4 design system VTSD (Figma) ———
+  if (layout_tipo === 'A4_1_abertura') {
+    return (
+      <div
+        className="page-a4 relative overflow-hidden"
+        style={{
+          width: 595,
+          height: 842,
+          backgroundColor: VTSD_COLOR.fundo_page,
+          color: VTSD_COLOR.texto_800,
+        }}
+      >
+        <div
+          className="absolute flex flex-col z-[1]"
+          style={{
+            left: SIDE,
+            top: PG,
+            width: AREA_W,
+            height: 350,
+            backgroundColor: blocoEscuro,
+            padding: '50px 50px 20px 50px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <h1
+            className="font-sora font-bold text-[40px] leading-[48px] tracking-[-0.025em] text-white m-0"
+          >
+            {titulo || 'Capítulo'}
+          </h1>
+          {subtitulo && (
+            <p
+              className="font-display text-[17px] leading-[20px] mt-4 m-0"
+              style={{ color: VTSD_COLOR.primary_lighter }}
+            >
+              {subtitulo}
+            </p>
+          )}
+        </div>
+        <div
+          className="absolute z-0 overflow-hidden flex items-center justify-center"
+          style={{
+            left: SIDE,
+            top: PG + 350 + 10,
+            width: AREA_W,
+            height: 210,
+            backgroundColor: VTSD_COLOR.fundo_box,
+          }}
+        >
+          {imagemGerada ? (
+            <img src={imagemGerada} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-[#A8A8A8] font-display text-xs text-center px-8">
+              {sugestao_imagem || prompt_imagem || 'Área de imagem (cover)'}
+            </span>
+          )}
+        </div>
+        <div
+          className="absolute z-[1]"
+          style={{ left: SIDE, top: PG + 350 + 10 + 210 + 10, width: AREA_W, maxHeight: VTSD_MARGENS_A4.area_util.y_fim_px - (PG + 350 + 10 + 210 + 10) }}
+        >
+          {paragrafos.slice(0, 3).map((p, i) => (
+            <p key={i} className="font-display text-[14px] leading-[15px] mb-3 m-0 text-justify" style={{ color: VTSD_COLOR.texto_800 }}>
+              {p}
+            </p>
+          ))}
+        </div>
+        <BadgePagina numero={numeroPagina} bg={blocoMedio} />
+      </div>
+    );
+  }
+
+  if (layout_tipo === 'A4_2_conteudo_misto') {
+    const calloutHtml = destaques[0] || paragrafos[0] || 'Dica do autor: aproveite cada etapa com foco na execução.';
+    const bodyParas = paragrafos;
+    const quote = citacao || bodyParas[bodyParas.length - 1] || '';
+    const midParas = bodyParas.slice(0, Math.max(1, bodyParas.length - 1));
+    return (
+      <div
+        className="page-a4 relative overflow-hidden flex flex-col"
+        style={{ width: 595, height: 842, backgroundColor: VTSD_COLOR.fundo_page }}
+      >
+        <div
+          className="w-full flex-shrink-0 flex flex-col gap-2.5"
+          style={{
+            backgroundColor: blocoEscuro,
+            padding: '20px 50px',
+            marginTop: PG,
+          }}
+        >
+          <p className="font-display font-bold text-[10px] leading-[13px] text-white m-0">
+            <span className="mr-1" aria-hidden>✦</span> Dica do Autor
+          </p>
+          <p className="font-display text-[14px] leading-[15px] text-white m-0">{calloutHtml}</p>
+        </div>
+        <div className="px-[50px] py-5 flex-1 min-h-0 overflow-hidden">
+          {midParas.slice(0, 2).map((p, i) => (
+            <p key={i} className="font-display text-[14px] leading-[15px] mb-3 m-0" style={{ color: VTSD_COLOR.texto_700 }}>
+              {p}
+            </p>
+          ))}
+          {quote ? (
+            <blockquote
+              className="font-display italic text-[14px] leading-[15px] m-0 mb-4 py-[15px] pr-5 pl-5"
+              style={{
+                color: VTSD_COLOR.texto_700,
+                border: `1px solid ${VTSD_COLOR.texto_600}`,
+                borderRadius: '0 15px 15px 0',
+              }}
+            >
+              {quote}
+            </blockquote>
+          ) : null}
+          <div className="flex gap-0 mt-2">
+            <div className="w-[240px] flex-shrink-0 pr-2">
+              {midParas.slice(2, 4).map((p, i) => (
+                <p key={i} className="font-display italic text-[14px] leading-[15px] mb-2 m-0" style={{ color: VTSD_COLOR.texto_800 }}>
+                  {p}
+                </p>
+              ))}
+            </div>
+            <div
+              className="flex-1 min-h-[120px] rounded-sm flex items-center justify-center overflow-hidden"
+              style={{ backgroundColor: VTSD_COLOR.fundo_box }}
+            >
+              {imagemGerada ? (
+                <img src={imagemGerada} alt="" className="w-full h-full min-h-[120px] object-cover" />
+              ) : (
+                <span className="text-[#A8A8A8] font-display text-[11px] px-2 text-center">
+                  {sugestao_imagem || 'Imagem lateral'}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        <div
+          className="w-full flex-shrink-0 flex flex-col gap-2.5"
+          style={{
+            backgroundColor: blocoEscuro,
+            padding: '15px 50px',
+            marginBottom: VTSD_MARGENS_A4.margens.base_px,
+          }}
+        >
+          <p className="font-display font-bold text-[10px] leading-[13px] m-0" style={{ color: VTSD_COLOR.primary_lighter }}>
+            ✦ Atenção
+          </p>
+          <p className="font-display text-[14px] leading-[15px] text-white m-0">
+            {destaques[1] || paragrafos[paragrafos.length - 1] || 'Revise o conteúdo e aplique na prática.'}
+          </p>
+        </div>
+        <BadgePagina numero={numeroPagina} bg={blocoMedio} />
+      </div>
+    );
+  }
+
+  if (layout_tipo === 'A4_3_sidebar_steps') {
+    const steps = itens.length ? itens : destaques.length ? destaques : paragrafos.slice(0, 4);
+    return (
+      <div className="page-a4 relative overflow-hidden flex" style={{ width: 595, height: 842 }}>
+        <aside
+          className="flex flex-col justify-between flex-shrink-0 h-full"
+          style={{
+            width: 370,
+            backgroundColor: blocoEscuro,
+            padding: '50px 40px 20px 50px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div>
+            <p className="font-display font-semibold text-[9px] leading-[13px] text-white m-0 uppercase tracking-wide">
+              {nomeCurso}
+            </p>
+            <h1 className="font-sora font-bold text-[40px] leading-[48px] tracking-[-0.025em] text-white m-0 mt-4">
+              {titulo || 'Conteúdo'}
+            </h1>
+            {subtitulo && (
+              <p className="font-display text-[17px] leading-[20px] mt-3 m-0" style={{ color: VTSD_COLOR.teal_tint }}>
+                {subtitulo}
+              </p>
+            )}
+          </div>
+          <div className="relative">
+            <span
+              className="font-sora font-bold text-[110px] leading-[120px] tracking-[-0.04em] block select-none"
+              style={{ color: cyanMarca, opacity: 0.12 }}
+              aria-hidden
+            >
+              {numeroPagina}
+            </span>
+            <p className="font-display font-semibold text-[9px] leading-[13px] text-white/50 m-0 mt-2">{nomeCurso}</p>
+          </div>
+        </aside>
+        <div
+          className="flex-1 flex flex-col min-w-0 h-full overflow-hidden"
+          style={{ backgroundColor: VTSD_COLOR.fundo_externo, padding: '20px 16px 40px 16px', boxSizing: 'border-box' }}
+        >
+          {paragrafos.slice(0, 2).map((p, i) => (
+            <p key={i} className="font-display text-[14px] leading-[15px] mb-3 m-0" style={{ color: VTSD_COLOR.texto_700 }}>
+              {p}
+            </p>
+          ))}
+          {citacao ? (
+            <blockquote
+              className="font-display italic text-[14px] leading-[15px] m-0 mb-4 py-[15px] px-5"
+              style={{
+                color: VTSD_COLOR.texto_700,
+                border: `1px solid ${VTSD_COLOR.texto_600}`,
+                borderRadius: '0 15px 15px 0',
+              }}
+            >
+              {citacao}
+            </blockquote>
+          ) : null}
+          <div className="space-y-2.5 mt-2 flex-1">
+            {steps.slice(0, 4).map((step, i) => (
+              <div key={i} className="flex items-start gap-2.5">
+                <span
+                  className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center font-sora font-bold text-[13px] text-white"
+                  style={{ backgroundColor: blocoMedio }}
+                >
+                  {i + 1}
+                </span>
+                <p className="font-display text-[14px] leading-[15px] m-0 pt-1.5" style={{ color: VTSD_COLOR.texto_800 }}>
+                  {step}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <BadgePagina numero={numeroPagina} bg={blocoMedio} />
+      </div>
+    );
+  }
+
+  if (layout_tipo === 'A4_4_magazine') {
+    return (
+      <div
+        className="page-a4 relative overflow-hidden"
+        style={{ width: 595, height: 842, backgroundColor: VTSD_COLOR.fundo_page }}
+      >
+        <h2
+          className="font-sora font-bold text-[28px] leading-[40px] m-0 absolute w-[495px]"
+          style={{ left: SIDE, top: PG, color: blocoMedio }}
+        >
+          {titulo || 'Seção'}
+        </h2>
+        <div
+          className="absolute left-[-38px] top-[176px] w-[304px] h-[382px] z-0"
+          style={{ backgroundColor: blocoEscuro }}
+          aria-hidden
+        />
+        <div
+          className="absolute left-0 top-[207px] w-[308px] h-[316px] z-[1] flex items-center justify-center overflow-hidden"
+          style={{ backgroundColor: VTSD_COLOR.fundo_box }}
+        >
+          {imagemGerada ? (
+            <img src={imagemGerada} alt="" className="w-full h-full object-cover z-[1]" />
+          ) : (
+            <span className="text-[#A8A8A8] font-display text-[11px] px-4 text-center z-[1]">
+              {sugestao_imagem || prompt_imagem || 'Foto'}
+            </span>
+          )}
+        </div>
+        <div className="absolute left-[307px] top-[176px] w-[240px] z-[1]">
+          <h3 className="font-display font-semibold text-[20px] leading-[24px] m-0 mb-3" style={{ color: blocoMedio }}>
+            {subtitulo || 'Destaque'}
+          </h3>
+          {paragrafos.map((p, i) => (
+            <p key={i} className="font-display text-[14px] leading-[15px] mb-3 m-0" style={{ color: VTSD_COLOR.texto_700 }}>
+              {p}
+            </p>
+          ))}
+        </div>
+        <div
+          className="absolute left-0 w-full z-[1] flex flex-col gap-2.5"
+          style={{
+            bottom: VTSD_MARGENS_A4.margens.base_px,
+            backgroundColor: blocoEscuro,
+            padding: '20px 50px 16px 50px',
+          }}
+        >
+          <p className="font-display font-bold text-[10px] leading-[13px] m-0" style={{ color: VTSD_COLOR.primary_lighter }}>
+            ✦ Insight
+          </p>
+          <p className="font-display italic text-[14px] leading-[15px] text-white m-0">
+            {citacao || paragrafos[0] || 'Citação ou síntese da página.'}
+          </p>
+        </div>
+        <BadgePagina numero={numeroPagina} bg={blocoMedio} />
+      </div>
+    );
+  }
+
+  if (layout_tipo === 'A4_7_sidebar_conteudo') {
+    return (
+      <div className="page-a4 relative overflow-hidden flex" style={{ width: 595, height: 842 }}>
+        <aside
+          className="flex flex-col justify-between flex-shrink-0"
+          style={{
+            width: 225,
+            height: '100%',
+            backgroundColor: blocoEscuro,
+            padding: '50px 40px 20px 50px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div>
+            <p className="font-display font-semibold text-[9px] text-white/80 m-0">{nomeCurso}</p>
+            <h1 className="font-sora font-bold text-[28px] leading-[40px] text-white m-0 mt-4">
+              {titulo || 'Módulo'}
+            </h1>
+          </div>
+          <p className="font-display text-[9px] text-white/50 m-0">{nomeCurso}</p>
+        </aside>
+        <div
+          className="flex-1 overflow-auto"
+          style={{
+            backgroundColor: VTSD_COLOR.fundo_box,
+            padding: '24px 40px 40px 32px',
+            boxSizing: 'border-box',
+          }}
+        >
+          {paragrafos.map((p, i) => (
+            <p key={i} className="font-display text-[14px] leading-[15px] mb-3 m-0" style={{ color: VTSD_COLOR.texto_800 }}>
+              {p}
+            </p>
+          ))}
+        </div>
+        <BadgePagina numero={numeroPagina} bg={blocoMedio} />
+      </div>
+    );
+  }
+
+  // ——— Layouts legados ———
 
   /** Rodapé comum a todos os layouts */
   const Rodape = () => (
@@ -383,17 +754,25 @@ export function PageConteudo({
             ))}
           </div>
           <div className="w-[45%] p-6 flex items-center justify-center">
-            <div
-              className="w-full aspect-square max-h-72 rounded-xl border-2 border-dashed flex flex-col items-center justify-center text-center p-4"
-              style={{
-                borderColor: `${cor_texto_principal}40`,
-                color: cor_texto_principal,
-                backgroundColor: cor_fundo_destaque,
-              }}
-            >
-              <span className="text-4xl mb-2 opacity-60">🖼</span>
-              <p className="text-xs font-medium opacity-80">{sugestao_imagem || prompt_imagem || 'Imagem sugerida para o conteúdo'}</p>
-            </div>
+            {imagemGerada ? (
+              <img
+                src={imagemGerada}
+                alt=""
+                className="w-full aspect-square max-h-72 rounded-xl object-cover"
+              />
+            ) : (
+              <div
+                className="w-full aspect-square max-h-72 rounded-xl border-2 border-dashed flex flex-col items-center justify-center text-center p-4"
+                style={{
+                  borderColor: `${cor_texto_principal}40`,
+                  color: cor_texto_principal,
+                  backgroundColor: cor_fundo_destaque,
+                }}
+              >
+                <span className="text-4xl mb-2 opacity-60">🖼</span>
+                <p className="text-xs font-medium opacity-80">{sugestao_imagem || prompt_imagem || 'Imagem sugerida para o conteúdo'}</p>
+              </div>
+            )}
           </div>
         </div>
         <Rodape />
@@ -490,16 +869,20 @@ export function PageConteudo({
         }}
       >
         <div
-          className="w-full h-48 flex-shrink-0 flex items-center justify-center"
+          className="w-full h-48 flex-shrink-0 flex items-center justify-center overflow-hidden"
           style={{ backgroundColor: tema.primaryDark || tema.primary }}
         >
-          <div
-            className="w-[calc(100%-3rem)] h-40 rounded border-2 border-white/20 flex items-center justify-center text-white/60"
-            style={{ borderColor: 'rgba(255,255,255,0.3)' }}
-          >
-            <span className="text-4xl opacity-60">🖼</span>
-            <p className="text-xs mt-2 mx-4 text-center">{sugestao_imagem || prompt_imagem || 'Imagem'}</p>
-          </div>
+          {imagemGerada ? (
+            <img src={imagemGerada} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div
+              className="w-[calc(100%-3rem)] h-40 rounded border-2 border-white/20 flex flex-col items-center justify-center text-white/60"
+              style={{ borderColor: 'rgba(255,255,255,0.3)' }}
+            >
+              <span className="text-4xl opacity-60">🖼</span>
+              <p className="text-xs mt-2 mx-4 text-center">{sugestao_imagem || prompt_imagem || 'Imagem'}</p>
+            </div>
+          )}
         </div>
         <div className="flex-1 px-8 py-6 pb-4">
           {titulo && (

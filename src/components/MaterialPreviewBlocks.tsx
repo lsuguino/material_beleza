@@ -13,6 +13,8 @@ import {
   collectConceptTextParts,
   shouldAppendPageTextFallback,
 } from '@/lib/normalize-content-blocks';
+import { PageConteudo, type PaginaComDesign } from '@/components/pages/PageConteudo';
+import type { LayoutTipo } from '@/lib/design-agent';
 
 export type { ContentBlockItem };
 
@@ -43,6 +45,8 @@ export interface PaginaDesign {
   proporcao_colunas?: string;
   sugestao_imagem?: string;
   prompt_imagem?: string;
+  /** Data URL após geração Gemini (Nano Banana) */
+  imagem_url?: string;
   sugestao_grafico?: { tipo: string; titulo: string; labels: string[]; valores: number[] };
   sugestao_fluxograma?: { titulo: string; etapas: string[] };
   sugestao_tabela?: { titulo: string; colunas: string[]; linhas: string[][] };
@@ -81,6 +85,9 @@ function computeTocStartPages(paginas: PaginaDesign[]): number[] {
 /** Intro na 1ª página ou quando há sugestão de imagem; demais em duas colunas (texto corrido + exemplos à direita). */
 function chooseEditorialTemplate(pagina: PaginaDesign, isFirstContent: boolean): 'intro' | 'double_column' {
   const layoutTipo = (pagina.layout_tipo || '').toString();
+  if (layoutTipo.startsWith('A4_')) {
+    return 'intro';
+  }
   if (layoutTipo === 'header_destaque' || layoutTipo === 'imagem_top' || layoutTipo === 'imagem_lateral') {
     return 'intro';
   }
@@ -148,9 +155,10 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
       <div
         className={
           isVtsd
-            ? 'shadow-sm rounded-sm overflow-hidden border border-neutral-200/90 bg-white print-editorial-page'
+            ? 'shadow-sm rounded-sm overflow-hidden border border-neutral-200/90 print-editorial-page'
             : 'shadow-xl rounded-sm overflow-hidden border border-white/10 print-editorial-page'
         }
+        style={isVtsd ? { backgroundColor: '#C4C4C4' } : undefined}
       >
         {node}
       </div>
@@ -220,6 +228,11 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
           );
         }
 
+        const heroImageUrl =
+          typeof pagina.imagem_url === 'string' && pagina.imagem_url.startsWith('data:')
+            ? pagina.imagem_url
+            : undefined;
+
         if (tipo === 'intro_ref') {
           return wrap(
             <PageIntro
@@ -228,6 +241,7 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
               contentBlocks={contentBlocks}
               imagePlaceholder={pagina.sugestao_imagem || 'Imagem'}
               imagePrompt={pagina.prompt_imagem}
+              imageUrl={heroImageUrl}
               nomeCurso={nomeCurso}
               primary={primary}
               accent={accent}
@@ -254,6 +268,50 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
           );
         }
 
+        if (isVtsd && tipo === 'conteudo') {
+          const nonTextBlocks = contentBlocks.filter((b) => b.type !== 'text');
+          if (nonTextBlocks.length === 0) {
+            const lt = ((pagina.layout_tipo as string) || 'A4_2_conteudo_misto') as LayoutTipo;
+            const paginaComDesign: PaginaComDesign = {
+              layout_tipo: lt,
+              cor_fundo_principal: (pagina.cor_fundo_principal as string) || '#FFFFFF',
+              cor_fundo_destaque: (pagina.cor_fundo_destaque as string) || primary,
+              cor_texto_principal: (pagina.cor_texto_principal as string) || '#383838',
+              cor_texto_destaque: (pagina.cor_texto_destaque as string) || '#FFFFFF',
+              icone_sugerido: (pagina.icone_sugerido as string) || 'article',
+              titulo,
+              subtitulo: pagina.subtitulo,
+              paragrafos: paragrafos.length > 0 ? paragrafos : introParagraphs,
+              destaques: (pagina.destaques as string[]) || [],
+              citacao: pagina.citacao as string | undefined,
+              itens: (pagina.itens as string[]) || [],
+              sugestao_imagem: pagina.sugestao_imagem,
+              prompt_imagem: pagina.prompt_imagem,
+              sugestao_grafico: pagina.sugestao_grafico as PaginaComDesign['sugestao_grafico'],
+              sugestao_fluxograma: pagina.sugestao_fluxograma as PaginaComDesign['sugestao_fluxograma'],
+              sugestao_tabela: pagina.sugestao_tabela as PaginaComDesign['sugestao_tabela'],
+              sugestao_icone: pagina.sugestao_icone,
+              proporcao_colunas: pagina.proporcao_colunas as PaginaComDesign['proporcao_colunas'],
+              usar_barra_lateral: pagina.usar_barra_lateral as boolean | undefined,
+              usar_faixa_decorativa: pagina.usar_faixa_decorativa as boolean | undefined,
+              imagem_url: pagina.imagem_url as string | undefined,
+            };
+            return wrap(
+              <PageConteudo
+                pagina={paginaComDesign}
+                tema={{
+                  primary,
+                  primaryLight: tema.primaryLight,
+                  primaryDark: tema.primaryDark,
+                  accent,
+                }}
+                numeroPagina={pageNumber ?? index + 1}
+                nomeCurso={nomeCurso}
+              />
+            );
+          }
+        }
+
         const template = chooseEditorialTemplate(pagina, isFirstContent);
 
         if (template === 'intro') {
@@ -264,6 +322,7 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
               contentBlocks={contentBlocks}
               imagePlaceholder={pagina.sugestao_imagem || 'Imagem'}
               imagePrompt={pagina.prompt_imagem}
+              imageUrl={heroImageUrl}
               nomeCurso={nomeCurso}
               primary={primary}
               accent={accent}

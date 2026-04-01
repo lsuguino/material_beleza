@@ -13,6 +13,8 @@ export interface PageIntroProps {
   imagePlaceholder?: string;
   /** IMAGE_PROMPT em inglês para o topo (ou primeiro bloco image de content_blocks) */
   imagePrompt?: string;
+  /** Imagem já gerada (ex.: Gemini Nano Banana) — data URL */
+  imageUrl?: string;
   nomeCurso: string;
   pageNumber?: number;
   showPageNumber?: boolean;
@@ -28,6 +30,7 @@ export function PageIntro({
   contentBlocks,
   imagePlaceholder = 'Imagem',
   imagePrompt,
+  imageUrl,
   nomeCurso,
   pageNumber,
   showPageNumber = true,
@@ -38,8 +41,10 @@ export function PageIntro({
   const hasContentBlocks = contentBlocks && contentBlocks.length > 0;
   const firstImageIndex = hasContentBlocks ? contentBlocks.findIndex((b) => b.type === 'image') : -1;
   const firstImageBlock = firstImageIndex >= 0 && contentBlocks ? contentBlocks[firstImageIndex] : null;
-  // Neste fluxo, "image" é só prompt (não há imagem real), então não reservamos área de imagem.
-  const topPrompt = imagePrompt ?? firstImageBlock?.content;
+  const firstBlockImageUrl = firstImageBlock?.imageUrl || firstImageBlock?.imagem_url;
+  const heroSrc =
+    imageUrl ||
+    (typeof firstBlockImageUrl === 'string' && firstBlockImageUrl.startsWith('data:') ? firstBlockImageUrl : undefined);
   const bodyBlocks =
     hasContentBlocks && contentBlocks
       ? contentBlocks.filter((_, i) => i !== firstImageIndex)
@@ -62,7 +67,11 @@ export function PageIntro({
         } as React.CSSProperties
       }
     >
-      {/* Removido bloco de imagem (era só prompt), para não aparecer vazio */}
+      {heroSrc ? (
+        <div className="w-full flex-shrink-0 overflow-hidden" style={{ maxHeight: '52mm' }}>
+          <img src={heroSrc} alt="" className="w-full h-full object-cover block" style={{ maxHeight: '52mm' }} />
+        </div>
+      ) : null}
       <div className="page-body">
         <h2>{title}</h2>
         {bodyBlocks && bodyBlocks.length > 0 ? <ContentBlocksRenderer blocks={bodyBlocks} /> : null}

@@ -6,6 +6,9 @@ import { ChartBlock } from '@/components/ChartBlock';
 export interface ContentBlockItem {
   type: 'text' | 'image' | 'mermaid' | 'chart';
   content: string;
+  /** Preenchido após geração (Gemini Nano Banana) — data URL */
+  imageUrl?: string;
+  imagem_url?: string;
 }
 
 interface ContentBlocksRendererProps {
@@ -116,8 +119,18 @@ export function ContentBlocksRenderer({ blocks, className = '' }: ContentBlocksR
           );
         }
         if (block.type === 'image') {
-          // Imagens do content-agent aqui são apenas prompts (não geramos imagem nesse fluxo).
-          // Para não poluir o layout, não renderizamos nada.
+          const src = block.imageUrl || block.imagem_url;
+          if (src) {
+            return (
+              <figure key={i} className="my-4 w-full overflow-hidden rounded-sm">
+                <img
+                  src={src}
+                  alt=""
+                  className="w-full h-auto object-cover max-h-[280mm]"
+                />
+              </figure>
+            );
+          }
           return null;
         }
         if (block.type === 'mermaid') {

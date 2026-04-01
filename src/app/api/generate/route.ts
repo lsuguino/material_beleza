@@ -6,8 +6,10 @@ import { parseTextoOrganizado } from '@/lib/text-organizado-parser';
 import { generateContent, generateResumoFromOrganizedText } from '@/lib/content-agent';
 import { generateDesign } from '@/lib/design-agent';
 import { COURSE_THEMES, type CourseId } from '@/lib/courseThemes';
+import { VTSD_COLOR, VTSD_LAYOUT_A4 } from '@/lib/vtsd-design-system';
 import { getFriendlyErrorMessage } from '@/lib/anthropic-error';
-import { ensureOpenRouterKey } from '@/lib/ensure-env';
+import { ensureOpenRouterKey, ensureGeminiApiKey } from '@/lib/ensure-env';
+import { applyNanoBananaImagesToPaginas, type PaginaComImagem } from '@/lib/gemini-nano-banana-images';
 
 export const maxDuration = 300;
 
@@ -207,6 +209,32 @@ function mergeDesignIntoContent(
   return { ...conteudo, ...design, paginas: paginasComDesign };
 }
 
+/** Copia URLs de imagem geradas do payload de design para o de conteúdo (mesmo índice de página). */
+function syncGeneratedImagesToConteudo(
+  designPaginas: PaginaComImagem[],
+  conteudoPaginas: PaginaComImagem[]
+): void {
+  const n = Math.min(designPaginas.length, conteudoPaginas.length);
+  for (let i = 0; i < n; i++) {
+    const d = designPaginas[i];
+    const c = conteudoPaginas[i];
+    if (d.imagem_url) c.imagem_url = d.imagem_url;
+    const db = d.content_blocks;
+    const cb = c.content_blocks;
+    if (!Array.isArray(db) || !Array.isArray(cb)) continue;
+    for (let j = 0; j < Math.min(db.length, cb.length); j++) {
+      const di = db[j] as Record<string, unknown> | undefined;
+      const ci = cb[j] as Record<string, unknown> | undefined;
+      if (!di || !ci) continue;
+      const url = di.imagem_url ?? di.imageUrl;
+      if (url && String(url).startsWith('data:')) {
+        ci.imagem_url = url;
+        ci.imageUrl = url;
+      }
+    }
+  }
+}
+
 /** Aplica design padrão (cores do tema + layout) quando o design-agent falha. */
 function applyDefaultDesign(
   conteudo: Record<string, unknown>,
@@ -223,22 +251,30 @@ function applyDefaultDesign(
 
   const paginasComDesign = paginas.map((p, i) => {
     const tipo = p.tipo as string | undefined;
-    const layoutTipo =
-      tipo === 'capa'
-        ? 'header_destaque'
-        : tipo === 'contracapa'
+    let layoutTipo: string;
+    if (isVtsd && tipo === 'conteudo') {
+      layoutTipo = VTSD_LAYOUT_A4[i % VTSD_LAYOUT_A4.length];
+    } else {
+      layoutTipo =
+        tipo === 'capa'
           ? 'header_destaque'
-          : i === 1
-          ? 'imagem_top'
-          : i % 3 === 0
-            ? 'dois_colunas'
-            : 'header_destaque';
+          : tipo === 'contracapa'
+            ? 'header_destaque'
+            : i === 1
+              ? 'imagem_top'
+              : i % 3 === 0
+                ? 'dois_colunas'
+                : 'header_destaque';
+    }
+    const fundoPrincipal = isVtsd ? VTSD_COLOR.fundo_page : bg;
+    const fundoDestaque = isVtsd ? VTSD_COLOR.primary_darker : accent;
+    const textoPrincipal = isVtsd ? VTSD_COLOR.texto_800 : '#1a1a1a';
     return {
       ...p,
       layout_tipo: layoutTipo,
-      cor_fundo_principal: bg,
-      cor_fundo_destaque: accent,
-      cor_texto_principal: '#1a1a1a',
+      cor_fundo_principal: fundoPrincipal,
+      cor_fundo_destaque: fundoDestaque,
+      cor_texto_principal: textoPrincipal,
       cor_texto_destaque: '#FFFFFF',
       icone_sugerido: 'article',
       proporcao_colunas: '60/40' as const,
@@ -406,7 +442,27 @@ export async function POST(request: NextRequest) {
       return { ...obj, paginas };
     };
     const conteudoNorm = normalizePaginas(conteudoRecord);
-    const designNorm = normalizePaginas(conteudoComDesign);
+    let designNorm = normalizePaginas(conteudoComDesign);
+
+    // 3. Imagens: OpenRouter (OPENROUTER_MODEL_IMAGE) ou Gemini direto (GEMINI_API_KEY)
+    const hasOpenRouterImage =
+      !!process.env.OPENROUTER_MODEL_IMAGE?.trim() && !!process.env.OPENROUTER_API_KEY?.trim();
+    const geminiKeyForImages = hasOpenRouterImage ? null : await ensureGeminiApiKey();
+    if (hasOpenRouterImage || geminiKeyForImages) {
+      try {
+        const designPaginas = designNorm.paginas as PaginaComImagem[] | undefined;
+        const conteudoPaginas = conteudoNorm.paginas as PaginaComImagem[] | undefined;
+        if (Array.isArray(designPaginas) && designPaginas.length > 0) {
+          await applyNanoBananaImagesToPaginas(designPaginas);
+          designNorm = { ...designNorm, paginas: designPaginas as unknown[] };
+          if (Array.isArray(conteudoPaginas) && conteudoPaginas.length > 0) {
+            syncGeneratedImagesToConteudo(designPaginas, conteudoPaginas);
+          }
+        }
+      } catch (imgErr) {
+        console.warn('[api/generate] Etapa de imagens falhou:', imgErr);
+      }
+    }
 
     return NextResponse.json({
       conteudo: { ...conteudoNorm, paginas: conteudoNorm.paginas ?? [] },

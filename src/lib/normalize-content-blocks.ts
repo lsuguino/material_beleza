@@ -26,7 +26,13 @@ export function normalizeContentBlocks(raw: unknown): ContentBlockItem[] {
       if (c.trim()) out.push({ type: 'text', content: c });
       continue;
     }
-    out.push({ type: t as ContentBlockItem['type'], content: c });
+    const imgUrl =
+      o.imagem_url != null ? String(o.imagem_url) : o.imageUrl != null ? String(o.imageUrl) : undefined;
+    out.push({
+      type: t as ContentBlockItem['type'],
+      content: c,
+      ...(t === 'image' && imgUrl?.startsWith('data:') ? { imageUrl: imgUrl, imagem_url: imgUrl } : {}),
+    });
   }
   return out;
 }

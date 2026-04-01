@@ -1,8 +1,14 @@
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
+/** Claude Sonnet 4 (Anthropic via OpenRouter) — etapa de design/layout. */
+export const OPENROUTER_MODEL_CLAUDE_SONNET_4 = 'anthropic/claude-sonnet-4';
+
+/** GPT-4o (OpenAI via OpenRouter) — etapa de texto/material didático. */
+export const OPENROUTER_MODEL_GPT_4O = 'openai/gpt-4o';
+
 export const OPENROUTER_MODELS = {
-  textMaterial: 'openai/gpt-4o',
-  design: 'anthropic/claude-sonnet-4',
+  textMaterial: OPENROUTER_MODEL_GPT_4O,
+  design: OPENROUTER_MODEL_CLAUDE_SONNET_4,
 } as const;
 
 export type OpenRouterTask = 'text_material' | 'design';
@@ -22,6 +28,10 @@ export function getOpenRouterModel(): string {
   return process.env.OPENROUTER_MODEL?.trim() || 'anthropic/claude-3.5-sonnet';
 }
 
+/**
+ * Modelo por etapa: texto (`text_material`) vs design (`design`).
+ * Sobrescreva com OPENROUTER_MODEL_TEXT_MATERIAL e OPENROUTER_MODEL_DESIGN no .env.local.
+ */
 export function getOpenRouterModelForTask(task: OpenRouterTask): string {
   const envModelText = process.env.OPENROUTER_MODEL_TEXT_MATERIAL?.trim();
   const envModelDesign = process.env.OPENROUTER_MODEL_DESIGN?.trim();
@@ -117,4 +127,91 @@ export async function openRouterChatByTask(
     ...params,
     model: getOpenRouterModelForTask(task),
   });
+}
+
+/** Modelo só para geração de imagem (ex.: google/gemini-2.5-flash-image). Ver OPENROUTER_MODEL_IMAGE. */
+export function getOpenRouterImageModel(): string | null {
+  return process.env.OPENROUTER_MODEL_IMAGE?.trim() || null;
+}
+
+type OpenRouterImagePart = {
+  image_url?: { url?: string };
+  imageUrl?: { url?: string };
+  type?: string;
+};
+
+/**
+ * Gera imagem via OpenRouter (chat/completions + modalities).
+ * Retorna data URL (data:image/...;base64,...) ou null.
+ */
+export async function openRouterGenerateImage(prompt: string): Promise<string | null> {
+  const model = getOpenRouterImageModel();
+  if (!model) return null;
+
+  const apiKey = process.env.OPENROUTER_API_KEY?.trim();
+  if (!apiKey) {
+    console.warn('[openrouter-image] OPENROUTER_API_KEY ausente');
+    return null;
+  }
+
+  const didacticPrefix =
+    'Professional clean educational illustration for a printed course handout (A4), clear composition, minimal overlaid text. ';
+  const userContent = `${didacticPrefix}${prompt.trim()}`.slice(0, 8000);
+
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+  };
+  const referer = process.env.OPENROUTER_HTTP_REFERER?.trim();
+  if (referer) headers['HTTP-Referer'] = referer;
+  const title = process.env.OPENROUTER_X_TITLE?.trim();
+  if (title) headers['X-Title'] = title;
+
+  const res = await fetch(OPENROUTER_URL, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: userContent }],
+      modalities: ['image', 'text'],
+      max_tokens: 4096,
+      temperature: 0.3,
+    }),
+  });
+
+  const rawText = await res.text();
+  let data: unknown;
+  try {
+    data = JSON.parse(rawText) as unknown;
+  } catch {
+    console.error('[openrouter-image] JSON inválido:', rawText.slice(0, 400));
+    return null;
+  }
+
+  if (!res.ok) {
+    const detail = messageFromUnknownBody(data) ?? rawText.slice(0, 400);
+    console.error('[openrouter-image]', res.status, detail);
+    return null;
+  }
+
+  const message = (data as { choices?: Array<{ message?: Record<string, unknown> }> })?.choices?.[0]?.message;
+  if (!message) return null;
+
+  const images = message.images as OpenRouterImagePart[] | undefined;
+  if (!Array.isArray(images) || images.length === 0) {
+    console.warn('[openrouter-image] Resposta sem message.images');
+    return null;
+  }
+
+  const first = images[0];
+  const url =
+    first?.image_url?.url ??
+    first?.imageUrl?.url ??
+    (typeof (first as { url?: string })?.url === 'string' ? (first as { url: string }).url : undefined);
+
+  if (typeof url === 'string' && url.startsWith('data:')) return url;
+  if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) return url;
+
+  console.warn('[openrouter-image] Formato de imagem inesperado');
+  return null;
 }

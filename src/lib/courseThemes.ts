@@ -25,13 +25,13 @@ export const COURSE_THEMES: Record<CourseId, CourseTheme> = {
   geral: {
     id: 'geral',
     name: 'Venda Todo Santo Dia',
-    // Design system VTSD (referência spin-material-a4.html)
-    primary: '#0c8492',
-    primaryLight: '#05a7b5',
-    primaryDark: '#064e5a',
-    backgroundColor: '#dedede',
+    // Design system Figma VTSD — marca teal + A4 595×842
+    primary: '#0599A8',
+    primaryLight: '#03DFE6',
+    primaryDark: '#025468',
+    backgroundColor: '#FFFFFF',
     layoutClass: 'theme-geral',
-    accent: '#03dfe6',
+    accent: '#B4F8FB',
   },
   marketing: {
     id: 'marketing',
