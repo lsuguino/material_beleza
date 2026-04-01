@@ -25,12 +25,13 @@ export const COURSE_THEMES: Record<CourseId, CourseTheme> = {
   geral: {
     id: 'geral',
     name: 'Venda Todo Santo Dia',
-    primary: '#2A2A2A',
-    primaryLight: '#4a4a4a',
-    primaryDark: '#1a1a1a',
-    backgroundColor: '#F1F1F1',
+    // Design system VTSD (referência spin-material-a4.html)
+    primary: '#0c8492',
+    primaryLight: '#05a7b5',
+    primaryDark: '#064e5a',
+    backgroundColor: '#dedede',
     layoutClass: 'theme-geral',
-    accent: '#55B8A1',
+    accent: '#03dfe6',
   },
   marketing: {
     id: 'marketing',

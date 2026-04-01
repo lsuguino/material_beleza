@@ -12,6 +12,7 @@ export interface PageSummaryProps {
   /** Cores para rebrand (aplicadas como variáveis no container) */
   primary?: string;
   accent?: string;
+  variant?: 'default' | 'vtsd';
 }
 
 export function PageSummary({
@@ -23,10 +24,11 @@ export function PageSummary({
   showPageNumber = true,
   primary = 'var(--print-primary)',
   accent = 'var(--print-accent)',
+  variant = 'default',
 }: PageSummaryProps) {
   return (
     <section
-      className="page page-summary"
+      className={variant === 'vtsd' ? 'page page-summary vtsd-editorial' : 'page page-summary'}
       style={
         {
           '--print-primary': primary,

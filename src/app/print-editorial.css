@@ -251,6 +251,94 @@
   grid-area: footer;
 }
 
+/* ========== VTSD (Venda Todo Santo Dia) — Design System de referência ========== */
+.vtsd-editorial {
+  background: #dedede;
+  color: #2a2a2a;
+}
+
+.vtsd-editorial .page-body h2 {
+  font-family: 'Sora', var(--print-font-sans);
+  font-weight: 700;
+  color: #0c8492;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.vtsd-editorial .page-body p,
+.vtsd-editorial .page-body li {
+  font-family: 'Inter', var(--print-font-sans);
+  color: #595959;
+  line-height: 1.45;
+  font-size: 0.9rem;
+}
+
+.vtsd-editorial.page-intro {
+  grid-template-columns: 1fr 22mm;
+}
+
+.vtsd-editorial.page-intro .page-sidebar {
+  background: #05a7b5;
+}
+
+.vtsd-editorial.page-double-column .page-divider {
+  height: 4px;
+  margin: 0;
+  background: #0c8492;
+}
+
+.vtsd-editorial .page-footer {
+  border-top: 1px solid #b5b5b5;
+  background: #dedede;
+  color: #595959;
+  font-family: 'Inter', var(--print-font-sans);
+  font-weight: 600;
+}
+
+.vtsd-editorial .page-footer span:last-child {
+  color: #0c8492;
+}
+
+.vtsd-editorial.page-cover {
+  background: #dedede;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  padding: 38px 30px 24px 30px;
+}
+
+.vtsd-editorial.page-cover .page-cover-title {
+  font-family: 'Sora', var(--print-font-sans);
+  font-size: 40px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #0c8492;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  max-width: 92%;
+  margin-top: 8mm;
+}
+
+.vtsd-editorial.page-cover .page-cover-subtitle {
+  font-family: 'Sora', var(--print-font-sans);
+  font-size: 20px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #05a7b5;
+}
+
+.vtsd-editorial.page-summary .page-sidebar {
+  background: #0c8492;
+}
+
+.vtsd-editorial.page-summary .page-sidebar-title {
+  color: #adf8ff;
+}
+
+.vtsd-editorial.page-summary .page-list-num {
+  background: #05a7b5;
+}
+
 /* ========== Template: .page-double-column — duas colunas + linha divisória superior ========== */
 .page-double-column {
   display: grid;

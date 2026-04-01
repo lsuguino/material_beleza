@@ -66,11 +66,6 @@ interface MaterialPreviewBlocksProps {
   renderPageWrapper?: (pageNode: React.ReactNode, index: number) => React.ReactNode;
 }
 
-function extractLessonNumber(title: string): string {
-  const m = title.match(/\b(\d{1,3})\b/);
-  return m?.[1] ?? '01';
-}
-
 /** Número da página (1-based) em que cada seção `conteudo` começa, na ordem do PDF/preview. */
 function computeTocStartPages(paginas: PaginaDesign[]): number[] {
   const starts: number[] = [];
@@ -85,6 +80,13 @@ function computeTocStartPages(paginas: PaginaDesign[]): number[] {
 
 /** Intro na 1ª página ou quando há sugestão de imagem; demais em duas colunas (texto corrido + exemplos à direita). */
 function chooseEditorialTemplate(pagina: PaginaDesign, isFirstContent: boolean): 'intro' | 'double_column' {
+  const layoutTipo = (pagina.layout_tipo || '').toString();
+  if (layoutTipo === 'header_destaque' || layoutTipo === 'imagem_top' || layoutTipo === 'imagem_lateral') {
+    return 'intro';
+  }
+  if (layoutTipo === 'dois_colunas' || layoutTipo === 'citacao_grande' || layoutTipo === 'lista_icones' || layoutTipo === 'dados_grafico') {
+    return 'double_column';
+  }
   const hasImageHint = Boolean(pagina.sugestao_imagem || pagina.prompt_imagem);
   if (isFirstContent || hasImageHint) return 'intro';
   return 'double_column';
@@ -116,8 +118,6 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
   const isVtsd =
     data.curso_id === 'geral' ||
     (tema.name || '').toLowerCase().includes('venda todo santo dia');
-  const moduleName = (design as { subtitulo_curso?: string })?.subtitulo_curso || nomeCurso;
-  const lessonNumber = extractLessonNumber(tituloGeral);
   const tocItems = paginas
     .filter((p) => (p.tipo || 'conteudo') === 'conteudo')
     .map((p) => (p.titulo_bloco ?? p.titulo ?? 'Conteúdo').toString());
@@ -195,27 +195,6 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
         const pageNumber = showPageNumber ? index + 1 : undefined;
 
         if (tipo === 'capa') {
-          if (isVtsd) {
-            return wrap(
-              <div className="relative w-[595px] h-[842px] overflow-hidden">
-                <img src="/images/capa-vtsd.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
-                <div className="absolute inset-0 px-10 pt-10">
-                  <div className="relative z-10 flex items-start justify-between text-[#202020]">
-                    <h3 className="text-[20px] font-light tracking-tight max-w-[56%] leading-tight">
-                      {moduleName}
-                    </h3>
-                    <div className="text-right leading-tight">
-                      <div className="text-[18px] font-light">Aula</div>
-                      <div className="text-[34px] font-semibold">Nº {lessonNumber}</div>
-                    </div>
-                  </div>
-                  <h1 className="relative z-10 mt-6 text-[54px] leading-[1.03] font-bold text-[#111] max-w-[92%]">
-                    {pagina.titulo || tituloGeral}
-                  </h1>
-                </div>
-              </div>
-            );
-          }
           return wrap(
             <PageCoverEditorial
               title={pagina.titulo || tituloGeral}
@@ -224,6 +203,7 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
               primary={primary}
               pageNumber={pageNumber}
               showPageNumber={showPageNumber}
+              variant={isVtsd ? 'vtsd' : 'default'}
             />
           );
         }
@@ -240,59 +220,36 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
           );
         }
 
-        if (tipo === 'intro_ref' && isVtsd) {
+        if (tipo === 'intro_ref') {
           return wrap(
-            <div className="w-[595px] h-[842px] overflow-hidden">
-              <img
-                src="/images/Introducao-padrao-vtsd.png"
-                alt="Introdução"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          );
-        }
-
-        if (tipo === 'sumario_ref' && isVtsd) {
-          return wrap(
-            <div className="relative w-[595px] h-[842px] overflow-hidden">
-              <img src="/images/sumario-vtsd.png" alt="" className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0 z-10 px-8 pt-52 pb-16 flex flex-col items-center justify-start">
-                <ol className="list-none space-y-3.5 w-full max-w-[460px] mx-auto mt-12">
-                  {tocItems.map((item, i) => {
-                    const pageNum = tocStartPages[i] ?? i + 1;
-                    return (
-                      <li
-                        key={i}
-                        className="flex w-full items-baseline gap-2 text-[#0d9e97] text-[17px] font-semibold"
-                      >
-                        <span className="w-9 shrink-0 text-right tabular-nums">{String(i + 1).padStart(2, '0')}</span>
-                        <span className="min-w-0 shrink leading-[1.35]">{item}</span>
-                        <span
-                          className="flex-1 min-w-[1rem] border-b-2 border-dotted border-[#0d9e97]/40 mb-1 mx-0.5"
-                          aria-hidden
-                        />
-                        <span className="shrink-0 tabular-nums w-7 text-right" aria-label={`Página ${pageNum}`}>
-                          {pageNum}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </div>
-            </div>
-          );
-        }
-
-        if (tipo === 'sumario' && !isVtsd) {
-          return wrap(
-            <PageSummary
-              title="Sumário"
-              items={tocItems}
+            <PageIntro
+              title={titulo}
+              paragraphs={introParagraphs}
+              contentBlocks={contentBlocks}
+              imagePlaceholder={pagina.sugestao_imagem || 'Imagem'}
+              imagePrompt={pagina.prompt_imagem}
               nomeCurso={nomeCurso}
               primary={primary}
               accent={accent}
               pageNumber={pageNumber}
               showPageNumber={showPageNumber}
+              variant={isVtsd ? 'vtsd' : 'default'}
+            />
+          );
+        }
+
+        if (tipo === 'sumario_ref' || tipo === 'sumario') {
+          return wrap(
+            <PageSummary
+              title="Sumário"
+              items={tocItems}
+              nomeCurso={nomeCurso}
+              sidebarLabel="Conteúdo"
+              primary={primary}
+              accent={accent}
+              pageNumber={pageNumber}
+              showPageNumber={showPageNumber}
+              variant={isVtsd ? 'vtsd' : 'default'}
             />
           );
         }

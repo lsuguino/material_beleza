@@ -261,12 +261,16 @@ export default function Home() {
       : '90%';
 
   return (
-    <div className="font-sans bg-background-dark text-slate-100 min-h-screen flex flex-col relative overflow-x-hidden w-full">
+    <div
+      className={`font-sans bg-background-dark text-slate-100 flex flex-col relative overflow-x-hidden w-full ${
+        generatedData ? 'h-screen overflow-y-hidden' : 'min-h-screen'
+      }`}
+    >
       {/* Background Accents */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] pointer-events-none" aria-hidden />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-neon-cyan/10 rounded-full blur-[120px] pointer-events-none" aria-hidden />
 
-      <div className="relative z-20 flex flex-col flex-1 w-full">
+      <div className="relative z-20 flex flex-col flex-1 min-h-0 w-full">
         {/* Header */}
         <header className="sticky top-0 z-50 glass-panel border-b border-white/5 px-6 lg:px-20 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -293,13 +297,13 @@ export default function Home() {
         <main
           className={`flex-1 flex w-full max-w-6xl mx-auto px-6 py-12 box-border relative z-10 ${
             generatedData
-              ? 'flex-col md:flex-row gap-6 items-start min-h-0 overflow-hidden'
+              ? 'flex-col md:flex-row gap-6 items-start min-h-0 overflow-hidden md:h-[calc(100vh-112px)]'
               : 'flex-col overflow-y-auto'
           }`}
         >
           {/* Card do formulário */}
           <div
-            className={`w-full shrink-0 ${generatedData ? 'max-w-2xl h-fit' : ''}`}
+            className={`w-full shrink-0 ${generatedData ? 'max-w-2xl h-fit md:h-full md:overflow-y-auto md:pr-1' : ''}`}
           >
             {!generatedData && (
               <section className="flex flex-col lg:flex-row items-center gap-12 mb-16">
@@ -499,7 +503,7 @@ export default function Home() {
           {/* Painel de preview ao lado quando há material gerado */}
           <AnimatePresence>
             {generatedData && (
-              <div className="flex-1 min-w-0 min-h-0 flex flex-col glass-panel rounded-3xl shadow-2xl overflow-hidden border border-white/10">
+              <div className="flex-1 min-w-0 min-h-0 h-full flex flex-col glass-panel rounded-3xl shadow-2xl overflow-hidden border border-white/10">
                 <div className="p-4 border-b border-white/5 flex flex-wrap items-center justify-between gap-3">
                   <span className="text-white font-semibold">Preview do documento</span>
                   <div className="flex flex-wrap gap-2">
@@ -568,9 +572,11 @@ export default function Home() {
           </AnimatePresence>
         </main>
 
-        <footer className="mt-auto py-10 px-6 border-t border-white/5 glass-panel text-center shrink-0">
-          <p className="text-slate-500 text-sm">© {new Date().getFullYear()} Design Beleza - Powered by Advanced Machine Learning. Desenvolvido para o futuro da educação.</p>
-        </footer>
+        {!generatedData && (
+          <footer className="mt-auto py-10 px-6 border-t border-white/5 glass-panel text-center shrink-0">
+            <p className="text-slate-500 text-sm">© {new Date().getFullYear()} Design Beleza - Powered by Advanced Machine Learning. Desenvolvido para o futuro da educação.</p>
+          </footer>
+        )}
       </div>
     </div>
   );

@@ -72,21 +72,40 @@ CAMPOS DE DESIGN EM CADA PÁGINA:
 PRESERVE: sugestao_imagem, prompt_imagem, sugestao_grafico, sugestao_fluxograma, sugestao_tabela, sugestao_icone.`;
 
 const VTSD_REFERENCE_DESIGN_SYSTEM = `
-CURSO "VENDA TODO SANTO DIA" (tema.id = "geral" OU nome contém "venda todo santo dia") — alinhar ao design system:
-https://claude.ai/public/artifacts/93176494-a46d-42b3-a249-1048e4b12099
+CURSO "VENDA TODO SANTO DIA" (tema.id = "geral" OU nome contém "venda todo santo dia") — seguir design system de referência (arquivo "Propt pagina.txt"):
 
-Objetivo visual (alinhar a documentos tipo Claude Artifact / apostila limpa — NÃO cartão escuro atrás da folha, NÃO faixa vertical de cor em 100% da altura):
-- Folha branca ou off-white uniforme; acento só em traço ESQUERDO fino (4px) ou linha curta sob o título — proibido barra lateral colorida de capa a rodapé.
-- Tipografia sans moderna, hierarquia por peso e tamanho (não misturar serif no título e sans no corpo, salvo exceção pontual).
-- Editorial premium, muito espaço em branco; traços e boxes discretos.
-- cor_fundo_principal: preferir #FFFFFF (folha cheia); se usar backgroundColor do tema, mantenha claro e uniforme (sem “cartão” sobre fundo escuro).
-- cor_fundo_destaque: prefira accent para destaques; primary só para detalhes pontuais (títulos/caixas pequenas).
-- cor_texto_principal: cinza escuro legível (#1a1a1a–#2A2A2A) sobre fundo claro; cor_texto_destaque: #FFFFFF apenas dentro de blocos escuros.
-- usar_faixa_decorativa: false na maioria das páginas; true só em no máximo 1 página especial se fizer sentido.
-- usar_barra_lateral: false com frequência; quando true, manter apoio visual leve (evitar barra ocupando 30% com texto vertical pesado).
-- Layouts preferidos: header_destaque ou dois_colunas com respiração; dados_grafico / imagem_lateral / imagem_top apenas quando o conteúdo tiver sugestao_* correspondente.
-- proporção e ritmo: alternar layout_tipo entre páginas para variedade controlada, sem quebrar a consistência de cor e tipografia implícita do design system de referência.
-- Não invente campos fora da lista permitida neste prompt.
+TOKENS OBRIGATÓRIOS (usar estes hex):
+- teal-dark: #0c8492
+- teal-mid: #05a7b5
+- teal-accent: #03dfe6
+- teal-light: #adf8ff
+- text-dark: #2a2a2a
+- text-mid: #595959
+- page-bg: #dedede
+
+TIPOGRAFIA DE REFERÊNCIA:
+- Títulos/headers: estilo Sora (peso alto, tracking negativo leve).
+- Corpo: estilo Inter (14px aprox, line-height enxuto).
+- Citações: estilo Lora itálica quando houver.
+
+REGRAS DE DIAGRAMAÇÃO (mantendo seus campos JSON):
+- Página base clara com cor_fundo_principal próxima de #dedede ou #ffffff.
+- Blocos de destaque escuros em #0c8492 com texto branco.
+- Acentos, badges e elementos de enumeração em #05a7b5.
+- Subtítulos/realces claros em #adf8ff sobre fundo teal.
+- Texto corrido em #595959 e títulos em #0c8492.
+- Evite layout genérico: reproduza ritmo editorial dos layouts A/B/C/D (hero, blocos full-width, coluna lateral, callout de rodapé), sem depender de imagem fixa.
+
+MAPEAMENTO PARA layout_tipo:
+- "header_destaque" para páginas tipo hero/abertura (Layout A).
+- "dois_colunas" para páginas mistas e magazine (Layouts B e D).
+- "lista_icones" para estrutura de etapas/steps (Layout C).
+- "dados_grafico" apenas quando houver sugestao_grafico real.
+- "imagem_top" ou "imagem_lateral" apenas quando houver sugestao_imagem/prompt_imagem.
+
+IMPORTANTE:
+- Título e conteúdo variam conforme o VTT; preserve isso.
+- Não invente campos novos no JSON; só preencher os campos permitidos.
 `;
 
 /**

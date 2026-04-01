@@ -138,8 +138,8 @@ export default function PreviewPage() {
   const rawPaginas = design?.paginas ?? (design as { pages?: unknown[] })?.pages;
   const paginas = Array.isArray(rawPaginas) ? rawPaginas : [];
   const isVtsdPreview =
-    data.curso_id === 'geral' ||
-    (data.tema?.name || '').toLowerCase().includes('venda todo santo dia');
+    data?.curso_id === 'geral' ||
+    (data?.tema?.name || '').toLowerCase().includes('venda todo santo dia');
 
   // Responsivo: escala as páginas (595px) para caber no canvas
   useEffect(() => {

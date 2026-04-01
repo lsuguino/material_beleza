@@ -9,6 +9,7 @@ export interface PageCoverEditorialProps {
   pageNumber?: number;
   showPageNumber?: boolean;
   primary?: string;
+  variant?: 'default' | 'vtsd';
 }
 
 export function PageCoverEditorial({
@@ -18,10 +19,11 @@ export function PageCoverEditorial({
   pageNumber,
   showPageNumber = true,
   primary = 'var(--print-primary)',
+  variant = 'default',
 }: PageCoverEditorialProps) {
   return (
     <section
-      className="page page-cover"
+      className={variant === 'vtsd' ? 'page page-cover vtsd-editorial' : 'page page-cover'}
       style={{ '--print-primary': primary } as React.CSSProperties}
     >
       <h1 className="page-cover-title">{title}</h1>
