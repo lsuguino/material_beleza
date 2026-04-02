@@ -1,6 +1,7 @@
 'use client';
 
 import type { LayoutTipo } from '@/lib/design-agent';
+import { excerptDistinctFromSources } from '@/lib/dedupe-vtt-excerpts';
 import { VTSD_COLOR, VTSD_MARGENS_A4 } from '@/lib/vtsd-design-system';
 
 const PG = VTSD_MARGENS_A4.margens.topo_px;
@@ -229,35 +230,46 @@ export function PageConteudo({
   }
 
   if (layout_tipo === 'A4_2_conteudo_misto') {
-    const calloutHtml = destaques[0] || paragrafos[0] || 'Dica do autor: aproveite cada etapa com foco na execução.';
     const bodyParas = paragrafos;
-    const quote = citacao || bodyParas[bodyParas.length - 1] || '';
-    const midParas = bodyParas.slice(0, Math.max(1, bodyParas.length - 1));
+    const calloutHtml = excerptDistinctFromSources(destaques[0], bodyParas);
+    const pullQuote = excerptDistinctFromSources(citacao, [
+      ...bodyParas,
+      ...(calloutHtml ? [calloutHtml] : []),
+    ]);
+    const bottomText = excerptDistinctFromSources(destaques[1], [
+      ...bodyParas,
+      ...(calloutHtml ? [calloutHtml] : []),
+      ...(pullQuote ? [pullQuote] : []),
+    ]);
     return (
       <div
         className="page-a4 relative overflow-hidden flex flex-col"
         style={{ width: 595, height: 842, backgroundColor: VTSD_COLOR.fundo_page }}
       >
-        <div
-          className="w-full flex-shrink-0 flex flex-col gap-2.5"
-          style={{
-            backgroundColor: blocoEscuro,
-            padding: '20px 50px',
-            marginTop: PG,
-          }}
-        >
-          <p className="font-display font-bold text-[10px] leading-[13px] text-white m-0">
-            <span className="mr-1" aria-hidden>✦</span> Dica do Autor
-          </p>
-          <p className="font-display text-[14px] leading-[15px] text-white m-0">{calloutHtml}</p>
-        </div>
+        {calloutHtml ? (
+          <div
+            className="w-full flex-shrink-0 flex flex-col gap-2.5"
+            style={{
+              backgroundColor: blocoEscuro,
+              padding: '20px 50px',
+              marginTop: PG,
+            }}
+          >
+            <p className="font-display font-bold text-[10px] leading-[13px] text-white m-0">
+              <span className="mr-1" aria-hidden>✦</span> Dica do Autor
+            </p>
+            <p className="font-display text-[14px] leading-[15px] text-white m-0">{calloutHtml}</p>
+          </div>
+        ) : (
+          <div className="flex-shrink-0" style={{ height: PG }} aria-hidden />
+        )}
         <div className="px-[50px] py-5 flex-1 min-h-0 overflow-hidden">
-          {midParas.slice(0, 2).map((p, i) => (
+          {bodyParas.slice(0, 2).map((p, i) => (
             <p key={i} className="font-display text-[14px] leading-[15px] mb-3 m-0" style={{ color: VTSD_COLOR.texto_700 }}>
               {p}
             </p>
           ))}
-          {quote ? (
+          {pullQuote ? (
             <blockquote
               className="font-display italic text-[14px] leading-[15px] m-0 mb-4 py-[15px] pr-5 pl-5"
               style={{
@@ -266,12 +278,12 @@ export function PageConteudo({
                 borderRadius: '0 15px 15px 0',
               }}
             >
-              {quote}
+              {pullQuote}
             </blockquote>
           ) : null}
           <div className="flex gap-0 mt-2">
             <div className="w-[240px] flex-shrink-0 pr-2">
-              {midParas.slice(2, 4).map((p, i) => (
+              {bodyParas.slice(2, 4).map((p, i) => (
                 <p key={i} className="font-display italic text-[14px] leading-[15px] mb-2 m-0" style={{ color: VTSD_COLOR.texto_800 }}>
                   {p}
                 </p>
@@ -291,21 +303,23 @@ export function PageConteudo({
             </div>
           </div>
         </div>
-        <div
-          className="w-full flex-shrink-0 flex flex-col gap-2.5"
-          style={{
-            backgroundColor: blocoEscuro,
-            padding: '15px 50px',
-            marginBottom: VTSD_MARGENS_A4.margens.base_px,
-          }}
-        >
-          <p className="font-display font-bold text-[10px] leading-[13px] m-0" style={{ color: VTSD_COLOR.primary_lighter }}>
-            ✦ Atenção
-          </p>
-          <p className="font-display text-[14px] leading-[15px] text-white m-0">
-            {destaques[1] || paragrafos[paragrafos.length - 1] || 'Revise o conteúdo e aplique na prática.'}
-          </p>
-        </div>
+        {bottomText ? (
+          <div
+            className="w-full flex-shrink-0 flex flex-col gap-2.5"
+            style={{
+              backgroundColor: blocoEscuro,
+              padding: '15px 50px',
+              marginBottom: VTSD_MARGENS_A4.margens.base_px,
+            }}
+          >
+            <p className="font-display font-bold text-[10px] leading-[13px] m-0" style={{ color: VTSD_COLOR.primary_lighter }}>
+              ✦ Atenção
+            </p>
+            <p className="font-display text-[14px] leading-[15px] text-white m-0">{bottomText}</p>
+          </div>
+        ) : (
+          <div className="flex-shrink-0" style={{ marginBottom: VTSD_MARGENS_A4.margens.base_px }} aria-hidden />
+        )}
         <BadgePagina numero={numeroPagina} bg={blocoMedio} />
       </div>
     );
@@ -313,6 +327,7 @@ export function PageConteudo({
 
   if (layout_tipo === 'A4_3_sidebar_steps') {
     const steps = itens.length ? itens : destaques.length ? destaques : paragrafos.slice(0, 4);
+    const citacaoBloco = excerptDistinctFromSources(citacao, paragrafos);
     return (
       <div className="page-a4 relative overflow-hidden flex" style={{ width: 595, height: 842 }}>
         <aside
@@ -357,7 +372,7 @@ export function PageConteudo({
               {p}
             </p>
           ))}
-          {citacao ? (
+          {citacaoBloco ? (
             <blockquote
               className="font-display italic text-[14px] leading-[15px] m-0 mb-4 py-[15px] px-5"
               style={{
@@ -366,7 +381,7 @@ export function PageConteudo({
                 borderRadius: '0 15px 15px 0',
               }}
             >
-              {citacao}
+              {citacaoBloco}
             </blockquote>
           ) : null}
           <div className="space-y-2.5 mt-2 flex-1">
@@ -391,6 +406,7 @@ export function PageConteudo({
   }
 
   if (layout_tipo === 'A4_4_magazine') {
+    const insightRodape = excerptDistinctFromSources(citacao, paragrafos);
     return (
       <div
         className="page-a4 relative overflow-hidden"
@@ -429,21 +445,21 @@ export function PageConteudo({
             </p>
           ))}
         </div>
-        <div
-          className="absolute left-0 w-full z-[1] flex flex-col gap-2.5"
-          style={{
-            bottom: VTSD_MARGENS_A4.margens.base_px,
-            backgroundColor: blocoEscuro,
-            padding: '20px 50px 16px 50px',
-          }}
-        >
-          <p className="font-display font-bold text-[10px] leading-[13px] m-0" style={{ color: VTSD_COLOR.primary_lighter }}>
-            ✦ Insight
-          </p>
-          <p className="font-display italic text-[14px] leading-[15px] text-white m-0">
-            {citacao || paragrafos[0] || 'Citação ou síntese da página.'}
-          </p>
-        </div>
+        {insightRodape ? (
+          <div
+            className="absolute left-0 w-full z-[1] flex flex-col gap-2.5"
+            style={{
+              bottom: VTSD_MARGENS_A4.margens.base_px,
+              backgroundColor: blocoEscuro,
+              padding: '20px 50px 16px 50px',
+            }}
+          >
+            <p className="font-display font-bold text-[10px] leading-[13px] m-0" style={{ color: VTSD_COLOR.primary_lighter }}>
+              ✦ Insight
+            </p>
+            <p className="font-display italic text-[14px] leading-[15px] text-white m-0">{insightRodape}</p>
+          </div>
+        ) : null}
         <BadgePagina numero={numeroPagina} bg={blocoMedio} />
       </div>
     );
@@ -453,18 +469,21 @@ export function PageConteudo({
     return (
       <div className="page-a4 relative overflow-hidden flex" style={{ width: 595, height: 842 }}>
         <aside
-          className="flex flex-col justify-between flex-shrink-0"
+          className="flex flex-col justify-between flex-shrink-0 min-w-0"
           style={{
-            width: 225,
+            width: 242,
             height: '100%',
             backgroundColor: blocoEscuro,
-            padding: '50px 40px 20px 50px',
+            padding: '50px 26px 20px 26px',
             boxSizing: 'border-box',
           }}
         >
-          <div>
+          <div className="min-w-0 w-full">
             <p className="font-display font-semibold text-[9px] text-white/80 m-0">{nomeCurso}</p>
-            <h1 className="font-sora font-bold text-[28px] leading-[40px] text-white m-0 mt-4">
+            <h1
+              lang="pt-BR"
+              className="font-sora font-bold text-white m-0 mt-4 max-w-full text-[26px] leading-snug hyphens-auto break-words [overflow-wrap:anywhere]"
+            >
               {titulo || 'Módulo'}
             </h1>
           </div>

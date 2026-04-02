@@ -41,6 +41,7 @@ REGRAS TÉCNICAS DO APLICATIVO:
    - Formato dos exemplos: array "destaques" com **um item por exemplo** (texto fiel) **ou**, logo após parágrafos de conceito em bloco_principal, linhas "• " só para esses exemplos — **nunca** • para ideias teóricas.
    - Vários exemplos: um bullet cada; não agrupe em parágrafo único sem marcar com •.
    - PROIBIDO inventar exemplos. PROIBIDO usar bullets/destaques para substituir explicação conceitual.
+11. SEM CLONAR TEXTO NA MESMA PÁGINA: "citacao" e cada item de "destaques" devem ser trechos distintos do VTT que **não** repetem o texto de bloco_principal (nem o mesmo parágrafo reformatado). Um exemplo em destaques não pode ser copiado integralmente no bloco_principal da mesma página.
 
 ESTRUTURA DO JSON DE RETORNO:
 {
@@ -64,7 +65,7 @@ ESTRUTURA DO JSON DE RETORNO:
         { "type": "chart", "content": "{\"tipo\":\"barra\",\"titulo\":\"Título\",\"labels\":[\"A\",\"B\"],\"valores\":[10,20]}" }
       ],
       "destaques": [] ou um item por exemplo citado (nunca conceitos em bullet),
-      "citacao": "frase marcante (se houver)",
+      "citacao": "outro trecho fiel do VTT (frase ou parágrafo curto), OBRIGATORIAMENTE diferente de qualquer parágrafo em bloco_principal na mesma página — nunca copie ou reescreva o mesmo texto do corpo; se não houver segundo trecho marcante, omita citacao ou use string vazia",
       "dado_numerico": "número (se houver)",
       "sugestao_imagem": "descrição",
       "prompt_imagem": "prompt curto",
