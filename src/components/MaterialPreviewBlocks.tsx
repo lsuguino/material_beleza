@@ -7,12 +7,17 @@ import { PageIntro } from '@/components/pages/PageIntro';
 import { PageDoubleColumn } from '@/components/pages/PageDoubleColumn';
 import { PageSummary } from '@/components/pages/PageSummary';
 import { renderParagraphParts, type ContentBlockItem } from '@/components/ContentBlocksRenderer';
+import { isRenderableImageUrl } from '@/lib/image-url';
 import {
   normalizeContentBlocks,
   collectPageTextParts,
   collectConceptTextParts,
   shouldAppendPageTextFallback,
 } from '@/lib/normalize-content-blocks';
+import {
+  enrichPaginaImageHints,
+  mergeDesignPageWithConteudo,
+} from '@/lib/preview-page-merge';
 import { PageConteudo, type PaginaComDesign } from '@/components/pages/PageConteudo';
 import type { LayoutTipo } from '@/lib/design-agent';
 
@@ -108,6 +113,7 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
     );
   }
   const design = data.design || data.conteudo;
+  const conteudoFonte = data.conteudo?.paginas;
   const tema = data.tema || {
     name: 'Curso',
     primary: '#0f1823',
@@ -117,7 +123,11 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
   };
   // Aceitar "paginas" ou "pages" (resposta da IA pode variar)
   const rawPaginas = design?.paginas ?? (design as { pages?: PaginaDesign[] })?.pages;
-  const paginas = Array.isArray(rawPaginas) ? rawPaginas : [];
+  const paginas = Array.isArray(rawPaginas)
+    ? rawPaginas.map((p, i) =>
+        enrichPaginaImageHints(mergeDesignPageWithConteudo(p, conteudoFonte?.[i]))
+      )
+    : [];
   const nomeCurso = tema.name || (design as { subtitulo_curso?: string })?.subtitulo_curso || 'Material';
   const tituloGeral = design?.titulo || 'Material gerado';
   const primary = tema.primary ?? '#0f1823';
@@ -203,15 +213,20 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
         const pageNumber = showPageNumber ? index + 1 : undefined;
 
         if (tipo === 'capa') {
+          const capaBloco = typeof pagina.bloco_principal === 'string' ? pagina.bloco_principal.trim() : '';
+          const capaExcerpt =
+            capaBloco.split(/\n\s*\n/).find((s) => s.trim().length > 0)?.trim().slice(0, 720) ||
+            capaBloco.slice(0, 720);
           return wrap(
             <PageCoverEditorial
               title={pagina.titulo || tituloGeral}
               subtitle={pagina.subtitulo}
               nomeCurso={nomeCurso}
               primary={primary}
-              pageNumber={pageNumber}
-              showPageNumber={showPageNumber}
+              pageNumber={isVtsd ? index + 1 : pageNumber}
+              showPageNumber={isVtsd ? false : showPageNumber}
               variant={isVtsd ? 'vtsd' : 'default'}
+              excerpt={capaExcerpt || undefined}
             />
           );
         }
@@ -228,16 +243,13 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
           );
         }
 
-        const heroImageUrl =
-          typeof pagina.imagem_url === 'string' && pagina.imagem_url.startsWith('data:')
-            ? pagina.imagem_url
-            : undefined;
+        const heroImageUrl = isRenderableImageUrl(pagina.imagem_url) ? pagina.imagem_url.trim() : undefined;
 
         if (tipo === 'intro_ref') {
           return wrap(
             <PageIntro
               title={titulo}
-              paragraphs={introParagraphs}
+              paragraphs={isVtsd ? [] : introParagraphs}
               contentBlocks={contentBlocks}
               imagePlaceholder={pagina.sugestao_imagem || 'Imagem'}
               imagePrompt={pagina.prompt_imagem}
@@ -248,6 +260,7 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
               pageNumber={pageNumber}
               showPageNumber={showPageNumber}
               variant={isVtsd ? 'vtsd' : 'default'}
+              vtsdWelcome={isVtsd}
             />
           );
         }
@@ -269,9 +282,14 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
         }
 
         if (isVtsd && tipo === 'conteudo') {
-          const nonTextBlocks = contentBlocks.filter((b) => b.type !== 'text');
-          if (nonTextBlocks.length === 0) {
-            const lt = ((pagina.layout_tipo as string) || 'A4_2_conteudo_misto') as LayoutTipo;
+          const lt = ((pagina.layout_tipo as string) || 'A4_2_conteudo_misto') as LayoutTipo;
+          if (String(lt).startsWith('A4_')) {
+            const visualBlocks = contentBlocks.filter(
+              (b) =>
+                b.type === 'chart' ||
+                b.type === 'mermaid' ||
+                (b.type === 'image' && isRenderableImageUrl(b.imageUrl || b.imagem_url))
+            );
             const paginaComDesign: PaginaComDesign = {
               layout_tipo: lt,
               cor_fundo_principal: (pagina.cor_fundo_principal as string) || '#FFFFFF',
@@ -295,6 +313,7 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
               usar_barra_lateral: pagina.usar_barra_lateral as boolean | undefined,
               usar_faixa_decorativa: pagina.usar_faixa_decorativa as boolean | undefined,
               imagem_url: pagina.imagem_url as string | undefined,
+              extraContentBlocks: visualBlocks.length > 0 ? visualBlocks : undefined,
             };
             return wrap(
               <PageConteudo

@@ -632,22 +632,24 @@ article .material-highlight {
     padding: 0 !important;
     background: #fff !important;
     max-width: none !important;
+    gap: 0 !important;
   }
+  .preview-canvas .flex.flex-col.gap-8 {
+    gap: 0 !important;
+  }
+  /* Quebra só no .page interno (print-editorial.css); evita folha em branco entre páginas */
   .preview-page-wrap {
     box-shadow: none !important;
     margin: 0 !important;
-    page-break-after: always;
-    break-after: page;
-  }
-  .preview-page-wrap:last-child {
-    page-break-after: auto;
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
   .preview-layout {
     background: #fff !important;
   }
   @page {
     size: A4;
-    margin: 12mm;
+    margin: 0;
   }
 }
 
@@ -676,6 +678,8 @@ article .material-highlight {
     margin: 0;
     width: 210mm;
     min-height: 297mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   @page {
     size: A4;

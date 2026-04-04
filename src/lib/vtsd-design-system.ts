@@ -169,6 +169,8 @@ export const VTSD_COLOR = {
   fundo_subtle: '#F6F6F6',
   fundo_dark: '#0C1520',
   fundo_externo: '#C4C4C4',
+  /** Fundo da página de boas-vindas institucional (referência marca) */
+  intro_page_teal: '#1399A4',
   error: '#E01040',
   warning: '#F5A500',
   success: '#0FA846',
@@ -235,3 +237,25 @@ export const VTSD_CSS_VARS: Record<string, string> = {
   '--cor-fundo-externo': '#C4C4C4',
   ...VTSD_MARGENS_CSS_VARS,
 };
+
+/**
+ * Texto grande na faixa da capa (ex.: "SPIN"): prioriza palavras em maiúsculas no título;
+ * senão, iniciais das primeiras palavras significativas.
+ */
+export function vtsdCoverWatermarkFromTitle(title: string): string {
+  const t = title.trim();
+  if (!t) return 'VTSD';
+  const ascii = t.normalize('NFD').replace(/\p{M}/gu, '');
+  const capsWords = ascii.match(/\b[A-ZÀÁÂÃÉÊÍÓÔÚÇ]{2,}\b/g);
+  if (capsWords?.length) {
+    return capsWords.reduce((best, w) => (w.length >= best.length ? w : best));
+  }
+  const words = ascii.split(/\s+/).filter((w) => w.length > 1 && !/^\d/.test(w));
+  if (words.length === 0) return 'VTSD';
+  return words
+    .slice(0, 6)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 8);
+}

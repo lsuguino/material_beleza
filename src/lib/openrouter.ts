@@ -140,6 +140,43 @@ type OpenRouterImagePart = {
   type?: string;
 };
 
+/** Extrai data URL / URL http da mensagem assistant (images[] ou content multimodal). */
+export function extractImageUrlFromOpenRouterMessage(message: Record<string, unknown> | undefined): string | null {
+  if (!message) return null;
+
+  const images = message.images as OpenRouterImagePart[] | undefined;
+  if (Array.isArray(images) && images.length > 0) {
+    const first = images[0];
+    const url =
+      first?.image_url?.url ??
+      first?.imageUrl?.url ??
+      (typeof (first as { url?: string })?.url === 'string' ? (first as { url: string }).url : undefined);
+    if (typeof url === 'string' && (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://'))) {
+      return url;
+    }
+  }
+
+  const content = message.content;
+  if (Array.isArray(content)) {
+    for (const part of content) {
+      if (!part || typeof part !== 'object') continue;
+      const p = part as Record<string, unknown>;
+      const t = String(p.type || '').toLowerCase();
+      if (t === 'image_url') {
+        const iu = p.image_url ?? p.imageUrl;
+        if (iu && typeof iu === 'object') {
+          const url = (iu as { url?: string }).url;
+          if (typeof url === 'string' && (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://'))) {
+            return url;
+          }
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
 /**
  * Gera imagem via OpenRouter (chat/completions + modalities).
  * Retorna data URL (data:image/...;base64,...) ou null.
@@ -197,21 +234,12 @@ export async function openRouterGenerateImage(prompt: string): Promise<string | 
   const message = (data as { choices?: Array<{ message?: Record<string, unknown> }> })?.choices?.[0]?.message;
   if (!message) return null;
 
-  const images = message.images as OpenRouterImagePart[] | undefined;
-  if (!Array.isArray(images) || images.length === 0) {
-    console.warn('[openrouter-image] Resposta sem message.images');
-    return null;
-  }
+  const extracted = extractImageUrlFromOpenRouterMessage(message);
+  if (extracted) return extracted;
 
-  const first = images[0];
-  const url =
-    first?.image_url?.url ??
-    first?.imageUrl?.url ??
-    (typeof (first as { url?: string })?.url === 'string' ? (first as { url: string }).url : undefined);
-
-  if (typeof url === 'string' && url.startsWith('data:')) return url;
-  if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) return url;
-
-  console.warn('[openrouter-image] Formato de imagem inesperado');
+  console.warn(
+    '[openrouter-image] Sem imagem na resposta (sem message.images nem content[].image_url). message keys:',
+    Object.keys(message).join(', ')
+  );
   return null;
 }

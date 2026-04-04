@@ -49,10 +49,7 @@
   letter-spacing: 0.04em;
 }
 
-.page:last-child {
-  page-break-after: auto;
-  break-after: auto;
-}
+/* Última folha no preview: @media print → .preview-page-wrap:last-child .page */
 
 /* ========== Grid utilitário 12 colunas ========== */
 .page-grid {
@@ -299,33 +296,7 @@
   color: #0599a8;
 }
 
-.vtsd-editorial.page-cover {
-  background: #ffffff;
-  align-items: flex-start;
-  justify-content: flex-start;
-  text-align: left;
-  padding: 38px 30px 24px 30px;
-}
-
-.vtsd-editorial.page-cover .page-cover-title {
-  font-family: 'Sora', var(--print-font-sans);
-  font-size: 40px;
-  line-height: 48px;
-  font-weight: 700;
-  color: #0599a8;
-  letter-spacing: -0.02em;
-  text-transform: none;
-  max-width: 92%;
-  margin-top: 8mm;
-}
-
-.vtsd-editorial.page-cover .page-cover-subtitle {
-  font-family: 'Sora', var(--print-font-sans);
-  font-size: 20px;
-  line-height: 24px;
-  font-weight: 600;
-  color: #03dfe6;
-}
+/* Capa VTSD: layout em page-a4 (Book DS / A4_1_abertura), não usa .page-cover editorial */
 
 .vtsd-editorial.page-summary .page-sidebar {
   background: #025468;
@@ -562,6 +533,111 @@
   color: #383838;
 }
 
+/* VTSD — boas-vindas: degradê (menos “chapado”), tokens #025468 → #1399a4 → tom ciano suave */
+.page-intro.vtsd-editorial.vtsd-welcome-page {
+  background: linear-gradient(
+    148deg,
+    #1aadbd 0%,
+    #1399a4 22%,
+    #0d8494 42%,
+    #066d7d 62%,
+    #025468 82%,
+    #023d52 100%
+  ) !important;
+  color: #0d0d0d;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-body {
+  position: relative;
+  z-index: 1;
+  border-left: none !important;
+  padding: 12mm 14mm 10mm 15mm !important;
+  overflow: hidden;
+  background: transparent !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-kicker {
+  font-family: 'Inter', var(--print-font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: #0d0d0d;
+  margin: 0 0 2mm 0;
+  letter-spacing: 0.01em;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-title {
+  font-family: 'Sora', var(--print-font-sans);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  color: #0d0d0d;
+  margin: 0 0 3.5mm 0;
+  line-height: 1.05;
+  text-transform: none;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-title-line {
+  display: block;
+  font-size: clamp(28px, 8mm, 40px);
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-title-accent {
+  width: 36mm;
+  height: 3px;
+  background: #ffffff;
+  border-radius: 1px;
+  margin: 0 0 5mm 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-body > p,
+.page-intro.vtsd-welcome-page .vtsd-welcome-body ul,
+.page-intro.vtsd-welcome-page .vtsd-welcome-body li {
+  font-family: 'Inter', var(--print-font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  color: #ffffff;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-body > p {
+  margin: 0 0 3mm 0;
+  text-align: left;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-signoff {
+  margin-top: 3mm;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-signoff p {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #ffffff;
+  margin: 0 0 0.8mm 0;
+}
+
+.page-intro.vtsd-welcome-page .page-footer.vtsd-welcome-footer {
+  position: relative;
+  z-index: 1;
+  background: #ffffff !important;
+  border-top: 1px solid rgba(13, 13, 13, 0.08) !important;
+  color: #383838 !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-footer-wordmark {
+  font-family: 'Sora', var(--print-font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: #0599a8 !important;
+}
+
 /* Duas colunas: mesma lógica — sem tarja lateral; traço esquerdo na página */
 .page-double-column.vtsd-editorial {
   grid-template-columns: 1fr 1fr;
@@ -645,14 +721,14 @@
     width: 210mm !important;
     min-height: 297mm !important;
     height: auto !important;
-    min-height: 297mm !important;
     margin: 0 !important;
     box-shadow: none !important;
     page-break-after: always !important;
     break-after: page !important;
   }
 
-  .page:last-child {
+  /* Cada folha está dentro de .preview-page-wrap; .page era sempre :last-child do pai → folha extra */
+  .preview-page-wrap:last-child .page {
     page-break-after: auto !important;
     break-after: auto !important;
   }

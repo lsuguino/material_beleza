@@ -1,7 +1,9 @@
 'use client';
 
+import { ContentBlocksRenderer, type ContentBlockItem } from '@/components/ContentBlocksRenderer';
 import type { LayoutTipo } from '@/lib/design-agent';
 import { excerptDistinctFromSources } from '@/lib/dedupe-vtt-excerpts';
+import { isRenderableImageUrl } from '@/lib/image-url';
 import { VTSD_COLOR, VTSD_MARGENS_A4 } from '@/lib/vtsd-design-system';
 
 const PG = VTSD_MARGENS_A4.margens.topo_px;
@@ -67,6 +69,8 @@ export interface PaginaComDesign {
   usar_barra_lateral?: boolean;
   /** Faixa decorativa chevron/zigzag no rodapé */
   usar_faixa_decorativa?: boolean;
+  /** Blocos chart/mermaid/image (gerados) renderizados no layout A4 */
+  extraContentBlocks?: ContentBlockItem[];
   [key: string]: unknown;
 }
 
@@ -87,6 +91,33 @@ function getProporcaoClasses(proporcao?: string): { left: string; right: string 
     default:
       return { left: 'w-[60%]', right: 'w-[40%]' };
   }
+}
+
+/** Descrição / prompt no slot de imagem quando ainda não há `imagem_url` gerada. */
+function ImageAreaPlaceholder({
+  sugestao,
+  prompt,
+  fallback,
+  className,
+}: {
+  sugestao?: string;
+  prompt?: string;
+  fallback: string;
+  className?: string;
+}) {
+  const text = [sugestao?.trim(), prompt?.trim()].filter(Boolean).join('\n\n') || fallback;
+  return (
+    <div className="w-full h-full min-h-[48px] px-3 py-2 overflow-y-auto flex items-center justify-center box-border">
+      <p
+        className={
+          className ??
+          'text-[#575757] font-display text-[11px] leading-relaxed text-center whitespace-pre-wrap max-h-full'
+        }
+      >
+        {text}
+      </p>
+    </div>
+  );
 }
 
 /** Faixa decorativa chevron/zigzag na cor do curso */
@@ -148,10 +179,10 @@ export function PageConteudo({
     usar_barra_lateral,
     usar_faixa_decorativa,
     subtitulo,
+    extraContentBlocks = [],
   } = pagina;
 
-  const imagemGerada =
-    typeof imagemUrlPagina === 'string' && imagemUrlPagina.startsWith('data:') ? imagemUrlPagina : undefined;
+  const imagemGerada = isRenderableImageUrl(imagemUrlPagina) ? imagemUrlPagina.trim() : undefined;
 
   const proporcao = getProporcaoClasses(pagina.proporcao_colunas);
   const blocoEscuro = tema.primaryDark || VTSD_COLOR.primary_darker;
@@ -209,9 +240,12 @@ export function PageConteudo({
           {imagemGerada ? (
             <img src={imagemGerada} alt="" className="w-full h-full object-cover" />
           ) : (
-            <span className="text-[#A8A8A8] font-display text-xs text-center px-8">
-              {sugestao_imagem || prompt_imagem || 'Área de imagem (cover)'}
-            </span>
+            <ImageAreaPlaceholder
+              sugestao={sugestao_imagem}
+              prompt={prompt_imagem}
+              fallback="Área de imagem (cover)"
+              className="text-[#A8A8A8] font-display text-xs text-center whitespace-pre-wrap max-h-full px-2"
+            />
           )}
         </div>
         <div
@@ -296,9 +330,11 @@ export function PageConteudo({
               {imagemGerada ? (
                 <img src={imagemGerada} alt="" className="w-full h-full min-h-[120px] object-cover" />
               ) : (
-                <span className="text-[#A8A8A8] font-display text-[11px] px-2 text-center">
-                  {sugestao_imagem || 'Imagem lateral'}
-                </span>
+                <ImageAreaPlaceholder
+                  sugestao={sugestao_imagem}
+                  prompt={prompt_imagem}
+                  fallback="Imagem lateral"
+                />
               )}
             </div>
           </div>
@@ -320,6 +356,14 @@ export function PageConteudo({
         ) : (
           <div className="flex-shrink-0" style={{ marginBottom: VTSD_MARGENS_A4.margens.base_px }} aria-hidden />
         )}
+        {extraContentBlocks.length > 0 ? (
+          <div
+            className="w-full flex-shrink-0 px-[50px] py-3 overflow-x-auto"
+            style={{ borderTop: `1px solid ${VTSD_COLOR.texto_600}` }}
+          >
+            <ContentBlocksRenderer blocks={extraContentBlocks} />
+          </div>
+        ) : null}
         <BadgePagina numero={numeroPagina} bg={blocoMedio} />
       </div>
     );
@@ -430,9 +474,12 @@ export function PageConteudo({
           {imagemGerada ? (
             <img src={imagemGerada} alt="" className="w-full h-full object-cover z-[1]" />
           ) : (
-            <span className="text-[#A8A8A8] font-display text-[11px] px-4 text-center z-[1]">
-              {sugestao_imagem || prompt_imagem || 'Foto'}
-            </span>
+            <ImageAreaPlaceholder
+              sugestao={sugestao_imagem}
+              prompt={prompt_imagem}
+              fallback="Foto"
+              className="text-[#A8A8A8] font-display text-[11px] px-4 text-center whitespace-pre-wrap max-h-full z-[1]"
+            />
           )}
         </div>
         <div className="absolute left-[307px] top-[176px] w-[240px] z-[1]">
@@ -458,6 +505,18 @@ export function PageConteudo({
               ✦ Insight
             </p>
             <p className="font-display italic text-[14px] leading-[15px] text-white m-0">{insightRodape}</p>
+          </div>
+        ) : null}
+        {extraContentBlocks.length > 0 ? (
+          <div
+            className="absolute z-[2] w-[495px] overflow-x-auto py-2"
+            style={{
+              left: SIDE,
+              bottom: VTSD_MARGENS_A4.margens.base_px + 36,
+              maxHeight: 140,
+            }}
+          >
+            <ContentBlocksRenderer blocks={extraContentBlocks} />
           </div>
         ) : null}
         <BadgePagina numero={numeroPagina} bg={blocoMedio} />
@@ -781,15 +840,22 @@ export function PageConteudo({
               />
             ) : (
               <div
-                className="w-full aspect-square max-h-72 rounded-xl border-2 border-dashed flex flex-col items-center justify-center text-center p-4"
+                className="w-full aspect-square max-h-72 rounded-xl border-2 border-dashed flex flex-col items-stretch justify-center text-center p-4 min-h-0"
                 style={{
                   borderColor: `${cor_texto_principal}40`,
                   color: cor_texto_principal,
                   backgroundColor: cor_fundo_destaque,
                 }}
               >
-                <span className="text-4xl mb-2 opacity-60">🖼</span>
-                <p className="text-xs font-medium opacity-80">{sugestao_imagem || prompt_imagem || 'Imagem sugerida para o conteúdo'}</p>
+                <span className="text-4xl mb-2 opacity-60 shrink-0 text-center">🖼</span>
+                <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden">
+                  <ImageAreaPlaceholder
+                    sugestao={sugestao_imagem}
+                    prompt={prompt_imagem}
+                    fallback="Imagem sugerida para o conteúdo"
+                    className="text-xs font-medium opacity-80 text-center whitespace-pre-wrap max-w-full"
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -898,8 +964,15 @@ export function PageConteudo({
               className="w-[calc(100%-3rem)] h-40 rounded border-2 border-white/20 flex flex-col items-center justify-center text-white/60"
               style={{ borderColor: 'rgba(255,255,255,0.3)' }}
             >
-              <span className="text-4xl opacity-60">🖼</span>
-              <p className="text-xs mt-2 mx-4 text-center">{sugestao_imagem || prompt_imagem || 'Imagem'}</p>
+              <span className="text-4xl opacity-60 shrink-0">🖼</span>
+              <div className="mt-2 mx-2 flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden">
+                <ImageAreaPlaceholder
+                  sugestao={sugestao_imagem}
+                  prompt={prompt_imagem}
+                  fallback="Imagem"
+                  className="text-xs text-white/75 text-center whitespace-pre-wrap max-h-32 overflow-y-auto"
+                />
+              </div>
             </div>
           )}
         </div>

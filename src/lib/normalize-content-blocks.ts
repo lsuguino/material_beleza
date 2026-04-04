@@ -1,4 +1,5 @@
 import type { ContentBlockItem } from '@/components/ContentBlocksRenderer';
+import { isRenderableImageUrl } from '@/lib/image-url';
 
 /** Texto mínimo nos blocos `text` para não duplicar `bloco_principal` no preview. */
 export const MIN_CHARS_TEXT_IN_BLOCKS = 72;
@@ -28,10 +29,12 @@ export function normalizeContentBlocks(raw: unknown): ContentBlockItem[] {
     }
     const imgUrl =
       o.imagem_url != null ? String(o.imagem_url) : o.imageUrl != null ? String(o.imageUrl) : undefined;
+    const promptImagem = t === 'image' && o.prompt_imagem != null ? String(o.prompt_imagem) : undefined;
     out.push({
       type: t as ContentBlockItem['type'],
       content: c,
-      ...(t === 'image' && imgUrl?.startsWith('data:') ? { imageUrl: imgUrl, imagem_url: imgUrl } : {}),
+      ...(t === 'image' && imgUrl && isRenderableImageUrl(imgUrl) ? { imageUrl: imgUrl, imagem_url: imgUrl } : {}),
+      ...(t === 'image' && promptImagem?.trim() ? { prompt_imagem: promptImagem.trim() } : {}),
     });
   }
   return out;

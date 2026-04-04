@@ -10,6 +10,7 @@ import { VTSD_COLOR, VTSD_LAYOUT_A4 } from '@/lib/vtsd-design-system';
 import { getFriendlyErrorMessage } from '@/lib/anthropic-error';
 import { ensureOpenRouterKey, ensureGeminiApiKey } from '@/lib/ensure-env';
 import { applyNanoBananaImagesToPaginas, type PaginaComImagem } from '@/lib/gemini-nano-banana-images';
+import { isRenderableImageUrl } from '@/lib/image-url';
 
 export const maxDuration = 300;
 
@@ -141,6 +142,25 @@ function compactSparseContentPages(conteudo: Record<string, unknown>): Record<st
       const curD = Array.isArray(current.destaques) ? (current.destaques as string[]) : [];
       const nextD = Array.isArray(next.destaques) ? (next.destaques as string[]) : [];
       current.destaques = [...curD, ...nextD].slice(0, 8);
+      for (const key of [
+        'sugestao_imagem',
+        'prompt_imagem',
+        'sugestao_grafico',
+        'sugestao_fluxograma',
+        'sugestao_tabela',
+      ] as const) {
+        const curVal = current[key];
+        const empty =
+          curVal == null ||
+          curVal === '' ||
+          (typeof curVal === 'string' && !String(curVal).trim());
+        if (empty && next[key] != null && next[key] !== '') current[key] = next[key];
+      }
+      const curCb = current.content_blocks;
+      const nextCb = next.content_blocks;
+      if ((!Array.isArray(curCb) || curCb.length === 0) && Array.isArray(nextCb) && nextCb.length > 0) {
+        current.content_blocks = nextCb;
+      }
       i += 1; // consome página seguinte
     }
 
@@ -196,7 +216,10 @@ function mergeDesignIntoContent(
 ): Record<string, unknown> {
   const designPaginas = design.paginas as Array<Record<string, unknown>> | undefined;
   const contentPaginas = conteudo.paginas as Array<Record<string, unknown>> | undefined;
-  if (!Array.isArray(designPaginas) || !Array.isArray(contentPaginas)) return design;
+  if (!Array.isArray(designPaginas) || !Array.isArray(contentPaginas)) {
+    console.warn('[api/generate] mergeDesignIntoContent: design sem paginas alinhadas; mantendo conteudo');
+    return conteudo;
+  }
 
   const paginasComDesign = contentPaginas.map((p, i) => {
     const d = designPaginas[i];
@@ -209,8 +232,8 @@ function mergeDesignIntoContent(
   return { ...conteudo, ...design, paginas: paginasComDesign };
 }
 
-/** Copia URLs de imagem geradas do payload de design para o de conteúdo (mesmo índice de página). */
-function syncGeneratedImagesToConteudo(
+/** Garante que design e conteúdo tenham a mesma URL quando só um lado foi preenchido na geração. */
+function syncRenderableImagesBidirectional(
   designPaginas: PaginaComImagem[],
   conteudoPaginas: PaginaComImagem[]
 ): void {
@@ -218,7 +241,10 @@ function syncGeneratedImagesToConteudo(
   for (let i = 0; i < n; i++) {
     const d = designPaginas[i];
     const c = conteudoPaginas[i];
-    if (d.imagem_url) c.imagem_url = d.imagem_url;
+    const du = isRenderableImageUrl(d.imagem_url) ? String(d.imagem_url) : null;
+    const cu = isRenderableImageUrl(c.imagem_url) ? String(c.imagem_url) : null;
+    if (du && !cu) c.imagem_url = du;
+    if (cu && !du) d.imagem_url = cu;
     const db = d.content_blocks;
     const cb = c.content_blocks;
     if (!Array.isArray(db) || !Array.isArray(cb)) continue;
@@ -226,10 +252,17 @@ function syncGeneratedImagesToConteudo(
       const di = db[j] as Record<string, unknown> | undefined;
       const ci = cb[j] as Record<string, unknown> | undefined;
       if (!di || !ci) continue;
-      const url = di.imagem_url ?? di.imageUrl;
-      if (url && String(url).startsWith('data:')) {
-        ci.imagem_url = url;
-        ci.imageUrl = url;
+      const diUrl = di.imagem_url ?? di.imageUrl;
+      const ciUrl = ci.imagem_url ?? ci.imageUrl;
+      const du2 = isRenderableImageUrl(diUrl) ? String(diUrl) : null;
+      const cu2 = isRenderableImageUrl(ciUrl) ? String(ciUrl) : null;
+      if (du2 && !cu2) {
+        ci.imagem_url = du2;
+        ci.imageUrl = du2;
+      }
+      if (cu2 && !du2) {
+        di.imagem_url = cu2;
+        di.imageUrl = cu2;
       }
     }
   }
@@ -447,17 +480,20 @@ export async function POST(request: NextRequest) {
     // 3. Imagens: OpenRouter (OPENROUTER_MODEL_IMAGE) ou Gemini direto (GEMINI_API_KEY)
     const hasOpenRouterImage =
       !!process.env.OPENROUTER_MODEL_IMAGE?.trim() && !!process.env.OPENROUTER_API_KEY?.trim();
-    const geminiKeyForImages = hasOpenRouterImage ? null : await ensureGeminiApiKey();
+    const geminiKeyForImages = await ensureGeminiApiKey();
+    if (geminiKeyForImages) process.env.GEMINI_API_KEY = geminiKeyForImages;
     if (hasOpenRouterImage || geminiKeyForImages) {
       try {
         const designPaginas = designNorm.paginas as PaginaComImagem[] | undefined;
         const conteudoPaginas = conteudoNorm.paginas as PaginaComImagem[] | undefined;
         if (Array.isArray(designPaginas) && designPaginas.length > 0) {
-          await applyNanoBananaImagesToPaginas(designPaginas);
-          designNorm = { ...designNorm, paginas: designPaginas as unknown[] };
+          const imagePromptCache = new Map<string, string>();
+          await applyNanoBananaImagesToPaginas(designPaginas, imagePromptCache);
           if (Array.isArray(conteudoPaginas) && conteudoPaginas.length > 0) {
-            syncGeneratedImagesToConteudo(designPaginas, conteudoPaginas);
+            await applyNanoBananaImagesToPaginas(conteudoPaginas, imagePromptCache);
+            syncRenderableImagesBidirectional(designPaginas, conteudoPaginas);
           }
+          designNorm = { ...designNorm, paginas: designPaginas as unknown[] };
         }
       } catch (imgErr) {
         console.warn('[api/generate] Etapa de imagens falhou:', imgErr);

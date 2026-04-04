@@ -2,6 +2,13 @@
 
 import { ContentBlocksRenderer, renderParagraphParts, type ContentBlockItem } from '@/components/ContentBlocksRenderer';
 import { contentBlocksTextCharCount, MIN_CHARS_TEXT_IN_BLOCKS } from '@/lib/normalize-content-blocks';
+import {
+  VTSD_INTRO_BODY_PARAGRAPHS,
+  VTSD_INTRO_SIGNOFF_LINES,
+  VTSD_WELCOME_KICKER,
+  VTSD_WELCOME_TITLE_LINE_1,
+  VTSD_WELCOME_TITLE_LINE_2,
+} from '@/lib/vtsd-fixed-copy';
 
 /** Template: imagem de topo sangrada + bloco de cor lateral (Corporate Editorial) */
 
@@ -22,6 +29,8 @@ export interface PageIntroProps {
   accent?: string;
   /** Venda Todo Santo Dia: diagramação alinhada ao design system de referência (artifact) */
   variant?: 'default' | 'vtsd';
+  /** Página de boas-vindas VTSD: título fixo + texto institucional (ignora blocos de imagem da IA) */
+  vtsdWelcome?: boolean;
 }
 
 export function PageIntro({
@@ -37,8 +46,9 @@ export function PageIntro({
   primary = 'var(--print-primary)',
   accent = 'var(--print-accent)',
   variant = 'default',
+  vtsdWelcome = false,
 }: PageIntroProps) {
-  const hasContentBlocks = contentBlocks && contentBlocks.length > 0;
+  const hasContentBlocks = !vtsdWelcome && contentBlocks && contentBlocks.length > 0;
   const firstImageIndex = hasContentBlocks ? contentBlocks.findIndex((b) => b.type === 'image') : -1;
   const firstImageBlock = firstImageIndex >= 0 && contentBlocks ? contentBlocks[firstImageIndex] : null;
   const firstBlockImageUrl = firstImageBlock?.imageUrl || firstImageBlock?.imagem_url;
@@ -54,7 +64,51 @@ export function PageIntro({
     paragraphs.length > 0 &&
     (!bodyBlocks?.length || bodyTextChars < MIN_CHARS_TEXT_IN_BLOCKS);
 
-  const pageClass = variant === 'vtsd' ? 'page page-intro vtsd-editorial' : 'page page-intro';
+  const pageClass =
+    variant === 'vtsd'
+      ? vtsdWelcome
+        ? 'page page-intro vtsd-editorial vtsd-welcome-page'
+        : 'page page-intro vtsd-editorial'
+      : 'page page-intro';
+
+  if (vtsdWelcome && variant === 'vtsd') {
+    return (
+      <section
+        className={pageClass}
+        style={
+          {
+            '--print-primary': primary,
+            '--print-primary-light': primary,
+            '--print-accent': accent,
+          } as React.CSSProperties
+        }
+      >
+        <div className="page-body vtsd-welcome-body">
+          <header className="vtsd-welcome-header">
+            <p className="vtsd-welcome-kicker">{VTSD_WELCOME_KICKER}</p>
+            <h2 className="vtsd-welcome-title">
+              <span className="vtsd-welcome-title-line">{VTSD_WELCOME_TITLE_LINE_1}</span>
+              <span className="vtsd-welcome-title-line">{VTSD_WELCOME_TITLE_LINE_2}</span>
+            </h2>
+            <div className="vtsd-welcome-title-accent" aria-hidden />
+          </header>
+          {renderParagraphParts(VTSD_INTRO_BODY_PARAGRAPHS, 'vtsd-welcome-para')}
+          <div className="vtsd-welcome-signoff">
+            {VTSD_INTRO_SIGNOFF_LINES.map((line, i) => (
+              <p key={i}>{line}</p>
+            ))}
+          </div>
+        </div>
+        <div className="page-sidebar" aria-hidden />
+        <footer className="page-footer vtsd-welcome-footer">
+          <span className="vtsd-footer-wordmark">venda todo santo dia</span>
+          {showPageNumber && typeof pageNumber === 'number' ? (
+            <span>Página {pageNumber}</span>
+          ) : null}
+        </footer>
+      </section>
+    );
+  }
 
   return (
     <section

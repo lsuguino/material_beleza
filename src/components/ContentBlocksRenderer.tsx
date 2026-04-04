@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ChartBlock } from '@/components/ChartBlock';
+import { isRenderableImageUrl } from '@/lib/image-url';
 
 export interface ContentBlockItem {
   type: 'text' | 'image' | 'mermaid' | 'chart';
@@ -9,6 +10,8 @@ export interface ContentBlockItem {
   /** Preenchido após geração (Gemini Nano Banana) — data URL */
   imageUrl?: string;
   imagem_url?: string;
+  /** Descrição curta da IA quando `content` vem vazio */
+  prompt_imagem?: string;
 }
 
 interface ContentBlocksRendererProps {
@@ -120,7 +123,7 @@ export function ContentBlocksRenderer({ blocks, className = '' }: ContentBlocksR
         }
         if (block.type === 'image') {
           const src = block.imageUrl || block.imagem_url;
-          if (src) {
+          if (isRenderableImageUrl(src)) {
             return (
               <figure key={i} className="my-4 w-full overflow-hidden rounded-sm">
                 <img
@@ -129,6 +132,17 @@ export function ContentBlocksRenderer({ blocks, className = '' }: ContentBlocksR
                   className="w-full h-auto object-cover max-h-[280mm]"
                 />
               </figure>
+            );
+          }
+          const desc = [block.content?.trim(), block.prompt_imagem?.trim()].filter(Boolean).join('\n\n');
+          if (desc) {
+            return (
+              <div
+                key={i}
+                className="my-4 rounded border border-dashed border-neutral-300 bg-neutral-100/80 px-4 py-6 text-center text-sm text-neutral-600 whitespace-pre-wrap"
+              >
+                {desc}
+              </div>
             );
           }
           return null;
