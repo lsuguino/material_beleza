@@ -65,6 +65,8 @@ export interface PreviewData {
   design?: { titulo?: string; subtitulo_curso?: string; paginas?: PaginaDesign[] };
   tema?: TemaPreview;
   curso_id?: string;
+  /** Perguntas de estudo geradas na primeira etapa (opção do formulário). */
+  perguntas?: string[];
 }
 
 interface MaterialPreviewBlocksProps {

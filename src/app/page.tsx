@@ -68,6 +68,8 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [cursoId, setCursoId] = useState('geral');
   const [modo, setModo] = useState<Modo>('completo');
+  /** Na primeira geração (arquivo único ou 1º do lote), pede 3 perguntas extras ao backend. */
+  const [comPerguntas, setComPerguntas] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progressStep, setProgressStep] = useState(0);
@@ -96,12 +98,15 @@ export default function Home() {
   }, [loading, generatedData, notifyWhenDone]);
 
   const runGenerate = useCallback(
-    async (textFile: File, effectiveCursoId?: string) => {
+    async (textFile: File, effectiveCursoId?: string, opts?: { comPerguntas?: boolean }) => {
       const cid = effectiveCursoId ?? (cursoId || 'geral');
       const form = new FormData();
       form.append('vtt', textFile);
       form.append('curso_id', cid);
       form.append('modo', modo);
+      if (opts?.comPerguntas) {
+        form.append('com_perguntas', '1');
+      }
       const res = await fetch('/api/generate', { method: 'POST', body: form });
       if (!res.ok) {
         let msg = 'Falha ao gerar material';
@@ -137,7 +142,7 @@ export default function Home() {
     const interval = setInterval(() => setProgressStep((s) => s + 1), 2500);
 
     try {
-      const data = await runGenerate(file, cId);
+      const data = await runGenerate(file, cId, { comPerguntas });
       clearInterval(interval);
       setError(null);
       if (typeof window !== 'undefined') {
@@ -150,7 +155,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [file, cursoId, modo, runGenerate]);
+  }, [file, cursoId, modo, comPerguntas, runGenerate]);
 
   const processNextBatch = useCallback(() => {
     if (batchQueue.length === 0) return;
@@ -167,7 +172,7 @@ export default function Home() {
     setBatchCurrentFile(batchQueue[next]);
     setLoading(true);
     setProgressStep(0);
-    runGenerate(batchQueue[next])
+    runGenerate(batchQueue[next], undefined, { comPerguntas: false })
       .then((data) => {
         if (typeof window !== 'undefined') {
           window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -195,7 +200,7 @@ export default function Home() {
       setGeneratedData(null);
       setLoading(true);
       setProgressStep(0);
-      runGenerate(textFiles[0])
+      runGenerate(textFiles[0], undefined, { comPerguntas })
         .then((data) => {
           if (typeof window !== 'undefined') {
             window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -206,7 +211,7 @@ export default function Home() {
         .catch((err) => setError(err instanceof Error ? err.message : 'Erro'))
         .finally(() => setLoading(false));
     },
-    [runGenerate]
+    [runGenerate, comPerguntas]
   );
 
   const handleDiscardAndRegenerate = useCallback(() => {
@@ -215,7 +220,7 @@ export default function Home() {
     setLoading(true);
     setProgressStep(0);
     setGeneratedData(null);
-    runGenerate(currentBatchFile)
+    runGenerate(currentBatchFile, undefined, { comPerguntas: batchIndex === 0 && comPerguntas })
       .then((data) => {
         if (typeof window !== 'undefined') {
           window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -228,7 +233,7 @@ export default function Home() {
         setLoading(false);
         setBatchRegenerating(false);
       });
-  }, [currentBatchFile, batchQueue.length, runGenerate]);
+  }, [currentBatchFile, batchQueue.length, batchIndex, comPerguntas, runGenerate]);
 
   const openPreviewFull = useCallback(() => {
     router.push('/preview');
@@ -504,6 +509,28 @@ export default function Home() {
                         </div>
                       </div>
 
+                      <div>
+                        <div className="flex items-start gap-3 rounded-xl border-2 border-outline-variant/25 dark:border-outline-variant/35 bg-surface-container-lowest/90 dark:bg-surface-low/35 px-3 py-3 sm:px-4 text-left">
+                          <input
+                            id="com-perguntas"
+                            type="checkbox"
+                            checked={comPerguntas}
+                            onChange={(e) => setComPerguntas(e.target.checked)}
+                            disabled={loading}
+                            className="mt-0.5 h-4 w-4 shrink-0 rounded border-outline-variant text-primary focus:ring-2 focus:ring-primary/40"
+                          />
+                          <label htmlFor="com-perguntas" className="cursor-pointer min-w-0">
+                            <span className="font-semibold text-sm text-on-surface dark:text-white block">
+                              Gerar material com perguntas de estudo
+                            </span>
+                            <span className="text-on-surface-variant dark:text-white/70 text-xs mt-1 block leading-relaxed">
+                              Quando marcado, na primeira geração o sistema também elabora 3 perguntas sobre o tema com base no
+                              seu arquivo.
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+
                       <div className="pt-2 space-y-4">
                         <input
                           ref={(el) => {
@@ -631,6 +658,20 @@ export default function Home() {
                       )}
                     </div>
                   </div>
+                  {generatedData.perguntas && generatedData.perguntas.length > 0 && (
+                    <div className="px-4 py-3 border-b border-outline-variant/40 dark:border-outline-variant/30 shrink-0 bg-primary/6 dark:bg-primary/10">
+                      <p className="text-xs font-bold uppercase tracking-wider text-primary mb-2">
+                        Perguntas para reflexão
+                      </p>
+                      <ol className="list-decimal list-inside space-y-2 text-sm text-on-surface dark:text-white/90 leading-snug">
+                        {generatedData.perguntas.map((q, i) => (
+                          <li key={i} className="pl-0.5">
+                            {q}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
                   <div
                     className={`flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-[320px] dark:bg-[#16171b] ${
                       generatedData.curso_id === 'geral' ||

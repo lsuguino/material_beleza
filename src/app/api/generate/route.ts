@@ -12,6 +12,7 @@ import { getFriendlyErrorMessage } from '@/lib/anthropic-error';
 import { ensureOpenRouterKey, ensureGeminiApiKey } from '@/lib/ensure-env';
 import { applyNanoBananaImagesToPaginas, type PaginaComImagem } from '@/lib/gemini-nano-banana-images';
 import { isRenderableImageUrl } from '@/lib/image-url';
+import { generateThreeStudyQuestions } from '@/lib/study-questions-agent';
 
 export const maxDuration = 300;
 
@@ -357,6 +358,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const comPerguntasRaw = formData.get('com_perguntas');
+    const comPerguntas =
+      comPerguntasRaw === '1' ||
+      comPerguntasRaw === 'true' ||
+      (typeof comPerguntasRaw === 'string' && comPerguntasRaw.toLowerCase() === 'on');
+
     const fileNameRaw = (inputFile as File).name || '';
     const fileName = fileNameRaw.toLowerCase();
     const isPdf = fileName.endsWith('.pdf') || (inputFile as Blob).type === 'application/pdf';
@@ -428,6 +435,21 @@ export async function POST(request: NextRequest) {
         { error: 'O conteúdo gerado não retornou páginas válidas. Tente novamente ou use outro arquivo.' },
         { status: 500 }
       );
+    }
+
+    let perguntas: string[] | undefined;
+    if (comPerguntas) {
+      try {
+        const tituloMat = String(conteudo.titulo ?? '').trim() || 'Material';
+        const subtituloMat = String(conteudo.subtitulo_curso ?? nomeCurso ?? '').trim();
+        perguntas = await generateThreeStudyQuestions({
+          titulo: tituloMat,
+          subtituloCurso: subtituloMat,
+          textoBase: transcricao,
+        });
+      } catch (pqErr) {
+        console.warn('[api/generate] Geração de perguntas de estudo falhou:', pqErr);
+      }
     }
     // Resumo de Palestra Master Fluxo: adiciona contra capa ao final
     if (cursoId === 'master-fluxo' && Array.isArray(conteudo.paginas)) {
@@ -508,6 +530,7 @@ export async function POST(request: NextRequest) {
       design: { ...designNorm, paginas: designNorm.paginas ?? conteudoNorm.paginas ?? [] },
       tema,
       curso_id: cursoId,
+      ...(perguntas && perguntas.length > 0 ? { perguntas } : {}),
     });
   } catch (err) {
     console.error('[api/generate]', err);

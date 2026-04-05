@@ -60,6 +60,14 @@ function buildPlainTextFromPreview(data: PreviewData): string {
     }
   }
 
+  if (data.perguntas?.length) {
+    lines.push('');
+    lines.push('Perguntas para reflexão');
+    for (const q of data.perguntas) {
+      lines.push(`• ${q}`);
+    }
+  }
+
   return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
