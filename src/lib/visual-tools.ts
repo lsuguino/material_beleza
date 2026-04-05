@@ -14,7 +14,7 @@ export const VISUAL_TOOLS_MAP = {
   fluxogramas: {
     tipo: 'mermaid' as const,
     ferramenta: 'Mermaid.js',
-    vantagem: 'O Claude escreve um texto simples e o navegador renderiza como gráfico profissional.',
+    vantagem: 'A IA gera um texto simples e o navegador renderiza como gráfico profissional.',
   },
   /** Gráficos de dados, números, comparações → Chart.js. content_blocks type "chart". */
   graficos_dados: {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { parseVTT } from '@/lib/vtt-parser';
+import { detectTipoEntrada } from '@/lib/detect-tipo-entrada';
 import { parseTextoOrganizado } from '@/lib/text-organizado-parser';
 import { generateContent, generateResumoFromOrganizedText } from '@/lib/content-agent';
 import { generateDesign } from '@/lib/design-agent';
@@ -356,13 +357,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const tipoEntrada = (formData.get('tipo_entrada') as string | null)?.trim() || 'transcricao';
-    const isTextoOrganizado = tipoEntrada === 'organizado';
-
-    const fileName = (inputFile as File).name?.toLowerCase() || '';
+    const fileNameRaw = (inputFile as File).name || '';
+    const fileName = fileNameRaw.toLowerCase();
     const isPdf = fileName.endsWith('.pdf') || (inputFile as Blob).type === 'application/pdf';
 
     let transcricao: string;
+    let isTextoOrganizado: boolean;
+
     if (isPdf) {
       const buf = await (inputFile as Blob).arrayBuffer();
       const buffer = Buffer.from(buf);
@@ -379,6 +380,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+      isTextoOrganizado = detectTipoEntrada(transcricao, fileNameRaw, true) === 'organizado';
     } else {
       let textContent: string;
       if (typeof (inputFile as File).text === 'function') {
@@ -387,6 +389,7 @@ export async function POST(request: NextRequest) {
         const buf = await (inputFile as Blob).arrayBuffer();
         textContent = new TextDecoder('utf-8').decode(buf);
       }
+      isTextoOrganizado = detectTipoEntrada(textContent, fileNameRaw, false) === 'organizado';
       transcricao = parseVTT(textContent);
     }
     if (!transcricao.trim()) {

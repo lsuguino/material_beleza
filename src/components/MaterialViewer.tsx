@@ -13,7 +13,16 @@ function extractLessonNumber(title: string): string {
   return m?.[1] ?? '01';
 }
 
-/** Renderiza texto com **palavra** em cor de destaque (azul) */
+/** Segmentos do gráfico de pizza seguem a cor de destaque (Scribo). */
+const PIE_CHART_COLORS = [
+  'var(--scribo-primary)',
+  'color-mix(in srgb, var(--scribo-primary) 78%, white)',
+  'color-mix(in srgb, var(--scribo-primary) 62%, white)',
+  'color-mix(in srgb, var(--scribo-primary) 48%, white)',
+  'color-mix(in srgb, var(--scribo-primary) 35%, white)',
+] as const;
+
+/** Renderiza texto com **palavra** em cor de destaque (accent Scribo) */
 function renderWithHighlights(text: string) {
   if (!text || typeof text !== 'string') return text;
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
@@ -21,7 +30,7 @@ function renderWithHighlights(text: string) {
     const match = part.match(/^\*\*(.+)\*\*$/);
     if (match) {
       return (
-        <span key={i} className="material-highlight text-primary dark:text-blue-300 font-semibold">
+        <span key={i} className="material-highlight text-primary font-semibold">
           {match[1]}
         </span>
       );
@@ -79,7 +88,7 @@ function Block({ block }: { block: MaterialBlock }) {
             Mapa mental
           </p>
           <div className="flex justify-center mb-6">
-            <div className="px-6 py-3.5 rounded-xl bg-primary text-white font-display font-semibold text-center text-base max-w-md">
+            <div className="px-6 py-3.5 rounded-xl bg-primary text-on-primary font-display font-semibold text-center text-base max-w-md">
               {center}
             </div>
           </div>
@@ -184,13 +193,12 @@ function Block({ block }: { block: MaterialBlock }) {
             ))}
             {type === 'pie' && values.length > 0 && (() => {
               const total = values.reduce((a, b) => a + b, 0) || 1;
-              const colors = ['#135bec', '#1e40af', '#3b82f6', '#60a5fa', '#93c5fd'];
               let acc = 0;
               const stops = values.map((v, i) => {
                 const start = (acc / total) * 100;
                 acc += v;
                 const end = (acc / total) * 100;
-                return `${colors[i % colors.length]} ${start}% ${end}%`;
+                return `${PIE_CHART_COLORS[i % PIE_CHART_COLORS.length]} ${start}% ${end}%`;
               }).join(', ');
               return (
                 <div key="pie" className="flex flex-col sm:flex-row items-center gap-6">
@@ -201,7 +209,10 @@ function Block({ block }: { block: MaterialBlock }) {
                 <ul className="flex flex-col gap-2">
                   {labels.map((label, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm">
-                      <span className="size-3 rounded-full shrink-0" style={{ backgroundColor: ['#135bec', '#1e40af', '#3b82f6', '#60a5fa', '#93c5fd'][i % 5] }} />
+                      <span
+                        className="size-3 rounded-full shrink-0"
+                        style={{ backgroundColor: PIE_CHART_COLORS[i % PIE_CHART_COLORS.length] }}
+                      />
                       <span className="text-slate-800 dark:text-[#0a0a0a] font-medium">{label}</span>
                       <span className="text-slate-700 dark:text-[#0a0a0a] text-xs font-medium">({values[i] ?? 0})</span>
                     </li>
@@ -417,7 +428,7 @@ export function MaterialViewer({ material, courseId = 'geral' }: MaterialViewerP
       {/* Rodapé — estilo livro */}
       <footer className="border-t border-book-blue/30 px-8 md:px-16 py-6 flex flex-col md:flex-row justify-between items-center gap-4 bg-book-cream">
         <p className="text-xs text-slate-600 font-medium tracking-widest uppercase">
-          © {new Date().getFullYear()} Design Beleza
+          © {new Date().getFullYear()} scribo
         </p>
         <div className="flex gap-8">
           <a className="text-xs text-book-blue hover:underline font-medium uppercase tracking-widest" href="#">Suporte</a>

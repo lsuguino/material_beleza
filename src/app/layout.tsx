@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { Inter, Lexend, Lora, Sora } from 'next/font/google';
+import { Inter, Lexend, Lora, Manrope, Sora } from 'next/font/google';
 import { SafeArea } from '@/components/SafeArea';
+import { ScriboUiProvider } from '@/context/ScriboUiContext';
 import './globals.css';
 import './print-editorial.css';
 
@@ -10,6 +11,13 @@ const inter = Inter({
   display: 'swap',
   weight: ['400', '500', '600', '700'],
   style: ['normal', 'italic'],
+});
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  variable: '--font-headline',
+  display: 'swap',
+  weight: ['400', '600', '700', '800'],
 });
 
 const lexend = Lexend({
@@ -32,7 +40,7 @@ const sora = Sora({
 });
 
 export const metadata: Metadata = {
-  title: 'Design Beleza — VTT em material didático',
+  title: 'scribo — VTT em material didático',
   description: 'Transforme a transcrição da sua aula (VTT) em apostila de estudo com design de alto nível.',
 };
 
@@ -42,12 +50,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={`dark ${inter.variable} ${lexend.variable} ${lora.variable} ${sora.variable}`}>
-      <body className="font-display antialiased min-h-screen min-h-[100vh] flex flex-col bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 w-full overflow-x-hidden">
-        {/* SafeArea: evita que a página caia por completo quando um componente der erro */}
-        <SafeArea>
-          {children}
-        </SafeArea>
+    <html
+      lang="pt-BR"
+      suppressHydrationWarning
+      className={`${inter.variable} ${manrope.variable} ${lexend.variable} ${lora.variable} ${sora.variable}`}
+    >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var k='scribo-dark',s=localStorage.getItem(k),d=s==='1'?true:s==='0'?false:window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.classList.toggle('dark',d);}catch(e){}})();`,
+          }}
+        />
+      </head>
+      <body className="font-body antialiased min-h-screen min-h-[100vh] flex flex-col bg-background text-on-surface w-full overflow-x-hidden selection:bg-primary/20 selection:text-on-surface dark:selection:bg-primary/35 dark:selection:text-white">
+        <ScriboUiProvider>
+          <SafeArea>{children}</SafeArea>
+        </ScriboUiProvider>
       </body>
     </html>
   );

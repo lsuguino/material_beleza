@@ -6,6 +6,10 @@ import { AnimatePresence } from 'framer-motion';
 import { MaterialPreviewBlocks, type PreviewData } from '@/components/MaterialPreviewBlocks';
 import { MermaidInit } from '@/components/MermaidInit';
 import { SafeArea } from '@/components/SafeArea';
+import { DropzoneParticles } from '@/components/DropzoneParticles';
+import { ScriboLogo } from '@/components/ScriboLogo';
+import { useScriboUi } from '@/context/ScriboUiContext';
+import { COURSE_PICKER_OPTIONS } from '@/lib/coursePickerOptions';
 
 const STORAGE_KEY = 'rtg-preview-data';
 
@@ -34,12 +38,6 @@ function isAcceptedFile(f: File): boolean {
 }
 
 type Modo = 'completo' | 'resumido';
-type TipoEntrada = 'transcricao' | 'organizado';
-
-interface ThemeOption {
-  id: string;
-  name: string;
-}
 
 function playNotificationSound() {
   if (typeof window === 'undefined') return;
@@ -62,13 +60,14 @@ function playNotificationSound() {
 
 export default function Home() {
   const router = useRouter();
+  const { notifyWhenDone, dark, toggleDark, toggleNotifyWhenDone } = useScriboUi();
+  const loadingWasActive = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropzoneRef = useRef<HTMLLabelElement>(null);
   const batchInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [cursoId, setCursoId] = useState('');
+  const [cursoId, setCursoId] = useState('geral');
   const [modo, setModo] = useState<Modo>('completo');
-  const [tipoEntrada, setTipoEntrada] = useState<TipoEntrada>('transcricao');
-  const [themes, setThemes] = useState<ThemeOption[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progressStep, setProgressStep] = useState(0);
@@ -84,28 +83,25 @@ export default function Home() {
   const currentBatchFile = batchCurrentFile || (batchQueue.length > 0 ? batchQueue[batchIndex] : null);
 
   useEffect(() => {
-    fetch('/api/themes')
-      .then((res) => res.json())
-      .then((data: ThemeOption[]) => {
-        const list = Array.isArray(data) ? data : [];
-        setThemes(list.length > 0 ? list : [{ id: 'geral', name: 'Venda Todo Santo Dia' }]);
-        if (list.length > 0 && !cursoId) setCursoId(list[0].id);
-        if (list.length === 0) setCursoId('geral');
-      })
-      .catch(() => {
-        setThemes([{ id: 'geral', name: 'Venda Todo Santo Dia' }]);
-        setCursoId('geral');
-      });
-  }, [cursoId]);
+    if (loadingWasActive.current && !loading && generatedData && notifyWhenDone) {
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification('scribo', { body: 'Diagramação do material concluída.' });
+        } catch {
+          // ignore
+        }
+      }
+    }
+    loadingWasActive.current = loading;
+  }, [loading, generatedData, notifyWhenDone]);
 
   const runGenerate = useCallback(
     async (textFile: File, effectiveCursoId?: string) => {
-      const cid = effectiveCursoId ?? (cursoId || themes[0]?.id || 'geral');
+      const cid = effectiveCursoId ?? (cursoId || 'geral');
       const form = new FormData();
       form.append('vtt', textFile);
       form.append('curso_id', cid);
       form.append('modo', modo);
-      form.append('tipo_entrada', tipoEntrada);
       const res = await fetch('/api/generate', { method: 'POST', body: form });
       if (!res.ok) {
         let msg = 'Falha ao gerar material';
@@ -120,7 +116,7 @@ export default function Home() {
       }
       return res.json() as Promise<PreviewData>;
     },
-    [cursoId, modo, tipoEntrada, themes]
+    [cursoId, modo]
   );
 
   const handleSubmit = useCallback(async () => {
@@ -128,7 +124,7 @@ export default function Home() {
       setError('Selecione um arquivo de texto (clique em "Selecionar Arquivo" ou arraste o arquivo na área).');
       return;
     }
-    const cId = cursoId || (themes[0]?.id ?? 'geral');
+    const cId = cursoId || 'geral';
     if (!cId) {
       setError('Selecione o curso de destino.');
       return;
@@ -259,234 +255,305 @@ export default function Home() {
     progressStep < PROGRESS_MESSAGES.length
       ? `${((progressStep + 1) / PROGRESS_MESSAGES.length) * 90}%`
       : '90%';
+  const progressPercent =
+    progressStep < PROGRESS_MESSAGES.length
+      ? Math.round(((progressStep + 1) / PROGRESS_MESSAGES.length) * 90)
+      : 90;
+
+  const dropzoneClass = isDragging
+    ? 'border-primary bg-primary/5 dark:bg-primary/15 shadow-lg shadow-primary/20 dark:shadow-primary/30 ring-2 ring-primary/30'
+    : 'border-outline-variant hover:border-primary dark:border-outline-variant/40 dark:hover:border-primary';
 
   return (
     <div
-      className={`font-sans bg-background-dark text-slate-100 flex flex-col relative overflow-x-hidden w-full ${
-        generatedData ? 'h-screen overflow-y-hidden' : 'min-h-screen'
+      className={`font-body bg-background text-on-surface flex w-full overflow-x-hidden selection:bg-primary/20 dark:selection:bg-primary/35 dark:selection:text-white ${
+        generatedData ? 'h-screen min-h-0 flex-col overflow-hidden' : 'min-h-screen flex-col'
       }`}
     >
-      {/* Background Accents */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] pointer-events-none" aria-hidden />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-neon-cyan/10 rounded-full blur-[120px] pointer-events-none" aria-hidden />
-
-      <div className="relative z-20 flex flex-col flex-1 min-h-0 w-full">
-        {/* Header */}
-        <header className="sticky top-0 z-50 glass-panel border-b border-white/5 px-6 lg:px-20 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden h-10 w-10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-2xl">auto_awesome</span>
+      <div className={`flex flex-col flex-1 min-h-0 min-w-0 w-full ${generatedData ? 'h-full overflow-hidden' : ''}`}>
+        <header className="sticky top-0 z-40 shrink-0 bg-[var(--scribo-header-bg)] backdrop-blur-xl">
+          <div className="flex flex-wrap justify-between items-center gap-y-2 w-full px-4 sm:px-6 lg:px-8 xl:px-10 py-2 sm:py-2.5 max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto">
+            <div className="flex items-center min-w-0 shrink-0">
+              <ScriboLogo className="shrink-0 text-[#1a2dc2] transition-colors dark:text-[#7B9CFF]" />
             </div>
-            <h2 className="text-xl font-black tracking-tighter text-white uppercase italic">Design <span className="text-neon-cyan">Beleza</span></h2>
-          </div>
-          <nav className="hidden md:flex items-center gap-10">
-            <a className="text-sm font-semibold text-slate-400 hover:text-neon-cyan transition-colors" href="#">Painel</a>
-            <a className="text-sm font-semibold text-slate-400 hover:text-neon-cyan transition-colors" href="#">Meus Materiais</a>
-            <a className="text-sm font-semibold text-white border-b-2 border-neon-cyan pb-1" href="#">Gerador</a>
-          </nav>
-          <div className="flex items-center gap-4">
-            <button type="button" className="p-2 text-slate-400 hover:text-white transition-colors" aria-label="Notificações">
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
-            <div className="h-10 w-10 rounded-full border-2 border-primary/50 overflow-hidden bg-slate-800 flex items-center justify-center">
-              <span className="material-symbols-outlined text-slate-500">person</span>
+            <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => void toggleNotifyWhenDone()}
+                aria-pressed={notifyWhenDone}
+                title={
+                  notifyWhenDone
+                    ? 'Aviso ao concluir ativo — clique para desligar'
+                    : 'Avisar quando a diagramação terminar'
+                }
+                className={`relative p-1.5 rounded-full transition-colors ${
+                  notifyWhenDone
+                    ? 'text-primary bg-primary/15 dark:bg-primary/25'
+                    : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high/80 dark:hover:bg-surface-high/45'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[20px] sm:text-[22px]">notifications</span>
+                {notifyWhenDone && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary ring-2 ring-[var(--scribo-header-bg)]" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={toggleDark}
+                aria-label={dark ? 'Ativar modo claro' : 'Ativar modo escuro'}
+                title={dark ? 'Modo claro' : 'Modo escuro'}
+                className="p-1.5 rounded-full text-on-surface-variant hover:text-primary hover:bg-surface-container-high/80 dark:hover:bg-surface-high/45 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px] sm:text-[22px]">{dark ? 'light_mode' : 'dark_mode'}</span>
+              </button>
             </div>
           </div>
         </header>
 
         <main
-          className={`flex-1 flex w-full max-w-6xl mx-auto px-6 py-12 box-border relative z-10 ${
-            generatedData
-              ? 'flex-col md:flex-row gap-6 items-start min-h-0 overflow-hidden md:h-[calc(100vh-112px)]'
-              : 'flex-col overflow-y-auto'
+          className={`flex-1 flex flex-col min-h-0 w-full ${
+            generatedData ? 'overflow-hidden' : 'overflow-y-auto'
           }`}
         >
-          {/* Card do formulário */}
-          <div
-            className={`w-full shrink-0 ${generatedData ? 'max-w-2xl h-fit md:h-full md:overflow-y-auto md:pr-1' : ''}`}
-          >
-            {!generatedData && (
-              <section className="flex flex-col lg:flex-row items-center gap-12 mb-16">
-                <div className="flex-1 space-y-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 border border-primary/30 text-xs font-bold text-neon-cyan uppercase tracking-widest">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-cyan opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-neon-cyan" />
+          {!generatedData && (
+            <section className="w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-8 lg:py-10">
+              <div className="mb-8 lg:mb-10 text-left max-w-3xl xl:max-w-4xl">
+                <h1 className="font-headline text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-on-surface dark:text-white tracking-tight leading-[1.12] mb-5">
+                  <span className="block">Geração inteligente de</span>
+                  <span className="mt-1.5 block sm:mt-2">
+                    materiais de estudo com{' '}
+                    <span className="inline-block align-middle rounded-full bg-primary/12 px-3 py-1 text-[0.92em] font-bold uppercase tracking-tight text-primary shadow-sm dark:bg-primary/20 dark:text-[#7B9CFF]">
+                      IA
                     </span>
-                    Nova tecnologia Claude
-                  </div>
-                  <h1 className="text-5xl lg:text-7xl font-black leading-tight text-white tracking-tight">
-                    Gerar Materiais de <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-neon-cyan to-white neon-text-glow">Estudo com IA</span>
-                  </h1>
-                  <p className="text-lg text-slate-400 max-w-xl">
-                    Transforme seus conteúdos brutos em materiais didáticos estruturados, quizzes e resumos otimizados em questão de segundos.
-                  </p>
-                </div>
-                <div className="w-full lg:w-2/5 flex justify-center">
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-primary/30 blur-3xl rounded-full group-hover:bg-neon-cyan/20 transition-all duration-700" />
-                    <div className="relative glass-panel rounded-3xl p-8 border border-white/10 overflow-hidden">
-                      <span className="material-symbols-outlined text-8xl text-neon-cyan/80 animate-pulse">psychology</span>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            <div className="glass-panel rounded-3xl p-8 lg:p-12 mb-12 shadow-2xl relative">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                {/* Upload Area */}
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="material-symbols-outlined text-neon-cyan">upload_file</span>
-                    <h3 className="font-bold text-white uppercase tracking-wider text-sm">Upload de Conteúdo</h3>
-                  </div>
-                  <div className="relative">
-                    <input
-                      id="vtt-file-input"
-                      ref={inputRef}
-                      type="file"
-                      accept=".txt,.vtt,.srt,.md,.csv,.json,.xml,.pdf,text/*,application/x-subrip,application/pdf"
-                      className="absolute w-0 h-0 opacity-0 overflow-hidden"
-                      aria-hidden
-                      tabIndex={-1}
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) {
-                          if (isAcceptedFile(f)) {
-                            setFile(f);
-                            setError(null);
-                          } else {
-                            setError('Selecione um arquivo de texto ou PDF (.txt, .vtt, .srt, .md, .pdf, etc.).');
-                          }
-                        }
-                        e.target.value = '';
-                      }}
-                    />
-                    <label
-                      htmlFor="vtt-file-input"
-                      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.types.includes('Files')) setIsDragging(true); }}
-                      onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); }}
-                      onDrop={handleDrop}
-                      className={isDragging ? 'flex-1 flex flex-col items-center justify-center gap-6 rounded-2xl border-2 border-dashed py-16 px-8 cursor-pointer group transition-all border-neon-cyan bg-white/10' : 'flex-1 flex flex-col items-center justify-center gap-6 rounded-2xl border-2 border-dashed py-16 px-8 cursor-pointer group transition-all border-primary/40 bg-white/5 hover:bg-white/10 hover:border-neon-cyan'}
-                    >
-                      <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:scale-110 transition-transform">
-                        <span className="material-symbols-outlined text-4xl text-neon-cyan">cloud_upload</span>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-white text-xl font-bold mb-2">{file ? file.name : 'Arraste e solte seus arquivos'}</p>
-                        <p className="text-slate-400 text-sm">PDF, TXT, VTT, SRT, MD (Máx 50MB)</p>
-                      </div>
-                      <button type="button" className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl font-bold text-sm border border-white/10 transition-all">
-                        Selecionar Arquivo
-                      </button>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Configuration Area */}
-                <div className="flex flex-col gap-8">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="material-symbols-outlined text-neon-cyan">settings</span>
-                    <h3 className="font-bold text-white uppercase tracking-wider text-sm">Configurações de Geração</h3>
-                  </div>
-                  <div className="space-y-6">
-                    <div className="space-y-3">
-                      <label className="text-sm font-semibold text-slate-300">Tipo de entrada</label>
-                      <div className="flex bg-slate-900/80 p-1.5 rounded-xl border border-white/5 gap-1">
-                        <button type="button" onClick={() => !loading && setTipoEntrada('transcricao')} disabled={loading}
-                          className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${tipoEntrada === 'transcricao' ? 'bg-primary text-white shadow-lg' : 'hover:bg-white/5 text-slate-400'}`}>
-                          Transcrição
-                        </button>
-                        <button type="button" onClick={() => !loading && setTipoEntrada('organizado')} disabled={loading}
-                          className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${tipoEntrada === 'organizado' ? 'bg-primary text-white shadow-lg' : 'hover:bg-white/5 text-slate-400'}`}>
-                          Texto organizado
-                        </button>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <label className="text-sm font-semibold text-slate-300">Selecionar Curso</label>
-                      <div className="relative">
-                        <select
-                          value={cursoId}
-                          onChange={(e) => setCursoId(e.target.value)}
-                          disabled={loading}
-                          className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-5 py-4 text-white focus:ring-2 focus:ring-primary focus:border-transparent appearance-none outline-none disabled:opacity-50"
-                        >
-                          <option value="">Selecione o curso destino...</option>
-                          {themes.map((t) => (
-                            <option key={t.id} value={t.id} className="bg-slate-900 text-white">{t.name}</option>
-                          ))}
-                        </select>
-                        <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">expand_more</span>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <label className="text-sm font-semibold text-slate-300">Tipo de Material</label>
-                      <div className="flex bg-slate-900/80 p-1.5 rounded-xl border border-white/5 gap-1">
-                        <button type="button" onClick={() => !loading && setModo('resumido')} disabled={loading}
-                          className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${modo === 'resumido' ? 'bg-primary text-white shadow-lg' : 'hover:bg-white/5 text-slate-400'}`}>
-                          Resumo
-                        </button>
-                        <button type="button" onClick={() => !loading && setModo('completo')} disabled={loading}
-                          className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all ${modo === 'completo' ? 'bg-primary text-white shadow-lg' : 'hover:bg-white/5 text-slate-400'}`}>
-                          Material Completo
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="pt-6 space-y-4">
-                    <input
-                      ref={(el) => {
-                        (batchInputRef as React.MutableRefObject<HTMLInputElement | null>).current = el;
-                        if (el) el.setAttribute('webkitdirectory', '');
-                      }}
-                      type="file"
-                      accept=".txt,.vtt,.srt,.md,.csv,.json,.xml,.pdf"
-                      className="absolute w-0 h-0 opacity-0 pointer-events-none overflow-hidden"
-                      aria-hidden
-                      multiple
-                      onChange={handleBatchFolder}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSubmit}
-                      disabled={loading}
-                      className="w-full py-5 rounded-2xl bg-gradient-to-r from-primary to-blue-700 text-white font-black uppercase tracking-widest text-lg neon-glow-primary hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                      <span className="material-symbols-outlined">auto_awesome</span>
-                      {loading ? 'Gerando...' : 'Geração Inteligente'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => batchInputRef.current?.click()}
-                      disabled={loading}
-                      className="w-full py-4 rounded-2xl bg-transparent border border-white/10 text-slate-300 font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      <span className="material-symbols-outlined text-xl">layers</span>
-                      Geração em Lote
-                    </button>
-                  </div>
-                </div>
+                  </span>
+                </h1>
+                <p className="max-w-2xl text-[#6b7280] dark:text-white/55 text-base sm:text-lg font-body font-normal leading-relaxed">
+                  Transforme suas transquições de aulas em materiais de estudo, ou resumos em segundos.
+                </p>
               </div>
 
-              {/* Progress Bar */}
-              <div className="mt-12 pt-10 border-t border-white/5">
-                <div className="flex justify-between items-end mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${loading ? 'bg-neon-cyan animate-pulse' : 'bg-slate-600'}`} />
-                    <span className="text-sm font-medium text-slate-300">{loading ? progressLabel : 'Pronto para iniciar'}</span>
-                  </div>
-                  {loading && <span className="text-neon-cyan font-black text-xl">{progressStep < PROGRESS_MESSAGES.length ? Math.round(((progressStep + 1) / PROGRESS_MESSAGES.length) * 90) : 90}%</span>}
+              <div className="flex flex-col gap-7 lg:gap-8 w-full">
+                <div className="group w-full">
+                  <input
+                    id="vtt-file-input"
+                    ref={inputRef}
+                    type="file"
+                    accept=".txt,.vtt,.srt,.md,.csv,.json,.xml,.pdf,text/*,application/x-subrip,application/pdf"
+                    className="sr-only"
+                    tabIndex={-1}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) {
+                        if (isAcceptedFile(f)) {
+                          setFile(f);
+                          setError(null);
+                        } else {
+                          setError('Selecione um arquivo de texto ou PDF (.txt, .vtt, .srt, .md, .pdf, etc.).');
+                        }
+                      }
+                      e.target.value = '';
+                    }}
+                  />
+                  <label
+                    ref={dropzoneRef}
+                    htmlFor="vtt-file-input"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (e.dataTransfer.types.includes('Files')) setIsDragging(true);
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDragging(false);
+                    }}
+                    onDrop={handleDrop}
+                    className={`relative bg-surface-container-lowest dark:bg-surface-container-low/90 rounded-xl p-10 sm:p-12 border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center text-center min-h-[260px] sm:min-h-[300px] cursor-pointer overflow-hidden dark:ring-1 dark:ring-outline-variant/25 ${dropzoneClass}`}
+                  >
+                    <DropzoneParticles containerRef={dropzoneRef} />
+                    <div className="relative z-10 flex flex-col items-center justify-center w-full">
+                      <h3 className="text-lg sm:text-xl font-bold font-headline mb-2 text-on-surface dark:text-white px-1">
+                        {file ? file.name : 'Arraste e solte seus arquivos'}
+                      </h3>
+                      <p className="text-on-surface-variant dark:text-white/75 mb-5 text-xs sm:text-sm px-2">
+                        PDF, TXT, VTT, SRT, MD e outros textos (até 50MB)
+                      </p>
+                      <span className="bg-primary text-white font-semibold py-3.5 px-10 rounded-full shadow-lg shadow-primary/30 dark:shadow-primary/40 ring-2 ring-transparent dark:ring-outline-variant/20 hover:brightness-110 transition-all pointer-events-none inline-block">
+                        Selecionar arquivo
+                      </span>
+                    </div>
+                  </label>
                 </div>
-                <div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden border border-white/5">
-                  <div className="h-full bg-gradient-to-r from-primary to-neon-cyan shadow-[0_0_10px_rgba(0,242,255,0.5)] transition-all duration-500 ease-out" style={{ width: loading ? progressWidth : '0%' }} />
+
+                <div className="w-full">
+                  <div className="bg-surface-container-low dark:bg-surface-container/60 rounded-xl p-5 sm:p-7 shadow-md dark:shadow-xl border border-outline-variant/30 dark:border-0 text-center">
+                    <div className="space-y-7 text-left">
+                      <div>
+                        <label className="text-xs sm:text-sm font-bold text-on-surface-variant dark:text-white/90 uppercase tracking-wider mb-3 block text-center sm:text-left">
+                          Curso relacionado
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-2 gap-y-1.5 sm:gap-x-3 sm:gap-y-2">
+                          {COURSE_PICKER_OPTIONS.map((opt) => {
+                            const selected = cursoId === opt.id;
+                            const logoMaxClass =
+                              opt.id === 'master-fluxo' ||
+                              opt.id === 'lightcopy' ||
+                              opt.id === 'super-ads'
+                                ? 'max-h-3.5 sm:max-h-4'
+                                : 'max-h-7 sm:max-h-8';
+                            return (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                disabled={loading || !opt.enabled}
+                                aria-label={opt.ariaLabel}
+                                aria-pressed={opt.enabled ? selected : undefined}
+                                onClick={() => {
+                                  if (loading || !opt.enabled) return;
+                                  setCursoId(opt.id);
+                                }}
+                                className={`flex min-h-[2.625rem] items-center justify-center rounded-xl border-2 px-2 py-1.5 transition-all sm:min-h-[2.875rem] sm:py-2 ${
+                                  !opt.enabled
+                                    ? 'cursor-not-allowed border-slate-300/90 bg-slate-200/95 dark:border-zinc-500/55 dark:bg-zinc-600/45'
+                                    : selected
+                                      ? 'cursor-pointer border-primary bg-primary/10 shadow-md ring-2 ring-primary/40 dark:bg-primary/15 dark:shadow-[0_0_0_1px_rgba(63,65,77,0.55)]'
+                                      : 'cursor-pointer border-transparent bg-surface-container-lowest/80 dark:bg-surface-low/80 hover:border-primary/30'
+                                }`}
+                              >
+                                {opt.logoSrc ? (
+                                  <img
+                                    src={opt.logoSrc}
+                                    alt=""
+                                    width={200}
+                                    height={52}
+                                    draggable={false}
+                                    className={`${logoMaxClass} w-auto max-w-full object-contain object-center ${
+                                      opt.enabled && selected
+                                        ? 'brightness-0 dark:brightness-100'
+                                        : 'brightness-0 opacity-55 dark:brightness-100 dark:opacity-50'
+                                    }`}
+                                  />
+                                ) : (
+                                  <span
+                                    className={`px-1 text-center text-[10px] font-bold uppercase leading-snug tracking-wide sm:text-[11px] ${
+                                      !opt.enabled
+                                        ? 'text-zinc-500 dark:text-zinc-400'
+                                        : 'text-on-surface'
+                                    }`}
+                                  >
+                                    {opt.ariaLabel}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs sm:text-sm font-bold text-on-surface-variant dark:text-white/90 uppercase tracking-wider mb-3 block text-center sm:text-left">
+                          Tipo de material
+                        </label>
+                        <div className="bg-surface-container-high dark:bg-surface-high/80 p-1.5 rounded-2xl grid grid-cols-2 gap-1.5 border border-outline-variant/20 dark:border-0">
+                          <button
+                            type="button"
+                            onClick={() => !loading && setModo('completo')}
+                            disabled={loading}
+                            aria-pressed={modo === 'completo'}
+                            aria-label="Material completo"
+                            className={`flex items-center justify-center min-w-0 w-full py-3 px-1 sm:px-2 rounded-xl font-semibold text-sm transition-all ${
+                              modo === 'completo'
+                                ? 'bg-surface-container-lowest dark:bg-surface-lowest text-primary shadow-md dark:shadow-[0_0_0_1px_rgba(63,65,77,0.55)] ring-2 ring-primary/40'
+                                : 'text-on-surface-variant dark:text-white/70 hover:text-on-surface dark:hover:text-white'
+                            }`}
+                          >
+                            <img
+                              src="/material-completo.svg"
+                              alt=""
+                              width={357}
+                              height={44}
+                              draggable={false}
+                              className={`h-5 sm:h-6 w-auto max-w-full object-contain object-center pointer-events-none select-none brightness-0 dark:brightness-100 ${
+                                modo === 'completo' ? 'opacity-100' : 'opacity-90'
+                              } dark:opacity-100`}
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => !loading && setModo('resumido')}
+                            disabled={loading}
+                            aria-pressed={modo === 'resumido'}
+                            aria-label="Resumo"
+                            className={`flex items-center justify-center min-w-0 w-full py-3 px-1 sm:px-2 rounded-xl font-semibold text-sm transition-all ${
+                              modo === 'resumido'
+                                ? 'bg-surface-container-lowest dark:bg-surface-lowest text-primary shadow-md dark:shadow-[0_0_0_1px_rgba(63,65,77,0.55)] ring-2 ring-primary/40'
+                                : 'text-on-surface-variant dark:text-white/70 hover:text-on-surface dark:hover:text-white'
+                            }`}
+                          >
+                            <img
+                              src="/resumo.svg"
+                              alt=""
+                              width={178}
+                              height={44}
+                              draggable={false}
+                              className={`h-5 sm:h-6 w-auto max-w-full object-contain object-center pointer-events-none select-none brightness-0 dark:brightness-100 ${
+                                modo === 'resumido' ? 'opacity-100' : 'opacity-90'
+                              } dark:opacity-100`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 space-y-4">
+                        <input
+                          ref={(el) => {
+                            (batchInputRef as React.MutableRefObject<HTMLInputElement | null>).current = el;
+                            if (el) el.setAttribute('webkitdirectory', '');
+                          }}
+                          type="file"
+                          accept=".txt,.vtt,.srt,.md,.csv,.json,.xml,.pdf"
+                          className="sr-only"
+                          aria-hidden
+                          multiple
+                          onChange={handleBatchFolder}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSubmit}
+                          disabled={loading}
+                          aria-busy={loading}
+                          aria-label={loading ? 'Gerando material' : 'Geração inteligente'}
+                          className="w-full bg-primary text-on-primary font-bold text-base py-3 rounded-full border-2 border-primary/90 dark:border-primary/55 shadow-lg shadow-primary/30 hover:brightness-110 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                        >
+                          {loading ? (
+                            <span className="font-bold text-base tracking-tight">Gerando...</span>
+                          ) : (
+                            <img
+                              src="/geracao-inteligente.svg"
+                              alt=""
+                              width={889}
+                              height={88}
+                              className="h-6 sm:h-7 w-auto max-w-[min(100%,42rem)] object-contain object-center pointer-events-none select-none"
+                              draggable={false}
+                            />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => batchInputRef.current?.click()}
+                          disabled={loading}
+                          className="w-full text-primary font-bold py-3 rounded-xl border-2 border-primary/30 dark:border-primary/50 bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/20 transition-all disabled:opacity-50"
+                        >
+                          Gerar uma pasta completa
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {isBatchMode && (
-                <p className="mt-3 text-xs text-slate-400">
+                <p className="mt-6 text-xs text-on-surface-variant dark:text-white/70">
                   Lote: {batchIndex + 1} de {batchQueue.length}
                   {currentBatchFile && ` — ${currentBatchFile.name}`}
                 </p>
@@ -494,87 +561,119 @@ export default function Home() {
 
               <AnimatePresence>
                 {error && (
-                  <div className="mt-6 p-4 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400 text-sm">{error}</div>
+                  <div className="mt-6 p-4 rounded-xl bg-error-container/80 dark:bg-error/20 border border-error/30 dark:border-error/50 text-error dark:text-red-200 text-sm w-full">
+                    {error}
+                  </div>
                 )}
               </AnimatePresence>
-            </div>
-          </div>
 
-          {/* Painel de preview ao lado quando há material gerado */}
+              <footer className="mt-16 py-10 border-t border-outline-variant/40 dark:border-outline-variant/28 text-center">
+                <p className="text-on-surface-variant dark:text-white/65 text-sm">
+                  © {new Date().getFullYear()} scribo — materiais didáticos com IA.
+                </p>
+              </footer>
+            </section>
+          )}
+
           <AnimatePresence>
             {generatedData && (
-              <div className="flex-1 min-w-0 min-h-0 h-full flex flex-col glass-panel rounded-3xl shadow-2xl overflow-hidden border border-white/10">
-                <div className="p-4 border-b border-white/5 flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-white font-semibold">Preview do documento</span>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={openPreviewFull}
-                      className="px-4 py-2 bg-gradient-to-r from-primary to-blue-700 text-white text-sm font-semibold rounded-xl hover:brightness-110 transition-colors flex items-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-lg">open_in_new</span>
-                      Abrir preview completo
-                    </button>
-                    {isBatchMode ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => { if (typeof window !== 'undefined') window.open('/preview'); processNextBatch(); }}
-                          className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1"
-                        >
-                          <span className="material-symbols-outlined text-lg">download</span>
-                          Download PDF
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleDiscardAndRegenerate}
-                          disabled={batchRegenerating || loading}
-                          className="px-4 py-2 bg-amber-600 text-white text-sm font-semibold rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-1 disabled:opacity-50"
-                        >
-                          <span className="material-symbols-outlined text-lg">refresh</span>
-                          Descartar e gerar novamente
-                        </button>
-                        <button
-                          type="button"
-                          onClick={processNextBatch}
-                          className="px-4 py-2 bg-white/80 text-navy text-sm font-semibold rounded-lg hover:bg-white transition-colors"
-                        >
-                          Próximo
-                        </button>
-                      </>
-                    ) : (
+              <div className="flex-1 flex flex-col min-h-0 w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-4 overflow-hidden">
+                <div className="flex-1 min-h-0 flex flex-col bg-surface-container-lowest dark:bg-surface-container-low border border-outline-variant dark:border-outline-variant/35 rounded-xl shadow-sm dark:shadow-xl overflow-hidden">
+                  <div className="p-4 border-b border-outline-variant/50 dark:border-outline-variant/30 flex flex-wrap items-center justify-between gap-3 shrink-0 bg-surface-container-low/50 dark:bg-surface-high/60">
+                    <span className="text-on-surface dark:text-white font-semibold font-headline">Preview do documento</span>
+                    <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => setGeneratedData(null)}
-                        className="px-4 py-2 bg-white/10 text-slate-300 text-sm font-semibold rounded-xl hover:bg-white/20 transition-colors border border-white/10"
+                        onClick={openPreviewFull}
+                        className="px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-full hover:brightness-110 transition-colors flex items-center gap-1 shadow-md shadow-primary/20"
                       >
-                        Gerar novo
+                        <span className="material-symbols-outlined text-lg">open_in_new</span>
+                        Abrir preview completo
                       </button>
-                    )}
+                      {isBatchMode ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (typeof window !== 'undefined') window.open('/preview');
+                              processNextBatch();
+                            }}
+                            className="px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-full hover:brightness-110 transition-colors flex items-center gap-1 shadow-md shadow-primary/25"
+                          >
+                            <span className="material-symbols-outlined text-lg">download</span>
+                            Download PDF
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDiscardAndRegenerate}
+                            disabled={batchRegenerating || loading}
+                            className="px-4 py-2 border-2 border-primary/50 text-primary bg-primary/5 dark:bg-primary/10 text-sm font-semibold rounded-full hover:bg-primary/15 transition-colors flex items-center gap-1 disabled:opacity-50"
+                          >
+                            <span className="material-symbols-outlined text-lg">refresh</span>
+                            Descartar e gerar novamente
+                          </button>
+                          <button
+                            type="button"
+                            onClick={processNextBatch}
+                            className="px-4 py-2 bg-surface-container-high dark:bg-surface-high/45 text-on-surface dark:text-white text-sm font-semibold rounded-full hover:bg-surface-container dark:hover:bg-surface-high/60 transition-colors border border-outline-variant dark:border-outline-variant/40"
+                          >
+                            Próximo
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setGeneratedData(null)}
+                          className="px-4 py-2 bg-surface-container dark:bg-surface-high/40 text-on-surface dark:text-white text-sm font-semibold rounded-full hover:bg-surface-container-high dark:hover:bg-surface-high/55 transition-colors border-2 border-outline-variant dark:border-outline-variant/45"
+                        >
+                          Gerar novo
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div
-                  className={`flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-[400px] ${
-                    generatedData.curso_id === 'geral' ||
-                    (generatedData.tema?.name || '').toLowerCase().includes('venda todo santo dia')
-                      ? 'bg-[#e6e6e4]'
-                      : ''
-                  }`}
-                >
-                  <SafeArea>
-                    <MermaidInit className="flex flex-col items-center">
-                      <MaterialPreviewBlocks data={generatedData} scale={0.35} />
-                    </MermaidInit>
-                  </SafeArea>
+                  <div
+                    className={`flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-[320px] dark:bg-[#16171b] ${
+                      generatedData.curso_id === 'geral' ||
+                      (generatedData.tema?.name || '').toLowerCase().includes('venda todo santo dia')
+                        ? 'bg-[#e6e6e4] dark:bg-[#1e1f24]'
+                        : 'bg-surface-bright'
+                    }`}
+                  >
+                    <SafeArea>
+                      <MermaidInit className="flex flex-col items-center">
+                        <MaterialPreviewBlocks data={generatedData} scale={0.35} />
+                      </MermaidInit>
+                    </SafeArea>
+                  </div>
                 </div>
               </div>
             )}
           </AnimatePresence>
         </main>
 
-        {!generatedData && (
-          <footer className="mt-auto py-10 px-6 border-t border-white/5 glass-panel text-center shrink-0">
-            <p className="text-slate-500 text-sm">© {new Date().getFullYear()} Design Beleza - Powered by Advanced Machine Learning. Desenvolvido para o futuro da educação.</p>
+        {loading && (
+          <footer className="fixed bottom-0 left-0 right-0 z-50 px-6 lg:px-8 py-5 pointer-events-none">
+            <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto w-full pointer-events-auto">
+              <div className="bg-surface-container-highest/90 dark:bg-surface-high/95 backdrop-blur-md rounded-full p-2 pr-5 shadow-2xl border border-outline-variant/30 dark:border-outline-variant/35 dark:ring-1 dark:ring-outline-variant/25 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0 animate-pulse ring-2 ring-primary/30">
+                  <span className="material-symbols-outlined">pending</span>
+                </div>
+                <div className="flex-grow min-w-0">
+                  <div className="flex justify-between items-center mb-1 gap-2">
+                    <span className="text-xs font-black uppercase tracking-widest text-on-surface-variant truncate">
+                      {progressLabel}
+                    </span>
+                    <span className="text-xs font-bold text-primary shrink-0">{progressPercent}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all duration-500 shadow-lg shadow-primary/50"
+                      style={{ width: progressWidth }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </footer>
         )}
       </div>
