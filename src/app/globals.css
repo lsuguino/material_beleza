@@ -374,6 +374,58 @@ body { display: flex; flex-direction: column; }
   animation-delay: -3s, 0.6s;
 }
 
+/* Partículas extras — slots 11-20 (aparecem ao selecionar arquivo) */
+.dropzone-particle-drift--11 {
+  animation-name: dropzone-blue-drift-4, dropzone-blue-fade-pulse;
+  animation-duration: 19s, 3.0s;
+  animation-delay: -7s, -0.3s;
+}
+.dropzone-particle-drift--12 {
+  animation-name: dropzone-blue-drift-2, dropzone-blue-fade-pulse;
+  animation-duration: 15s, 2.4s;
+  animation-delay: -3s, 0.7s;
+}
+.dropzone-particle-drift--13 {
+  animation-name: dropzone-blue-drift-5, dropzone-blue-fade-pulse;
+  animation-duration: 25s, 3.9s;
+  animation-delay: -11s, -0.9s;
+}
+.dropzone-particle-drift--14 {
+  animation-name: dropzone-blue-drift-1, dropzone-blue-fade-pulse;
+  animation-duration: 20s, 2.7s;
+  animation-delay: -9s, 1.2s;
+}
+.dropzone-particle-drift--15 {
+  animation-name: dropzone-blue-drift-3, dropzone-blue-fade-pulse;
+  animation-duration: 13s, 2.0s;
+  animation-delay: -1s, 0.1s;
+}
+.dropzone-particle-drift--16 {
+  animation-name: dropzone-blue-drift-6, dropzone-blue-fade-pulse;
+  animation-duration: 22s, 3.5s;
+  animation-delay: -16s, -0.6s;
+}
+.dropzone-particle-drift--17 {
+  animation-name: dropzone-blue-drift-4, dropzone-blue-fade-pulse;
+  animation-duration: 17s, 2.9s;
+  animation-delay: -4s, 0.9s;
+}
+.dropzone-particle-drift--18 {
+  animation-name: dropzone-blue-drift-2, dropzone-blue-fade-pulse;
+  animation-duration: 27s, 4.2s;
+  animation-delay: -13s, -0.4s;
+}
+.dropzone-particle-drift--19 {
+  animation-name: dropzone-blue-drift-5, dropzone-blue-fade-pulse;
+  animation-duration: 16s, 2.3s;
+  animation-delay: -6s, 0.5s;
+}
+.dropzone-particle-drift--20 {
+  animation-name: dropzone-blue-drift-3, dropzone-blue-fade-pulse;
+  animation-duration: 21s, 3.2s;
+  animation-delay: -18s, -1.1s;
+}
+
 /* Partículas — estado ativo (arquivo selecionado): velocidade ~2.5× e mais vívidas */
 .dropzone-blue-particles--active .dropzone-particle-blob {
   opacity: 0.9;
@@ -411,6 +463,16 @@ body { display: flex; flex-direction: column; }
 .dropzone-blue-particles--active .dropzone-particle-drift--10 {
   animation-duration: 9.5s, 1.6s;
 }
+.dropzone-blue-particles--active .dropzone-particle-drift--11 { animation-duration: 8s,  1.2s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--12 { animation-duration: 6s,  1.0s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--13 { animation-duration: 10s, 1.6s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--14 { animation-duration: 8s,  1.1s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--15 { animation-duration: 5.5s,0.8s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--16 { animation-duration: 9s,  1.4s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--17 { animation-duration: 7s,  1.2s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--18 { animation-duration: 11s, 1.7s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--19 { animation-duration: 6.5s,0.9s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--20 { animation-duration: 8.5s,1.3s; }
 
 /* Fade-pulse mais intenso no estado ativo */
 .dropzone-blue-particles--active .dropzone-particle-drift {
