@@ -5,6 +5,8 @@
 export interface PageSummaryProps {
   title: string;
   items: string[];
+  /** Número real da primeira página de cada item (alinhado com a numeração do PDF) */
+  startPages?: number[];
   sidebarLabel?: string;
   nomeCurso: string;
   pageNumber?: number;
@@ -18,6 +20,7 @@ export interface PageSummaryProps {
 export function PageSummary({
   title,
   items,
+  startPages,
   sidebarLabel = 'Conteúdo',
   nomeCurso,
   pageNumber,
@@ -43,9 +46,14 @@ export function PageSummary({
         <h2>{title}</h2>
         <ul className="page-list">
           {items.map((text, i) => (
-            <li key={i}>
+            <li key={i} style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
               <span className="page-list-num">{i + 1}</span>
-              <span>{text}</span>
+              <span style={{ flex: 1 }}>{text}</span>
+              {startPages?.[i] != null ? (
+                <span style={{ flexShrink: 0, fontSize: '11px', opacity: 0.6, fontVariantNumeric: 'tabular-nums' }}>
+                  p. {startPages[i]}
+                </span>
+              ) : null}
             </li>
           ))}
         </ul>

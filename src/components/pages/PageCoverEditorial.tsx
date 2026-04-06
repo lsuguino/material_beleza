@@ -86,26 +86,24 @@ export function PageCoverEditorial({
             boxSizing: 'border-box',
           }}
         >
-          <div className="flex items-start justify-between gap-4 text-[17px] sm:text-[19px] font-light tracking-tight leading-snug">
-            <span className="min-w-0 flex-1">{moduleLine}</span>
-            <div className="shrink-0 text-right">
-              <span className="block">Aula</span>
-              <span className="block font-semibold text-[28px] leading-tight tracking-tight">
-                Nº {String(badgeNum).padStart(2, '0')}
-              </span>
-            </div>
-          </div>
+          {/* Curso/módulo discreto no topo */}
+          <p className="font-display text-[13px] font-light tracking-tight leading-snug m-0 opacity-75">
+            {moduleLine}
+          </p>
+          {/* Título principal da aula */}
           <h1
-            className="mt-5 font-sora font-bold text-[32px] leading-[1.12] tracking-[-0.02em] m-0 max-w-[95%]"
+            className="mt-4 font-sora font-bold text-[32px] leading-[1.12] tracking-[-0.02em] m-0 max-w-[95%]"
             style={{ fontFamily: 'var(--font-sora), Sora, system-ui, sans-serif' }}
           >
             {title}
           </h1>
-          {stripText ? (
-            <p className="mt-6 font-display text-[13px] leading-[1.45] m-0 max-w-full text-justify opacity-95">{stripText}</p>
+          {/* Subtítulo — apenas uma vez, abaixo do título */}
+          {subtitle?.trim() ? (
+            <p className="mt-5 font-display text-[13px] leading-[1.45] m-0 max-w-full text-justify opacity-90">
+              {subtitle.trim()}
+            </p>
           ) : null}
         </div>
-        {showPageNumber ? <VtsdCoverBadge numero={badgeNum} bg={VTSD_COLOR.primary_dark} /> : null}
       </div>
     );
   }

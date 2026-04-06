@@ -272,6 +272,7 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
             <PageSummary
               title="Sumário"
               items={tocItems}
+              startPages={tocStartPages}
               nomeCurso={nomeCurso}
               sidebarLabel="Conteúdo"
               primary={primary}
