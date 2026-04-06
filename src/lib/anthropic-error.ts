@@ -1,7 +1,8 @@
 /**
- * Mensagens amigáveis para erros de APIs de LLM (OpenRouter, Anthropic, etc.).
+ * Mensagens amigáveis para erros da API Anthropic (Claude).
  */
 
+/** Extrai mensagem de um objeto de erro estruturado. */
 function getMessageFromBody(obj: unknown): string | null {
   if (obj && typeof obj === 'object') {
     const body = obj as Record<string, unknown>;
@@ -12,16 +13,21 @@ function getMessageFromBody(obj: unknown): string | null {
   return null;
 }
 
+/**
+ * Tenta extrair a mensagem de erro de uma string JSON.
+ * O SDK da Anthropic usa o formato: "STATUS_CODE {...json...}"
+ */
 function tryParseJsonMessage(str: string): string | null {
   const trimmed = str.trim();
-  if (
-    (trimmed.startsWith('{') && trimmed.includes('"error"')) ||
-    trimmed.startsWith('400 ')
-  ) {
+  // Remove prefixo de status code: "401 {..." → "{..."
+  const jsonPart = trimmed.replace(/^\d{3}\s+/, '');
+  if (jsonPart.startsWith('{')) {
     try {
-      const json = trimmed.replace(/^\d+\s*/, '');
-      const obj = JSON.parse(json) as { error?: { message?: string } };
-      return obj?.error?.message ?? null;
+      const obj = JSON.parse(jsonPart) as {
+        error?: { message?: string };
+        message?: string;
+      };
+      return obj?.error?.message ?? obj?.message ?? null;
     } catch {
       // ignore
     }
@@ -29,68 +35,76 @@ function tryParseJsonMessage(str: string): string | null {
   return null;
 }
 
-function toFriendlyMessage(englishMessage: string): string {
-  const lower = englishMessage.toLowerCase();
+function toFriendlyMessage(msg: string): string {
+  const lower = msg.toLowerCase();
+
   if (
     lower.includes('credit balance') ||
     lower.includes('too low') ||
     lower.includes('insufficient') ||
-    lower.includes('insufficient credits') ||
     lower.includes('payment required') ||
     lower.includes('402')
   ) {
-    return 'Saldo ou créditos insuficientes no provedor de IA (OpenRouter). Acesse openrouter.ai → Credits / Billing e adicione créditos.';
+    return 'Saldo ou créditos insuficientes na conta Anthropic. Acesse console.anthropic.com → Billing e adicione créditos.';
   }
-  if (lower.includes('user not found')) {
-    return 'OpenRouter não reconheceu esta chave (401). Confira em openrouter.ai/keys se a chave está ativa, se há créditos e crie uma chave nova se necessário. Em .env use só o valor da chave (sem a palavra Bearer) e sem espaços ou quebras de linha.';
-  }
+
   if (
-    lower.includes('invalid_api_key') ||
-    lower.includes('authentication') ||
-    lower.includes('api key') ||
+    lower.includes('invalid x-api-key') ||
+    lower.includes('invalid api key') ||
+    lower.includes('authentication_error') ||
+    lower.includes('user not found') ||
     lower.includes('401') ||
     lower.includes('unauthorized')
   ) {
-    return 'Chave da API inválida ou expirada. Verifique OPENROUTER_API_KEY (openrouter.ai/keys) e créditos na conta.';
+    return 'Chave ANTHROPIC_API_KEY inválida ou expirada. Verifique a chave em console.anthropic.com → API Keys e atualize o .env.local.';
   }
-  if (lower.includes('rate limit') || lower.includes('overloaded')) {
+
+  if (lower.includes('permission') || lower.includes('403')) {
+    return 'Sem permissão para usar este modelo. Verifique os limites da sua conta Anthropic.';
+  }
+
+  if (lower.includes('rate limit') || lower.includes('overloaded') || lower.includes('529')) {
     return 'Muitas requisições no momento. Aguarde alguns segundos e tente novamente.';
   }
-  if (lower.includes('context_length') || lower.includes('token')) {
-    return 'O conteúdo do VTT é muito longo. Tente um arquivo menor ou use o modo Resumido.';
+
+  if (lower.includes('context_length') || lower.includes('too many tokens')) {
+    return 'O conteúdo enviado é muito longo. Tente um arquivo menor ou use o modo Resumido.';
   }
-  return englishMessage;
+
+  return msg;
 }
 
 /**
  * Retorna uma mensagem em português para exibir ao usuário.
+ * Compatível com erros do SDK Anthropic (APIError com .status e .error).
  */
 export function getFriendlyErrorMessage(err: unknown): string {
   const fallback = 'Erro ao gerar material. Tente novamente.';
 
   if (err instanceof Error) {
     const msg = err.message;
+
+    // Tenta extrair do .error (propriedade do SDK Anthropic) ou .body
+    const sdkError = (err as Error & { error?: unknown; body?: unknown }).error;
+    const sdkBody = (err as Error & { body?: unknown }).body;
+    const fromSdk = getMessageFromBody(sdkError) ?? getMessageFromBody(sdkBody);
+
+    // Tenta parsear a string da mensagem (formato "STATUS {...json...}")
     const fromJson = tryParseJsonMessage(msg);
-    const fromBody = getMessageFromBody((err as Error & { body?: unknown }).body);
-    const raw = fromJson ?? fromBody ?? msg;
-    if (
-      raw.includes('credit balance') ||
-      raw.includes('too low') ||
-      raw.includes('invalid_request_error') ||
-      raw.includes('OpenRouter') ||
-      fromJson
-    ) {
+
+    const raw = fromSdk ?? fromJson ?? msg;
+
+    if (raw && raw.length > 0 && raw.length < 600) {
       return toFriendlyMessage(raw);
     }
-    if (raw.length > 0 && raw.length < 500) return raw;
   }
 
-  const body =
-    typeof err === 'object' && err !== null
-      ? (err as Record<string, unknown>).body
-      : undefined;
-  const fromBody = getMessageFromBody(body);
-  if (fromBody) return toFriendlyMessage(fromBody);
+  // Fallback: tenta extrair body do objeto de erro diretamente
+  if (err && typeof err === 'object') {
+    const body = (err as Record<string, unknown>).body ?? (err as Record<string, unknown>).error;
+    const fromBody = getMessageFromBody(body);
+    if (fromBody) return toFriendlyMessage(fromBody);
+  }
 
   return fallback;
 }

@@ -9,9 +9,7 @@ import { generateDesign } from '@/lib/design-agent';
 import { COURSE_THEMES, type CourseId } from '@/lib/courseThemes';
 import { VTSD_COLOR, VTSD_LAYOUT_A4 } from '@/lib/vtsd-design-system';
 import { getFriendlyErrorMessage } from '@/lib/anthropic-error';
-import { ensureOpenRouterKey, ensureGeminiApiKey } from '@/lib/ensure-env';
-import { applyNanoBananaImagesToPaginas, type PaginaComImagem } from '@/lib/gemini-nano-banana-images';
-import { isRenderableImageUrl } from '@/lib/image-url';
+import { ensureOpenRouterKey } from '@/lib/ensure-env';
 import { generateThreeStudyQuestions } from '@/lib/study-questions-agent';
 
 export const maxDuration = 300;
@@ -234,40 +232,46 @@ function mergeDesignIntoContent(
   return { ...conteudo, ...design, paginas: paginasComDesign };
 }
 
-/** Garante que design e conteúdo tenham a mesma URL quando só um lado foi preenchido na geração. */
-function syncRenderableImagesBidirectional(
-  designPaginas: PaginaComImagem[],
-  conteudoPaginas: PaginaComImagem[]
-): void {
-  const n = Math.min(designPaginas.length, conteudoPaginas.length);
-  for (let i = 0; i < n; i++) {
-    const d = designPaginas[i];
-    const c = conteudoPaginas[i];
-    const du = isRenderableImageUrl(d.imagem_url) ? String(d.imagem_url) : null;
-    const cu = isRenderableImageUrl(c.imagem_url) ? String(c.imagem_url) : null;
-    if (du && !cu) c.imagem_url = du;
-    if (cu && !du) d.imagem_url = cu;
-    const db = d.content_blocks;
-    const cb = c.content_blocks;
-    if (!Array.isArray(db) || !Array.isArray(cb)) continue;
-    for (let j = 0; j < Math.min(db.length, cb.length); j++) {
-      const di = db[j] as Record<string, unknown> | undefined;
-      const ci = cb[j] as Record<string, unknown> | undefined;
-      if (!di || !ci) continue;
-      const diUrl = di.imagem_url ?? di.imageUrl;
-      const ciUrl = ci.imagem_url ?? ci.imageUrl;
-      const du2 = isRenderableImageUrl(diUrl) ? String(diUrl) : null;
-      const cu2 = isRenderableImageUrl(ciUrl) ? String(ciUrl) : null;
-      if (du2 && !cu2) {
-        ci.imagem_url = du2;
-        ci.imageUrl = du2;
-      }
-      if (cu2 && !du2) {
-        di.imagem_url = cu2;
-        di.imageUrl = cu2;
-      }
+/**
+ * Limita o material a UMA única página com placeholder de imagem (a primeira página de conteúdo
+ * que contenha sugestao_imagem, prompt_imagem ou um content_block do tipo "image").
+ * A capa mantém sua sugestao_imagem pois é parte da identidade visual do layout.
+ * Todas as outras páginas de conteúdo têm os campos de imagem removidos.
+ */
+function limitToOneImagePerMaterial(conteudo: Record<string, unknown>): Record<string, unknown> {
+  const paginas = conteudo.paginas as Array<Record<string, unknown>> | undefined;
+  if (!Array.isArray(paginas)) return conteudo;
+
+  let imagePageFound = false;
+  const paginasAtualizadas = paginas.map((pagina) => {
+    const tipo = String(pagina.tipo ?? '');
+
+    // Capa mantém sua sugestao_imagem para o layout visual — não conta como "a imagem do material"
+    if (tipo === 'capa') return pagina;
+
+    const hasImageHint = Boolean(pagina.sugestao_imagem || pagina.prompt_imagem);
+    const blocks = pagina.content_blocks as Array<{ type: string }> | undefined;
+    const hasImageBlock = Array.isArray(blocks) && blocks.some((b) => b.type === 'image');
+
+    if ((hasImageHint || hasImageBlock) && !imagePageFound) {
+      imagePageFound = true;
+      return pagina; // mantém esta como a única imagem do material
     }
-  }
+
+    // Remove campos de imagem de todas as outras páginas
+    const { sugestao_imagem: _si, prompt_imagem: _pi, ...rest } = pagina as Record<string, unknown> & {
+      sugestao_imagem?: unknown;
+      prompt_imagem?: unknown;
+    };
+    return {
+      ...rest,
+      content_blocks: Array.isArray(blocks)
+        ? blocks.filter((b) => b.type !== 'image')
+        : blocks,
+    };
+  });
+
+  return { ...conteudo, paginas: paginasAtualizadas };
 }
 
 /** Aplica design padrão (cores do tema + layout) quando o design-agent falha. */
@@ -481,7 +485,8 @@ export async function POST(request: NextRequest) {
       ? injectVtsdReferencePages(conteudoComCompactacao)
       : conteudoComCompactacao;
 
-    const conteudoRecord = conteudoAjustado;
+    // Limita a UMA imagem por material (placeholder descritivo, sem geração real)
+    const conteudoRecord = limitToOneImagePerMaterial(conteudoAjustado);
     let conteudoComDesign: Record<string, unknown>;
 
     try {
@@ -501,29 +506,6 @@ export async function POST(request: NextRequest) {
     };
     const conteudoNorm = normalizePaginas(conteudoRecord);
     let designNorm = normalizePaginas(conteudoComDesign);
-
-    // 3. Imagens: OpenRouter (OPENROUTER_MODEL_IMAGE) ou Gemini direto (GEMINI_API_KEY)
-    const hasOpenRouterImage =
-      !!process.env.OPENROUTER_MODEL_IMAGE?.trim() && !!process.env.OPENROUTER_API_KEY?.trim();
-    const geminiKeyForImages = await ensureGeminiApiKey();
-    if (geminiKeyForImages) process.env.GEMINI_API_KEY = geminiKeyForImages;
-    if (hasOpenRouterImage || geminiKeyForImages) {
-      try {
-        const designPaginas = designNorm.paginas as PaginaComImagem[] | undefined;
-        const conteudoPaginas = conteudoNorm.paginas as PaginaComImagem[] | undefined;
-        if (Array.isArray(designPaginas) && designPaginas.length > 0) {
-          const imagePromptCache = new Map<string, string>();
-          await applyNanoBananaImagesToPaginas(designPaginas, imagePromptCache);
-          if (Array.isArray(conteudoPaginas) && conteudoPaginas.length > 0) {
-            await applyNanoBananaImagesToPaginas(conteudoPaginas, imagePromptCache);
-            syncRenderableImagesBidirectional(designPaginas, conteudoPaginas);
-          }
-          designNorm = { ...designNorm, paginas: designPaginas as unknown[] };
-        }
-      } catch (imgErr) {
-        console.warn('[api/generate] Etapa de imagens falhou:', imgErr);
-      }
-    }
 
     return NextResponse.json({
       conteudo: { ...conteudoNorm, paginas: conteudoNorm.paginas ?? [] },

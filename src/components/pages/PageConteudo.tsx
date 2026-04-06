@@ -191,49 +191,58 @@ export function PageConteudo({
 
   // ——— Layouts A4 design system VTSD (Figma) ———
   if (layout_tipo === 'A4_1_abertura') {
+    // Figma A4-1: split horizontal no topo (esquerda teal 370px / direita cinza 225px),
+    // imagem full-width abaixo do split, texto corrido no rodapé.
+    const IMG_H = 220;
+    const HEADER_H = 370;
+    const TEXT_TOP = HEADER_H + IMG_H;
+    const TEXT_MAX_H = VTSD_MARGENS_A4.area_util.y_fim_px - TEXT_TOP;
     return (
       <div
         className="page-a4 relative overflow-hidden"
-        style={{
-          width: 595,
-          height: 842,
-          backgroundColor: VTSD_COLOR.fundo_page,
-          color: VTSD_COLOR.texto_800,
-        }}
+        style={{ width: 595, height: 842, backgroundColor: VTSD_COLOR.fundo_externo }}
       >
+        {/* — Coluna esquerda: bloco teal com título — */}
         <div
           className="absolute flex flex-col z-[1]"
           style={{
-            left: SIDE,
-            top: PG,
-            width: AREA_W,
-            height: 350,
+            left: 0,
+            top: 0,
+            width: 370,
+            height: HEADER_H,
             backgroundColor: blocoEscuro,
-            padding: '50px 50px 20px 50px',
+            padding: `${PG}px 40px 24px ${SIDE}px`,
             boxSizing: 'border-box',
           }}
         >
-          <h1
-            className="font-sora font-bold text-[40px] leading-[48px] tracking-[-0.025em] text-white m-0"
-          >
+          <h1 className="font-sora font-bold text-[40px] leading-[48px] tracking-[-0.025em] text-white m-0">
             {titulo || 'Capítulo'}
           </h1>
           {subtitulo && (
-            <p
-              className="font-display text-[17px] leading-[20px] mt-4 m-0"
-              style={{ color: VTSD_COLOR.primary_lighter }}
-            >
+            <p className="font-display text-[16px] leading-[20px] mt-4 m-0" style={{ color: VTSD_COLOR.primary_light }}>
               {subtitulo}
             </p>
           )}
         </div>
+        {/* — Coluna direita: fundo cinza claro — */}
         <div
-          className="absolute z-0 overflow-hidden flex items-center justify-center"
+          className="absolute z-0"
           style={{
-            left: SIDE,
-            top: PG + 350 + 10,
-            width: AREA_W,
-            height: 210,
+            left: 370,
+            top: 0,
+            width: 225,
+            height: HEADER_H,
+            backgroundColor: VTSD_COLOR.fundo_externo,
+          }}
+        />
+        {/* — Área de imagem: full-width abaixo do split — */}
+        <div
+          className="absolute z-[1] overflow-hidden flex items-center justify-center"
+          style={{
+            left: 0,
+            top: HEADER_H,
+            width: 595,
+            height: IMG_H,
             backgroundColor: VTSD_COLOR.fundo_box,
           }}
         >
@@ -243,14 +252,22 @@ export function PageConteudo({
             <ImageAreaPlaceholder
               sugestao={sugestao_imagem}
               prompt={prompt_imagem}
-              fallback="Área de imagem (cover)"
-              className="text-[#A8A8A8] font-display text-xs text-center whitespace-pre-wrap max-h-full px-2"
+              fallback="Área de imagem"
+              className="text-[#A8A8A8] font-display text-xs text-center whitespace-pre-wrap max-h-full px-3"
             />
           )}
         </div>
+        {/* — Texto corrido no rodapé — */}
         <div
-          className="absolute z-[1]"
-          style={{ left: SIDE, top: PG + 350 + 10 + 210 + 10, width: AREA_W, maxHeight: VTSD_MARGENS_A4.area_util.y_fim_px - (PG + 350 + 10 + 210 + 10) }}
+          className="absolute z-[1] overflow-hidden"
+          style={{
+            left: SIDE,
+            top: TEXT_TOP,
+            width: AREA_W,
+            maxHeight: TEXT_MAX_H,
+            paddingTop: 16,
+            boxSizing: 'border-box',
+          }}
         >
           {paragrafos.slice(0, 3).map((p, i) => (
             <p key={i} className="font-display text-[14px] leading-[15px] mb-3 m-0 text-justify" style={{ color: VTSD_COLOR.texto_800 }}>
@@ -348,10 +365,10 @@ export function PageConteudo({
               marginBottom: VTSD_MARGENS_A4.margens.base_px,
             }}
           >
-            <p className="font-display font-bold text-[10px] leading-[13px] m-0" style={{ color: VTSD_COLOR.primary_lighter }}>
-              ✦ Atenção
+            <p className="font-sora font-bold text-[12px] leading-[13px] m-0" style={{ color: VTSD_COLOR.primary_light }}>
+              Exercício Prático
             </p>
-            <p className="font-display text-[14px] leading-[15px] text-white m-0">{bottomText}</p>
+            <p className="font-display text-[14px] leading-[15px] text-white m-0 mt-1">{bottomText}</p>
           </div>
         ) : (
           <div className="flex-shrink-0" style={{ marginBottom: VTSD_MARGENS_A4.margens.base_px }} aria-hidden />
@@ -399,17 +416,17 @@ export function PageConteudo({
           <div className="relative">
             <span
               className="font-sora font-bold text-[110px] leading-[120px] tracking-[-0.04em] block select-none"
-              style={{ color: cyanMarca, opacity: 0.12 }}
+              style={{ color: VTSD_COLOR.primary }}
               aria-hidden
             >
-              {numeroPagina}
+              {String(numeroPagina).padStart(2, '0')}
             </span>
-            <p className="font-display font-semibold text-[9px] leading-[13px] text-white/50 m-0 mt-2">{nomeCurso}</p>
+            <p className="font-display font-semibold text-[9px] leading-[13px] text-white/50 m-0 mt-1">{nomeCurso}</p>
           </div>
         </aside>
         <div
           className="flex-1 flex flex-col min-w-0 h-full overflow-hidden"
-          style={{ backgroundColor: VTSD_COLOR.fundo_externo, padding: '20px 16px 40px 16px', boxSizing: 'border-box' }}
+          style={{ backgroundColor: VTSD_COLOR.fundo_externo, padding: `${PG}px 20px 40px 20px`, boxSizing: 'border-box' }}
         >
           {paragrafos.slice(0, 2).map((p, i) => (
             <p key={i} className="font-display text-[14px] leading-[15px] mb-3 m-0" style={{ color: VTSD_COLOR.texto_700 }}>
@@ -463,7 +480,7 @@ export function PageConteudo({
           {titulo || 'Seção'}
         </h2>
         <div
-          className="absolute left-[-38px] top-[176px] w-[304px] h-[382px] z-0"
+          className="absolute left-0 top-[176px] w-[304px] h-[382px] z-0"
           style={{ backgroundColor: blocoEscuro }}
           aria-hidden
         />
@@ -501,10 +518,10 @@ export function PageConteudo({
               padding: '20px 50px 16px 50px',
             }}
           >
-            <p className="font-display font-bold text-[10px] leading-[13px] m-0" style={{ color: VTSD_COLOR.primary_lighter }}>
-              ✦ Insight
+            <p className="font-sora font-bold text-[12px] leading-[13px] m-0" style={{ color: VTSD_COLOR.primary_light }}>
+              ✦ Conceito-Chave
             </p>
-            <p className="font-display italic text-[14px] leading-[15px] text-white m-0">{insightRodape}</p>
+            <p className="font-display text-[14px] leading-[15px] text-white m-0 mt-1">{insightRodape}</p>
           </div>
         ) : null}
         {extraContentBlocks.length > 0 ? (

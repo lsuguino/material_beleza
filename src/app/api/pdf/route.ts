@@ -15,7 +15,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const buffer = await generatePDF(url);
+    const localStorageData =
+      body.data && typeof body.data === 'object' && !Array.isArray(body.data)
+        ? (body.data as Record<string, string>)
+        : undefined;
+
+    const buffer = await generatePDF(url, localStorageData);
 
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,

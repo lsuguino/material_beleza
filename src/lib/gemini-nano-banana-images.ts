@@ -1,14 +1,10 @@
 /**
- * Geração de imagens para materiais didáticos.
- * Prioridade: OpenRouter (`OPENROUTER_MODEL_IMAGE` + `OPENROUTER_API_KEY`).
- * Fallback: API Google Gemini direta (`GEMINI_API_KEY`).
- * @see https://openrouter.ai/docs/guides/overview/multimodal/image-generation
+ * Geração de imagens para materiais didáticos via API Google Gemini direta (`GEMINI_API_KEY`).
  * @see https://ai.google.dev/gemini-api/docs/image-generation
  */
 
 import { ensureGeminiApiKey } from '@/lib/ensure-env';
 import { isRenderableImageUrl } from '@/lib/image-url';
-import { openRouterGenerateImage } from '@/lib/openrouter';
 
 const GEMINI_GENERATE_URL =
   'https://generativelanguage.googleapis.com/v1beta/models';
@@ -166,21 +162,14 @@ export async function generateNanoBananaImage(
 }
 
 /**
- * Tenta OpenRouter (Nano Banana via slug `OPENROUTER_MODEL_IMAGE`),
- * depois Gemini direto se `GEMINI_API_KEY` estiver definida.
+ * Gera imagem via API Google Gemini direta (requer `GEMINI_API_KEY`).
+ * Retorna null se a chave não estiver configurada.
  */
 export async function generateMaterialImage(prompt: string): Promise<string | null> {
   const geminiKey = await ensureGeminiApiKey();
   if (geminiKey) process.env.GEMINI_API_KEY = geminiKey;
-
-  const viaOr = await openRouterGenerateImage(prompt);
-  if (viaOr) return viaOr;
-
   const gk = process.env.GEMINI_API_KEY?.trim();
-  if (!gk) {
-    console.warn('[gemini-image] Sem OPENROUTER_MODEL_IMAGE válido e sem GEMINI_API_KEY para fallback');
-    return null;
-  }
+  if (!gk) return null;
   return generateNanoBananaImage(gk, prompt);
 }
 
@@ -203,7 +192,7 @@ function resolvePageImagePrompt(pagina: PaginaComImagem): string {
 
 /**
  * Terceira etapa do pipeline: preenche `imagem_url` em cada página e nos blocos `type: image`.
- * Usa `generateMaterialImage` (OpenRouter ou Gemini). Cache por prompt na mesma requisição.
+ * Usa `generateMaterialImage` (OpenRouter/Gemini). Cache por prompt na mesma requisição.
  * Passe `cache` compartilhado para processar `design.paginas` e `conteudo.paginas` sem chamadas duplicadas.
  */
 export async function applyNanoBananaImagesToPaginas(

@@ -56,7 +56,8 @@ ESTRUTURA DO JSON DE RETORNO:
     },
     {
       "tipo": "conteudo",
-      "titulo_bloco": "título do bloco",
+      "titulo_bloco": "título do bloco (curto, direto — máx. 8 palavras)",
+      "subtitulo": "subtítulo da página — frase curta que complementa o título (máx. 12 palavras). OBRIGATÓRIO em toda página de conteúdo; aparece em destaque abaixo do título no layout.",
       "bloco_principal": "texto corrido... (use quando não usar content_blocks)",
       "content_blocks": [
         { "type": "text", "content": "Parágrafo ou grupo de parágrafos." },

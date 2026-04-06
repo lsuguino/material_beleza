@@ -119,9 +119,51 @@ export default function PreviewPage() {
     pageRefs.current[index]?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
-  const handlePrint = useCallback(() => {
-    window.print();
-  }, []);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!data) return;
+    setPdfLoading(true);
+    try {
+      const title = (data.conteudo?.titulo || data.design?.titulo || 'material')
+        .toLowerCase()
+        .replace(/[^a-z0-9\u00C0-\u017F]+/gi, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60) || 'material';
+
+      const previewUrl = `${window.location.origin}/preview`;
+      const storagePayload: Record<string, string> = {
+        [STORAGE_KEY]: JSON.stringify(data),
+      };
+
+      const res = await fetch('/api/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: previewUrl, data: storagePayload }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Erro ao gerar PDF.' }));
+        alert(err.error || 'Erro ao gerar PDF.');
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[handleDownloadPdf]', err);
+      alert('Erro inesperado ao gerar o PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(false);
+    }
+  }, [data]);
 
   const handleDownloadText = useCallback(() => {
     if (!data) return;
@@ -200,12 +242,12 @@ export default function PreviewPage() {
       >
         <button
           type="button"
-          onClick={handlePrint}
-          className="w-full py-2.5 rounded-xl font-semibold text-white mb-4 transition-opacity hover:opacity-90"
+          onClick={handleDownloadPdf}
+          disabled={pdfLoading}
+          className="w-full py-2.5 rounded-xl font-semibold text-white mb-4 transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
           style={{ backgroundColor: '#446EFF' }}
-
         >
-          Download PDF
+          {pdfLoading ? 'Gerando PDF...' : 'Download PDF'}
         </button>
         <button
           type="button"

@@ -10,7 +10,7 @@ import { DropzoneParticles } from '@/components/DropzoneParticles';
 import { ScriboLogo } from '@/components/ScriboLogo';
 import { useScriboUi } from '@/context/ScriboUiContext';
 import { COURSE_PICKER_OPTIONS } from '@/lib/coursePickerOptions';
-import { ClipboardQuestionRegular } from '@dev-mbr/icons';
+import { ClipboardQuestionRegular } from '@/vendor/dev-mbr-icons';
 
 const STORAGE_KEY = 'rtg-preview-data';
 

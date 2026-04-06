@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getFriendlyErrorMessage } from '@/lib/anthropic-error';
 import { ensureOpenRouterKey } from '@/lib/ensure-env';
-import { openRouterChat } from '@/lib/openrouter';
+import { openRouterChatByTask } from '@/lib/openrouter';
 
 /**
  * GET /api/check-credits
@@ -19,7 +19,7 @@ export async function GET() {
   process.env.OPENROUTER_API_KEY = apiKey;
 
   try {
-    await openRouterChat({
+    await openRouterChatByTask('text_material', {
       user: 'Responda só: OK',
       max_tokens: 10,
     });

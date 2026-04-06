@@ -73,6 +73,35 @@ export async function ensureOpenRouterKey(): Promise<string | null> {
   return null;
 }
 
+function isPlausibleAnthropicKey(s: string | undefined | null): boolean {
+  if (!s) return false;
+  return s.trim().length >= 20 && s.trim().startsWith('sk-ant-');
+}
+
+/**
+ * Garante que ANTHROPIC_API_KEY está disponível em process.env.
+ * Ordem: chave plausível em process.env → chave plausível em .env.local / .env → qualquer valor não vazio.
+ */
+export async function ensureAnthropicKey(): Promise<string | null> {
+  const keyRaw = process.env.ANTHROPIC_API_KEY?.trim();
+  const fromFile = await loadEnvVarFromFiles('ANTHROPIC_API_KEY');
+
+  if (isPlausibleAnthropicKey(keyRaw)) {
+    process.env.ANTHROPIC_API_KEY = keyRaw!;
+    return keyRaw!;
+  }
+  if (isPlausibleAnthropicKey(fromFile)) {
+    process.env.ANTHROPIC_API_KEY = fromFile!;
+    return fromFile!;
+  }
+  if (keyRaw) return keyRaw;
+  if (fromFile) {
+    process.env.ANTHROPIC_API_KEY = fromFile;
+    return fromFile;
+  }
+  return null;
+}
+
 /** Chave Google AI (Gemini) para geração de imagens (Nano Banana). Opcional. */
 export async function ensureGeminiApiKey(): Promise<string | null> {
   const key = process.env.GEMINI_API_KEY?.trim();

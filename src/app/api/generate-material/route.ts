@@ -71,7 +71,7 @@ function materialTextChars(material: Omit<TeachingMaterial, 'createdAt'>): numbe
   return total;
 }
 
-/** Refina o prompt de imagem via LLM (OpenRouter): mais detalhado e adequado para material didático. */
+/** Refina o prompt de imagem via Claude: mais detalhado e adequado para material didático. */
 async function refineImagePromptWithLlm(originalPrompt: string): Promise<string> {
   try {
     const text = await openRouterChatByTask('text_material', {
