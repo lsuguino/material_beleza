@@ -80,6 +80,9 @@ export default function Home() {
   /** Controla o colapso animado da área de upload ao iniciar geração */
   const [dropzoneCollapsing, setDropzoneCollapsing] = useState(false);
 
+  /** Referência ao AbortController ativo — permite cancelar a geração em curso */
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const [batchQueue, setBatchQueue] = useState<File[]>([]);
   const [batchIndex, setBatchIndex] = useState(0);
   const [batchCurrentFile, setBatchCurrentFile] = useState<File | null>(null);
@@ -102,7 +105,7 @@ export default function Home() {
   }, [loading, generatedData, notifyWhenDone]);
 
   const runGenerate = useCallback(
-    async (textFile: File, effectiveCursoId?: string, opts?: { comPerguntas?: boolean }) => {
+    async (textFile: File, effectiveCursoId?: string, opts?: { comPerguntas?: boolean; signal?: AbortSignal }) => {
       const cid = effectiveCursoId ?? (cursoId || 'geral');
       const form = new FormData();
       form.append('vtt', textFile);
@@ -111,7 +114,7 @@ export default function Home() {
       if (opts?.comPerguntas) {
         form.append('com_perguntas', '1');
       }
-      const res = await fetch('/api/generate', { method: 'POST', body: form });
+      const res = await fetch('/api/generate', { method: 'POST', body: form, signal: opts?.signal });
       if (!res.ok) {
         let msg = 'Falha ao gerar material';
         try {
@@ -127,6 +130,20 @@ export default function Home() {
     },
     [cursoId, modo]
   );
+
+  /** Cancela a geração em curso e retorna à área de seleção de arquivo. */
+  const handleCancelGeneration = useCallback(() => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setLoading(false);
+    setProgressStep(0);
+    setDropzoneCollapsing(false);
+    setError(null);
+    // Limpa lote se estiver em modo batch
+    setBatchQueue([]);
+    setBatchIndex(0);
+    setBatchCurrentFile(null);
+  }, []);
 
   const handleSubmit = useCallback(async () => {
     if (!file) {
@@ -147,10 +164,13 @@ export default function Home() {
     setProgressStep(0);
     setGeneratedData(null);
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     const interval = setInterval(() => setProgressStep((s) => s + 1), 2500);
 
     try {
-      const data = await runGenerate(file, cId, { comPerguntas });
+      const data = await runGenerate(file, cId, { comPerguntas, signal: controller.signal });
       clearInterval(interval);
       setError(null);
       if (typeof window !== 'undefined') {
@@ -159,11 +179,14 @@ export default function Home() {
       setGeneratedData(data);
     } catch (err) {
       clearInterval(interval);
+      // Ignora erro de cancelamento (AbortError)
+      if (err instanceof Error && err.name === 'AbortError') return;
       setError(err instanceof Error ? err.message : 'Erro ao gerar material');
       // Reabre o dropzone se der erro
       setDropzoneCollapsing(false);
     } finally {
       setLoading(false);
+      abortControllerRef.current = null;
     }
   }, [file, cursoId, modo, comPerguntas, runGenerate]);
 
@@ -720,7 +743,7 @@ export default function Home() {
         {loading && (
           <footer className="fixed bottom-0 left-0 right-0 z-50 px-6 lg:px-8 py-5 pointer-events-none">
             <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto w-full pointer-events-auto">
-              <div className="bg-surface-container-highest/90 dark:bg-surface-high/95 backdrop-blur-md rounded-full p-2 pr-5 shadow-2xl border border-outline-variant/30 dark:border-outline-variant/35 dark:ring-1 dark:ring-outline-variant/25 flex items-center gap-4">
+              <div className="bg-surface-container-highest/90 dark:bg-surface-high/95 backdrop-blur-md rounded-full p-2 pr-3 shadow-2xl border border-outline-variant/30 dark:border-outline-variant/35 dark:ring-1 dark:ring-outline-variant/25 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0 animate-pulse ring-2 ring-primary/30">
                   <span className="material-symbols-outlined">pending</span>
                 </div>
@@ -738,6 +761,15 @@ export default function Home() {
                     />
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleCancelGeneration}
+                  title="Cancelar geração"
+                  aria-label="Cancelar geração e voltar à seleção de arquivo"
+                  className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 dark:hover:bg-error/15 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
               </div>
             </div>
           </footer>
