@@ -133,12 +133,16 @@ export function FooterParticles({ hasFile, generating }: FooterParticlesProps) {
         p.x += p.vx;
         p.y += p.vy;
 
-        // Wrap around edges
-        const pad = p.r + 2;
-        if (p.x < -pad) p.x = w + pad;
-        else if (p.x > w + pad) p.x = -pad;
-        if (p.y < -pad) p.y = h + pad;
-        else if (p.y > h + pad) p.y = -pad;
+        // Soft boundary repulsion — keeps particles inside canvas with padding
+        const margin = p.r + 32;
+        const edgeForce = 0.18;
+        if (p.x < margin)     p.vx += edgeForce * (1 - p.x / margin);
+        if (p.x > w - margin) p.vx -= edgeForce * (1 - (w - p.x) / margin);
+        if (p.y < margin)     p.vy += edgeForce * (1 - p.y / margin);
+        if (p.y > h - margin) p.vy -= edgeForce * (1 - (h - p.y) / margin);
+        // Hard clamp as safety net
+        p.x = Math.max(p.r, Math.min(w - p.r, p.x));
+        p.y = Math.max(p.r, Math.min(h - p.r, p.y));
 
         // Fade near top → illusion of going behind the card above
         const fadeTop = h * FADE_TOP;
