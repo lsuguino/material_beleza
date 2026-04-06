@@ -621,6 +621,38 @@ export default function Home() {
                         >
                           Gerar uma pasta completa
                         </button>
+
+                        {/* Barra de progresso — aparece logo abaixo, no lugar do botão */}
+                        {loading && (
+                          <div className="bg-surface-container-highest/90 dark:bg-surface-high/95 backdrop-blur-md rounded-2xl p-3 pr-3 shadow-xl border border-outline-variant/30 dark:border-outline-variant/35 dark:ring-1 dark:ring-outline-variant/25 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0 animate-pulse ring-2 ring-primary/30">
+                              <span className="material-symbols-outlined text-[20px]">pending</span>
+                            </div>
+                            <div className="flex-grow min-w-0">
+                              <div className="flex justify-between items-center mb-1 gap-2">
+                                <span className="text-xs font-black uppercase tracking-widest text-on-surface-variant truncate">
+                                  {progressLabel}
+                                </span>
+                                <span className="text-xs font-bold text-primary shrink-0">{progressPercent}%</span>
+                              </div>
+                              <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-primary rounded-full transition-all duration-500 shadow-lg shadow-primary/50"
+                                  style={{ width: progressWidth }}
+                                />
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleCancelGeneration}
+                              title="Cancelar geração"
+                              aria-label="Cancelar geração e voltar à seleção de arquivo"
+                              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 dark:hover:bg-error/15 transition-colors"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">close</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -738,40 +770,6 @@ export default function Home() {
           </AnimatePresence>
         </main>
 
-        {loading && (
-          <footer className="fixed bottom-0 left-0 right-0 z-50 px-6 lg:px-8 py-5 pointer-events-none">
-            <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto w-full pointer-events-auto">
-              <div className="bg-surface-container-highest/90 dark:bg-surface-high/95 backdrop-blur-md rounded-full p-2 pr-3 shadow-2xl border border-outline-variant/30 dark:border-outline-variant/35 dark:ring-1 dark:ring-outline-variant/25 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0 animate-pulse ring-2 ring-primary/30">
-                  <span className="material-symbols-outlined">pending</span>
-                </div>
-                <div className="flex-grow min-w-0">
-                  <div className="flex justify-between items-center mb-1 gap-2">
-                    <span className="text-xs font-black uppercase tracking-widest text-on-surface-variant truncate">
-                      {progressLabel}
-                    </span>
-                    <span className="text-xs font-bold text-primary shrink-0">{progressPercent}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full transition-all duration-500 shadow-lg shadow-primary/50"
-                      style={{ width: progressWidth }}
-                    />
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCancelGeneration}
-                  title="Cancelar geração"
-                  aria-label="Cancelar geração e voltar à seleção de arquivo"
-                  className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error/10 dark:hover:bg-error/15 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[20px]">close</span>
-                </button>
-              </div>
-            </div>
-          </footer>
-        )}
       </div>
     </div>
   );
