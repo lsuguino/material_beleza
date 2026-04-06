@@ -77,6 +77,9 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [generatedData, setGeneratedData] = useState<PreviewData | null>(null);
 
+  /** Controla o colapso animado da área de upload ao iniciar geração */
+  const [dropzoneCollapsing, setDropzoneCollapsing] = useState(false);
+
   const [batchQueue, setBatchQueue] = useState<File[]>([]);
   const [batchIndex, setBatchIndex] = useState(0);
   const [batchCurrentFile, setBatchCurrentFile] = useState<File | null>(null);
@@ -136,6 +139,10 @@ export default function Home() {
       return;
     }
     setError(null);
+    // Dispara o colapso animado do dropzone antes de iniciar
+    setDropzoneCollapsing(true);
+    // Aguarda a transição CSS (500ms) antes de marcar loading
+    await new Promise<void>((resolve) => setTimeout(resolve, 480));
     setLoading(true);
     setProgressStep(0);
     setGeneratedData(null);
@@ -153,6 +160,8 @@ export default function Home() {
     } catch (err) {
       clearInterval(interval);
       setError(err instanceof Error ? err.message : 'Erro ao gerar material');
+      // Reabre o dropzone se der erro
+      setDropzoneCollapsing(false);
     } finally {
       setLoading(false);
     }
@@ -161,6 +170,7 @@ export default function Home() {
   const processNextBatch = useCallback(() => {
     if (batchQueue.length === 0) return;
     setGeneratedData(null);
+    setDropzoneCollapsing(false);
     setBatchRegenerating(false);
     if (batchIndex >= batchQueue.length - 1) {
       setBatchQueue([]);
@@ -339,6 +349,16 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col gap-7 lg:gap-8 w-full">
+                {/* Dropzone — colapsa suavemente ao iniciar geração */}
+                <div
+                  className="w-full overflow-hidden transition-all duration-500 ease-in-out"
+                  style={{
+                    maxHeight: dropzoneCollapsing ? 0 : 520,
+                    opacity: dropzoneCollapsing ? 0 : 1,
+                    transform: dropzoneCollapsing ? 'translateY(-12px) scale(0.98)' : 'translateY(0) scale(1)',
+                    pointerEvents: dropzoneCollapsing ? 'none' : undefined,
+                  }}
+                >
                 <div className="group w-full">
                   <input
                     id="vtt-file-input"
@@ -376,7 +396,7 @@ export default function Home() {
                     onDrop={handleDrop}
                     className={`relative bg-surface-container-lowest dark:bg-surface-container-low/90 rounded-xl p-10 sm:p-12 border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center text-center min-h-[260px] sm:min-h-[300px] cursor-pointer overflow-hidden dark:ring-1 dark:ring-outline-variant/25 ${dropzoneClass}`}
                   >
-                    <DropzoneParticles containerRef={dropzoneRef} />
+                    <DropzoneParticles containerRef={dropzoneRef} hasFile={!!file} />
                     <div className="relative z-10 flex flex-col items-center justify-center w-full">
                       <h3 className="text-lg sm:text-xl font-bold font-headline mb-2 text-on-surface dark:text-white px-1">
                         {file ? file.name : 'Arraste e solte seus arquivos'}
@@ -390,6 +410,7 @@ export default function Home() {
                     </div>
                   </label>
                 </div>
+                </div>{/* fim do wrapper colapsável do dropzone */}
 
                 <div className="w-full">
                   <div className="bg-surface-container-low dark:bg-surface-container/60 rounded-xl p-5 sm:p-7 shadow-md dark:shadow-xl border border-outline-variant/30 dark:border-0 text-center">

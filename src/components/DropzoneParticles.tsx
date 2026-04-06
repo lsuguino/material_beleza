@@ -5,6 +5,8 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 type DropzoneParticlesProps = {
   /** Label ou área que delimita o hover (coordenadas relativas a este elemento). */
   containerRef: React.RefObject<HTMLElement | null>;
+  /** Quando verdadeiro, aumenta a velocidade e intensidade das partículas. */
+  hasFile?: boolean;
 };
 
 const N = 10;
@@ -38,7 +40,7 @@ const ATTRACT_MAX = 300;
 const ATTRACT_GAIN = 22;
 const SMOOTH = 0.13;
 
-export function DropzoneParticles({ containerRef }: DropzoneParticlesProps) {
+export function DropzoneParticles({ containerRef, hasFile = false }: DropzoneParticlesProps) {
   const outerRefs = useRef<(HTMLDivElement | null)[]>([]);
   const offsetsRef = useRef<{ x: number; y: number }[]>(
     Array.from({ length: N }, () => ({ x: 0, y: 0 }))
@@ -185,7 +187,10 @@ export function DropzoneParticles({ containerRef }: DropzoneParticlesProps) {
   }, [containerRef]);
 
   return (
-    <div className="dropzone-blue-particles" aria-hidden>
+    <div
+      className={`dropzone-blue-particles${hasFile ? ' dropzone-blue-particles--active' : ''}`}
+      aria-hidden
+    >
       {SPECS.map((spec, i) => (
         <div
           key={spec.slot}
