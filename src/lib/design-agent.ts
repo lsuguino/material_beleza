@@ -60,7 +60,7 @@ CAMPOS EM CADA PÁGINA:
 - layout_tipo, cor_fundo_principal, cor_fundo_destaque, cor_texto_principal, cor_texto_destaque (hex), icone_sugerido
 - proporcao_colunas: '60/40' | '50/50' | '70/30'; usar_barra_lateral; usar_faixa_decorativa
 
-Regras: sugestao_grafico → dados_grafico; sugestao_fluxograma → dois_colunas (ou A4_* no VTSD); sugestao_imagem → A4_1/A4_4/imagem_* ; etapas/listas → A4_3_sidebar_steps ou lista_icones.`;
+Regras: sugestao_grafico → dados_grafico; sugestao_fluxograma → dois_colunas (ou A4_* no VTSD); etapas/listas → A4_3_sidebar_steps ou lista_icones. Não há imagens neste material (apenas capa pode ter sugestão de imagem).`;
 
 const VTSD_REFERENCE_DESIGN_SYSTEM = `
 ${MARGENS_A4_TEXTO}

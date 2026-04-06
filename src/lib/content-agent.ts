@@ -34,11 +34,12 @@ REGRAS TÉCNICAS:
    - No mínimo 85% do texto deve ser parágrafos. No máximo 15% pode ser lista (só exemplos).
    - “destaques”: só para exemplos citados (um por item). Deixe [] se não houver.
 10. SUGESTÕES VISUAIS (quando fizer sentido):
-    sugestao_imagem, prompt_imagem, sugestao_grafico, sugestao_fluxograma, sugestao_tabela, sugestao_icone.
-11. TIPOS EM content_blocks — use SOMENTE: “text” | “image” | “mermaid” | “chart”.
-    - FOTOS/CENÁRIOS → type “image” com prompt em inglês (DALL-E 3).
-    - FLUXOGRAMAS → type “mermaid” com código Mermaid válido.
-    - GRÁFICOS DE DADOS → type “chart” com JSON (só dados da transcrição).
+    sugestao_grafico, sugestao_fluxograma, sugestao_tabela, sugestao_icone.
+    NÃO inclua sugestao_imagem nem prompt_imagem nas páginas de conteúdo. Imagens só na capa.
+11. TIPOS EM content_blocks — use SOMENTE: “text” | “mermaid” | “chart”.
+    - NÃO use type “image”. Não gere prompts de imagem.
+    - FLUXOGRAMAS / ORGANOGRAMAS → type “mermaid” com código Mermaid válido. Use sempre que houver processos, etapas, hierarquias ou fluxos na transcrição.
+    - GRÁFICOS DE DADOS → type “chart” com JSON (só dados da transcrição). Use sempre que houver números, comparações ou estatísticas.
 12. SEM CLONAR TEXTO: “citacao” e “destaques” devem ser trechos distintos de bloco_principal.
 
 ESTRUTURA DO JSON DE RETORNO:
@@ -59,15 +60,12 @@ ESTRUTURA DO JSON DE RETORNO:
       "bloco_principal": "texto corrido... (use quando não usar content_blocks)",
       "content_blocks": [
         { "type": "text", "content": "Parágrafo ou grupo de parágrafos." },
-        { "type": "image", "content": "Hyperdetailed English prompt for DALL-E 3: Corporate Photography or Abstract 3D." },
         { "type": "mermaid", "content": "flowchart LR\n  A[Start] --> B[Step 1]\n  B --> C[Step 2]" },
         { "type": "chart", "content": "{\"tipo\":\"barra\",\"titulo\":\"Título\",\"labels\":[\"A\",\"B\"],\"valores\":[10,20]}" }
       ],
       "destaques": [] ou um item por exemplo citado (nunca conceitos em bullet),
       "citacao": "outro trecho fiel do VTT (frase ou parágrafo curto), OBRIGATORIAMENTE diferente de qualquer parágrafo em bloco_principal na mesma página — nunca copie ou reescreva o mesmo texto do corpo; se não houver segundo trecho marcante, omita citacao ou use string vazia",
       "dado_numerico": "número (se houver)",
-      "sugestao_imagem": "descrição",
-      "prompt_imagem": "prompt curto",
       "sugestao_icone": "ícone",
       "sugestao_grafico": { "tipo": "barra"|"pizza"|"linha", "titulo": "...", "labels": [], "valores": [] },
       "sugestao_fluxograma": { "titulo": "...", "etapas": [] },
@@ -75,7 +73,7 @@ ESTRUTURA DO JSON DE RETORNO:
     }
   ]
 }
-Use content_blocks conforme o tipo de conteúdo: image → DALL-E 3 (fotos/fundos), mermaid → Mermaid.js (fluxogramas), chart → Chart.js (gráficos de dados). Mantenha bloco_principal para páginas sem content_blocks.
+Use content_blocks conforme o tipo de conteúdo: mermaid → Mermaid.js (fluxogramas, organogramas, hierarquias), chart → Chart.js (gráficos de dados, comparações numéricas). Priorize criar diagramas mermaid e gráficos chart sempre que a transcrição mencionar processos, etapas, fluxos, hierarquias ou dados numéricos. Mantenha bloco_principal para páginas sem content_blocks.
 
 IMPORTANTE: O material impresso/PDF não pode ter páginas vazias ou quase vazias. Toda página de conteúdo deve ter texto corrido desenvolvido (mínimo de palavras respeitado), destaques ou listas, e sugestões visuais. Se a transcrição for curta, use menos páginas e preencha cada uma bem; se for longa, distribua em mais páginas mantendo cada uma recheada.
 

@@ -107,7 +107,7 @@ function ImageAreaPlaceholder({
 }) {
   const text = [sugestao?.trim(), prompt?.trim()].filter(Boolean).join('\n\n') || fallback;
   return (
-    <div className="w-full h-full min-h-[48px] px-3 py-2 overflow-y-auto flex items-center justify-center box-border">
+    <div className="image-placeholder-prompt w-full h-full min-h-[48px] px-3 py-2 overflow-y-auto flex items-center justify-center box-border">
       <p
         className={
           className ??
@@ -857,7 +857,7 @@ export function PageConteudo({
               />
             ) : (
               <div
-                className="w-full aspect-square max-h-72 rounded-xl border-2 border-dashed flex flex-col items-stretch justify-center text-center p-4 min-h-0"
+                className="image-placeholder-prompt w-full aspect-square max-h-72 rounded-xl border-2 border-dashed flex flex-col items-stretch justify-center text-center p-4 min-h-0"
                 style={{
                   borderColor: `${cor_texto_principal}40`,
                   color: cor_texto_principal,
@@ -978,7 +978,7 @@ export function PageConteudo({
             <img src={imagemGerada} alt="" className="w-full h-full object-cover" />
           ) : (
             <div
-              className="w-[calc(100%-3rem)] h-40 rounded border-2 border-white/20 flex flex-col items-center justify-center text-white/60"
+              className="image-placeholder-prompt w-[calc(100%-3rem)] h-40 rounded border-2 border-white/20 flex flex-col items-center justify-center text-white/60"
               style={{ borderColor: 'rgba(255,255,255,0.3)' }}
             >
               <span className="text-4xl opacity-60 shrink-0">🖼</span>

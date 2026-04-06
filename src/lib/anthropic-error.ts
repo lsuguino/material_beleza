@@ -45,7 +45,7 @@ function toFriendlyMessage(msg: string): string {
     lower.includes('payment required') ||
     lower.includes('402')
   ) {
-    return 'Saldo ou créditos insuficientes na conta Anthropic. Acesse console.anthropic.com → Billing e adicione créditos.';
+    return 'Saldo ou créditos insuficientes. Verifique seus créditos no OpenRouter (openrouter.ai/credits) ou no provedor do modelo utilizado.';
   }
 
   if (
@@ -56,11 +56,11 @@ function toFriendlyMessage(msg: string): string {
     lower.includes('401') ||
     lower.includes('unauthorized')
   ) {
-    return 'Chave ANTHROPIC_API_KEY inválida ou expirada. Verifique a chave em console.anthropic.com → API Keys e atualize o .env.local.';
+    return 'Chave de API inválida ou expirada. Verifique a chave no .env.local e no painel do provedor (OpenRouter ou Anthropic).';
   }
 
   if (lower.includes('permission') || lower.includes('403')) {
-    return 'Sem permissão para usar este modelo. Verifique os limites da sua conta Anthropic.';
+    return 'Sem permissão para usar este modelo. Verifique os limites da sua conta no provedor.';
   }
 
   if (lower.includes('rate limit') || lower.includes('overloaded') || lower.includes('529')) {

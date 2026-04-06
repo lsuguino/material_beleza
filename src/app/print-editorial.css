@@ -754,11 +754,15 @@
   .page {
     width: 210mm !important;
     min-height: 297mm !important;
-    height: auto !important;
+    height: 297mm !important;
     margin: 0 !important;
     box-shadow: none !important;
     page-break-after: always !important;
     break-after: page !important;
+  }
+
+  .image-placeholder-prompt {
+    display: none !important;
   }
 
   /* Cada folha está dentro de .preview-page-wrap; .page era sempre :last-child do pai → folha extra */

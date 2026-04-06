@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { MaterialPreviewBlocks, type PreviewData } from '@/components/MaterialPreviewBlocks';
+import { PageThumbnail } from '@/components/PageThumbnail';
 import { MermaidInit } from '@/components/MermaidInit';
 
 const STORAGE_KEY = 'rtg-preview-data';
@@ -326,13 +327,9 @@ export default function PreviewPage() {
                     ? 'border-black/15 opacity-80 hover:opacity-100'
                     : 'border-white/20 opacity-70 hover:opacity-90'
               }`}
-              style={{ backgroundColor: isVtsdPreview ? '#d8d8d5' : '#2d2d3a', aspectRatio: '595 / 842' }}
+              style={{ aspectRatio: '595 / 842' }}
             >
-              <span
-                className={`text-[10px] p-1 block text-center ${isVtsdPreview ? 'text-neutral-500' : 'text-white/50'}`}
-              >
-                {i + 1}
-              </span>
+              <PageThumbnail data={data!} pageIndex={i} width={93} height={131} />
             </button>
           ))}
           </div>

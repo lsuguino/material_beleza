@@ -75,6 +75,8 @@ interface MaterialPreviewBlocksProps {
   scale?: number;
   /** Na rota /preview: envolve cada página com ref e classe para scroll/impressão */
   renderPageWrapper?: (pageNode: React.ReactNode, index: number) => React.ReactNode;
+  /** Quando definido, renderiza apenas a página neste índice (0-based). Usado para miniaturas. */
+  singlePageIndex?: number;
 }
 
 /** Número da página (1-based) em que cada seção `conteudo` começa, na ordem do PDF/preview. */
@@ -106,7 +108,7 @@ function chooseEditorialTemplate(pagina: PaginaDesign, isFirstContent: boolean):
   return 'double_column';
 }
 
-export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, renderPageWrapper }: MaterialPreviewBlocksProps) {
+export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, renderPageWrapper, singlePageIndex }: MaterialPreviewBlocksProps) {
   if (!data || typeof data !== 'object') {
     return (
       <div className={`rounded-xl bg-white/10 border border-white/20 p-8 text-center text-white/70 min-h-[200px] flex items-center justify-center ${className}`}>
@@ -210,6 +212,10 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
         if (tipo === 'conteudo') contentPageIndex += 1;
 
         const wrap = (node: React.ReactNode) => wrapByKey(node, pageKeyCounter++);
+
+        // Miniatura de página única: pular todas as outras
+        if (singlePageIndex != null && index !== singlePageIndex) return null;
+
         const showPageNumber = sumarioIndex >= 0 ? index > sumarioIndex : index > 0;
         // Exibir numeração real do documento (mesma referência usada no sumário).
         const pageNumber = showPageNumber ? index + 1 : undefined;

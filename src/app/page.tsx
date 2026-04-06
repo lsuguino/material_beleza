@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
 import { type PreviewData } from '@/components/MaterialPreviewBlocks';
+import { PageThumbnail } from '@/components/PageThumbnail';
 import { DropzoneParticles } from '@/components/DropzoneParticles';
 import { FooterParticles } from '@/components/FooterParticles';
 import { ScriboLogo } from '@/components/ScriboLogo';
@@ -818,25 +819,18 @@ export default function Home() {
                     {/* Faixa horizontal de miniaturas */}
                     <div className="px-3 py-3 overflow-x-auto">
                       <div className="flex flex-row gap-2" style={{ width: 'max-content' }}>
-                        {genPaginas.map((p, i) => {
-                          const pagBg = String((p as Record<string, unknown>).cor_fundo || bgColor);
-                          const isAccent = String((p as Record<string, unknown>).tipo || '') === 'capa' || i === 0;
-                          return (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={openPreviewFull}
-                              title={`Página ${i + 1}`}
-                              className="flex-shrink-0 rounded border border-black/10 dark:border-white/15 overflow-hidden flex flex-col hover:opacity-90 transition-opacity cursor-pointer"
-                              style={{ width: 70, height: 99, backgroundColor: isAccent ? accentColor : pagBg }}
-                            >
-                              <div className="flex-1" />
-                              <div className="text-center pb-1" style={{ color: isAccent ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.35)', fontSize: 9, fontWeight: 700 }}>
-                                {i + 1}
-                              </div>
-                            </button>
-                          );
-                        })}
+                        {genPaginas.map((_p, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={openPreviewFull}
+                            title={`Página ${i + 1}`}
+                            className="flex-shrink-0 rounded border border-black/10 dark:border-white/15 overflow-hidden hover:opacity-90 transition-opacity cursor-pointer"
+                            style={{ width: 70, height: 99 }}
+                          >
+                            <PageThumbnail data={generatedData} pageIndex={i} width={70} height={99} />
+                          </button>
+                        ))}
                       </div>
                     </div>
 

@@ -139,7 +139,7 @@ export function ContentBlocksRenderer({ blocks, className = '' }: ContentBlocksR
             return (
               <div
                 key={i}
-                className="my-4 rounded border border-dashed border-neutral-300 bg-neutral-100/80 px-4 py-6 text-center text-sm text-neutral-600 whitespace-pre-wrap"
+                className="image-placeholder-prompt my-4 rounded border border-dashed border-neutral-300 bg-neutral-100/80 px-4 py-6 text-center text-sm text-neutral-600 whitespace-pre-wrap"
               >
                 {desc}
               </div>
