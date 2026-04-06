@@ -171,13 +171,20 @@ export default function Home() {
     const interval = setInterval(() => setProgressStep((s) => s + 1), 2500);
 
     try {
-      const data = await runGenerate(file, cId, { comPerguntas, signal: controller.signal });
+      const raw = await runGenerate(file, cId, { comPerguntas, signal: controller.signal });
       clearInterval(interval);
       setError(null);
+      // Extrai _pdfId retornado pelo servidor (não faz parte do PreviewData)
+      const rawAny = raw as Record<string, unknown>;
+      const pdfId = typeof rawAny._pdfId === 'string' ? rawAny._pdfId : null;
+      const { _pdfId: _omit, ...data } = rawAny;
+      void _omit;
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        if (pdfId) window.localStorage.setItem('rtg-pdf-id', pdfId);
+        else window.localStorage.removeItem('rtg-pdf-id');
       }
-      setGeneratedData(data);
+      setGeneratedData(data as PreviewData);
     } catch (err) {
       clearInterval(interval);
       // Ignora erro de cancelamento (AbortError)

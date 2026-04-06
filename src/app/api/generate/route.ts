@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { generatePDF } from '@/lib/pdf-generator';
+import { pdfCreate, pdfSetReady, pdfSetError } from '@/lib/pdf-store';
 import { parseVTT } from '@/lib/vtt-parser';
 import { detectTipoEntrada } from '@/lib/detect-tipo-entrada';
 import { parseTextoOrganizado } from '@/lib/text-organizado-parser';
@@ -507,13 +509,41 @@ export async function POST(request: NextRequest) {
     const conteudoNorm = normalizePaginas(conteudoRecord);
     let designNorm = normalizePaginas(conteudoComDesign);
 
-    return NextResponse.json({
+    const responsePayload = {
       conteudo: { ...conteudoNorm, paginas: conteudoNorm.paginas ?? [] },
       design: { ...designNorm, paginas: designNorm.paginas ?? conteudoNorm.paginas ?? [] },
       tema,
       curso_id: cursoId,
       ...(perguntas && perguntas.length > 0 ? { perguntas } : {}),
-    });
+    };
+
+    // Pré-geração do PDF em background — dispara sem bloquear a resposta
+    const pdfId = crypto.randomUUID();
+    pdfCreate(pdfId);
+    const origin =
+      request.headers.get('origin') ||
+      (() => {
+        const proto = request.headers.get('x-forwarded-proto') || 'http';
+        const host = request.headers.get('host') || 'localhost:3000';
+        return `${proto}://${host}`;
+      })();
+    const previewUrl = `${origin}/preview`;
+    const storageData: Record<string, string> = {
+      'rtg-preview-data': JSON.stringify(responsePayload),
+      'rtg-pdf-mode': '1',
+    };
+
+    void (async () => {
+      try {
+        const buf = await generatePDF(previewUrl, storageData);
+        pdfSetReady(pdfId, buf);
+      } catch (err) {
+        pdfSetError(pdfId, err instanceof Error ? err.message : 'Erro ao gerar PDF');
+        console.error('[generate] background PDF error:', err);
+      }
+    })();
+
+    return NextResponse.json({ ...responsePayload, _pdfId: pdfId });
   } catch (err) {
     console.error('[api/generate]', err);
     let message: string;

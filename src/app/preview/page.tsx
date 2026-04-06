@@ -120,6 +120,27 @@ export default function PreviewPage() {
   }, []);
 
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfReady, setPdfReady] = useState(false);
+
+  // Verifica periodicamente se o PDF pré-gerado já está pronto
+  useEffect(() => {
+    const id = typeof window !== 'undefined' ? window.localStorage.getItem('rtg-pdf-id') : null;
+    if (!id) return;
+    let cancelled = false;
+    const poll = async () => {
+      while (!cancelled) {
+        try {
+          const res = await fetch(`/api/pdf/${id}?check=1`);
+          if (!res.ok) { cancelled = true; return; }
+          const json = await res.json() as { ready: boolean; error?: string };
+          if (json.ready) { if (!cancelled) setPdfReady(true); return; }
+        } catch { /* ignore */ }
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    };
+    void poll();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleDownloadPdf = useCallback(async () => {
     if (!data) return;
@@ -131,25 +152,39 @@ export default function PreviewPage() {
         .replace(/^-+|-+$/g, '')
         .slice(0, 60) || 'material';
 
-      const previewUrl = `${window.location.origin}/preview`;
-      const storagePayload: Record<string, string> = {
-        [STORAGE_KEY]: JSON.stringify(data),
-        'rtg-pdf-mode': '1',
-      };
+      const pdfId = typeof window !== 'undefined' ? window.localStorage.getItem('rtg-pdf-id') : null;
 
-      const res = await fetch('/api/pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: previewUrl, data: storagePayload }),
-      });
+      let blob: Blob;
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Erro ao gerar PDF.' }));
-        alert(err.error || 'Erro ao gerar PDF.');
-        return;
+      if (pdfId) {
+        // Busca PDF pré-gerado (long-poll até ficar pronto)
+        const res = await fetch(`/api/pdf/${pdfId}`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Erro ao baixar PDF.' }));
+          throw new Error((err as { error?: string }).error || 'Erro ao baixar PDF.');
+        }
+        blob = await res.blob();
+        window.localStorage.removeItem('rtg-pdf-id');
+        setPdfReady(false);
+      } else {
+        // Fallback: geração sob demanda
+        const previewUrl = `${window.location.origin}/preview`;
+        const storagePayload: Record<string, string> = {
+          [STORAGE_KEY]: JSON.stringify(data),
+          'rtg-pdf-mode': '1',
+        };
+        const res = await fetch('/api/pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: previewUrl, data: storagePayload }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Erro ao gerar PDF.' }));
+          throw new Error((err as { error?: string }).error || 'Erro ao gerar PDF.');
+        }
+        blob = await res.blob();
       }
 
-      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -160,7 +195,7 @@ export default function PreviewPage() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('[handleDownloadPdf]', err);
-      alert('Erro inesperado ao gerar o PDF. Tente novamente.');
+      alert(err instanceof Error ? err.message : 'Erro inesperado ao gerar o PDF. Tente novamente.');
     } finally {
       setPdfLoading(false);
     }
@@ -251,10 +286,10 @@ export default function PreviewPage() {
           type="button"
           onClick={handleDownloadPdf}
           disabled={pdfLoading}
-          className="w-full py-2.5 rounded-xl font-semibold text-white mb-4 transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full py-2.5 rounded-xl font-semibold text-white mb-4 transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           style={{ backgroundColor: '#446EFF' }}
         >
-          {pdfLoading ? 'Gerando PDF...' : 'Download PDF'}
+          {pdfLoading ? 'Aguardando PDF...' : pdfReady ? '⚡ Download PDF' : 'Download PDF'}
         </button>
         <button
           type="button"
