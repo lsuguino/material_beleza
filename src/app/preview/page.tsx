@@ -134,6 +134,7 @@ export default function PreviewPage() {
       const previewUrl = `${window.location.origin}/preview`;
       const storagePayload: Record<string, string> = {
         [STORAGE_KEY]: JSON.stringify(data),
+        'rtg-pdf-mode': '1',
       };
 
       const res = await fetch('/api/pdf', {
@@ -193,6 +194,12 @@ export default function PreviewPage() {
 
   // Responsivo: escala as páginas (595px) para caber no canvas
   useEffect(() => {
+    // PDF render mode: always use scale 1 so content is pixel-perfect
+    if (typeof window !== 'undefined' && window.localStorage.getItem('rtg-pdf-mode') === '1') {
+      setScale(1);
+      return;
+    }
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 

@@ -18,6 +18,9 @@ export async function generatePDF(
   try {
     const page = await browser.newPage();
 
+    // Viewport largo o suficiente para que o layout não comprima as páginas
+    await page.setViewport({ width: 1400, height: 900 });
+
     // Injeta localStorage antes de qualquer script da página ser executado
     if (localStorageData && Object.keys(localStorageData).length > 0) {
       await page.evaluateOnNewDocument((entries: Record<string, string>) => {
