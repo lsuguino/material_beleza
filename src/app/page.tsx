@@ -7,6 +7,7 @@ import { MaterialPreviewBlocks, type PreviewData } from '@/components/MaterialPr
 import { MermaidInit } from '@/components/MermaidInit';
 import { SafeArea } from '@/components/SafeArea';
 import { DropzoneParticles } from '@/components/DropzoneParticles';
+import { FooterParticles } from '@/components/FooterParticles';
 import { ScriboLogo } from '@/components/ScriboLogo';
 import { useScriboUi } from '@/context/ScriboUiContext';
 import { COURSE_PICKER_OPTIONS } from '@/lib/coursePickerOptions';
@@ -355,7 +356,8 @@ export default function Home() {
           }`}
         >
           {!generatedData && (
-            <section className="w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-8 lg:py-10">
+            <section className="relative isolate w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-8 lg:py-10">
+              <FooterParticles hasFile={!!file} generating={loading} />
               <div className="mb-8 lg:mb-10 text-left max-w-3xl xl:max-w-4xl">
                 <h1 className="font-headline text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-on-surface dark:text-white tracking-tight leading-[1.12] mb-5">
                   <span className="block">Geração inteligente de</span>
@@ -674,7 +676,7 @@ export default function Home() {
                 )}
               </AnimatePresence>
 
-              <footer className="mt-16 py-10 text-center">
+              <footer className="relative z-10 mt-16 py-10 text-center">
                 <ScriboLogo className="inline-block text-[#1a2dc2] dark:text-[#7B9CFF] opacity-40 dark:opacity-30" />
               </footer>
             </section>
