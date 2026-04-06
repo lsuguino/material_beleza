@@ -312,28 +312,30 @@ export default function PreviewPage() {
         <p className={`text-sm mb-3 ${isVtsdPreview ? 'text-neutral-600' : 'text-white/60'}`}>
           Página {Math.min(Math.max(1, currentPage), paginas.length || 1)} de {paginas.length || 1}
         </p>
-        <div className="flex-1 overflow-auto space-y-2">
+        <div className="flex-1 overflow-auto">
+          <div className="grid grid-cols-2 gap-1.5">
           {paginas.map((_, i) => (
             <button
               key={i}
               type="button"
               onClick={() => scrollToPage(i)}
-              className={`w-full aspect-[595/842] max-h-24 rounded border-2 overflow-hidden transition-all ${
+              className={`w-full rounded border-2 overflow-hidden transition-all ${
                 currentPage === i + 1
                   ? 'border-[#446EFF] opacity-100'
                   : isVtsdPreview
                     ? 'border-black/15 opacity-80 hover:opacity-100'
                     : 'border-white/20 opacity-70 hover:opacity-90'
               }`}
-              style={{ backgroundColor: isVtsdPreview ? '#d8d8d5' : '#2d2d3a' }}
+              style={{ backgroundColor: isVtsdPreview ? '#d8d8d5' : '#2d2d3a', aspectRatio: '595 / 842' }}
             >
               <span
-                className={`text-xs p-1 block text-center ${isVtsdPreview ? 'text-neutral-500' : 'text-white/50'}`}
+                className={`text-[10px] p-1 block text-center ${isVtsdPreview ? 'text-neutral-500' : 'text-white/50'}`}
               >
                 {i + 1}
               </span>
             </button>
           ))}
+          </div>
         </div>
       </aside>
 

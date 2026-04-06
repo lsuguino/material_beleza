@@ -3,9 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
-import { MaterialPreviewBlocks, type PreviewData } from '@/components/MaterialPreviewBlocks';
-import { MermaidInit } from '@/components/MermaidInit';
-import { SafeArea } from '@/components/SafeArea';
+import { type PreviewData } from '@/components/MaterialPreviewBlocks';
 import { DropzoneParticles } from '@/components/DropzoneParticles';
 import { FooterParticles } from '@/components/FooterParticles';
 import { ScriboLogo } from '@/components/ScriboLogo';
@@ -77,6 +75,8 @@ export default function Home() {
   const [progressStep, setProgressStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [generatedData, setGeneratedData] = useState<PreviewData | null>(null);
+  const [pdfReady, setPdfReady] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   /** Controla o colapso animado da área de upload ao iniciar geração */
   const [dropzoneCollapsing, setDropzoneCollapsing] = useState(false);
@@ -281,6 +281,91 @@ export default function Home() {
     router.push('/preview');
   }, [router]);
 
+  // Polling: verifica se o PDF pré-gerado está pronto
+  useEffect(() => {
+    if (!generatedData) { setPdfReady(false); return; }
+    const id = typeof window !== 'undefined' ? window.localStorage.getItem('rtg-pdf-id') : null;
+    if (!id) return;
+    let cancelled = false;
+    const poll = async () => {
+      while (!cancelled) {
+        try {
+          const res = await fetch(`/api/pdf/${id}?check=1`);
+          if (!res.ok) { cancelled = true; return; }
+          const json = await res.json() as { ready: boolean; error?: string };
+          if (json.ready) { if (!cancelled) setPdfReady(true); return; }
+        } catch { /* ignore */ }
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    };
+    void poll();
+    return () => { cancelled = true; };
+  }, [generatedData]);
+
+  const handleReset = useCallback(() => {
+    setGeneratedData(null);
+    setDropzoneCollapsing(false);
+    setFile(null);
+    setPdfReady(false);
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('rtg-pdf-id');
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
+  }, []);
+
+  const handleDownloadPdfMain = useCallback(async () => {
+    if (!generatedData) return;
+    setPdfLoading(true);
+    try {
+      const title = (generatedData.conteudo?.titulo || generatedData.design?.titulo || 'material')
+        .toLowerCase()
+        .replace(/[^a-z0-9\u00C0-\u017F]+/gi, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60) || 'material';
+      const pdfId = typeof window !== 'undefined' ? window.localStorage.getItem('rtg-pdf-id') : null;
+      let blob: Blob;
+      if (pdfId) {
+        const res = await fetch(`/api/pdf/${pdfId}`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Erro ao baixar PDF.' }));
+          throw new Error((err as { error?: string }).error || 'Erro ao baixar PDF.');
+        }
+        blob = await res.blob();
+        window.localStorage.removeItem('rtg-pdf-id');
+        setPdfReady(false);
+      } else {
+        const previewUrl = `${window.location.origin}/preview`;
+        const storagePayload: Record<string, string> = {
+          [STORAGE_KEY]: JSON.stringify(generatedData),
+          'rtg-pdf-mode': '1',
+        };
+        const res = await fetch('/api/pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: previewUrl, data: storagePayload }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Erro ao gerar PDF.' }));
+          throw new Error((err as { error?: string }).error || 'Erro ao gerar PDF.');
+        }
+        blob = await res.blob();
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[handleDownloadPdfMain]', err);
+      alert(err instanceof Error ? err.message : 'Erro inesperado ao gerar o PDF. Tente novamente.');
+    } finally {
+      setPdfLoading(false);
+    }
+  }, [generatedData]);
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -312,12 +397,8 @@ export default function Home() {
     : 'border-outline-variant hover:border-primary dark:border-outline-variant/40 dark:hover:border-primary';
 
   return (
-    <div
-      className={`font-body bg-background text-on-surface flex w-full overflow-x-hidden selection:bg-primary/20 dark:selection:bg-primary/35 dark:selection:text-white ${
-        generatedData ? 'h-screen min-h-0 flex-col overflow-hidden' : 'min-h-screen flex-col'
-      }`}
-    >
-      <div className={`flex flex-col flex-1 min-h-0 min-w-0 w-full ${generatedData ? 'h-full overflow-hidden' : ''}`}>
+    <div className="font-body bg-background text-on-surface flex w-full overflow-x-hidden selection:bg-primary/20 dark:selection:bg-primary/35 dark:selection:text-white min-h-screen flex-col">
+      <div className="flex flex-col flex-1 min-h-0 min-w-0 w-full">
         <header className="sticky top-0 z-40 shrink-0 bg-[var(--scribo-header-bg)] backdrop-blur-xl">
           <div className="flex flex-wrap justify-between items-center gap-y-2 w-full px-4 sm:px-6 lg:px-8 xl:px-10 py-2 sm:py-2.5 max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto">
             <div className="flex items-center min-w-0 shrink-0">
@@ -357,13 +438,8 @@ export default function Home() {
           </div>
         </header>
 
-        <main
-          className={`flex-1 flex flex-col min-h-0 w-full ${
-            generatedData ? 'overflow-hidden' : 'overflow-y-auto'
-          }`}
-        >
-          {!generatedData && (
-            <section className="relative isolate w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-8 lg:py-10">
+        <main className="flex-1 flex flex-col min-h-0 w-full overflow-y-auto">
+          <section className="relative isolate w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-8 lg:py-10">
               <FooterParticles hasFile={!!file} generating={loading} />
               <div className="mb-8 lg:mb-10 text-left max-w-3xl xl:max-w-4xl">
                 <h1 className="font-headline text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-on-surface dark:text-white tracking-tight leading-[1.12] mb-5">
@@ -668,7 +744,118 @@ export default function Home() {
                 </div>
               </div>
 
-              {isBatchMode && (
+              {/* Strip de pré-visualização — aparece após a geração */}
+              {generatedData && !loading && (() => {
+                const genDesign = generatedData.design || generatedData.conteudo;
+                const genRawPag = genDesign?.paginas ?? (genDesign as { pages?: unknown[] })?.pages;
+                const genPaginas = Array.isArray(genRawPag) ? genRawPag as Array<Record<string, unknown>> : [];
+                const genTitle = generatedData.conteudo?.titulo || generatedData.design?.titulo || 'Material gerado';
+                const accentColor = String((genDesign as Record<string, unknown>)?.cor_fundo_destaque || '#446EFF');
+                const bgColor = String((genDesign as Record<string, unknown>)?.cor_fundo_principal || '#f5f5f5');
+                return (
+                  <div className="mt-4 rounded-xl border border-outline-variant/30 dark:border-outline-variant/35 bg-surface-container-low dark:bg-surface-container/60 overflow-hidden shadow-md">
+                    {/* Cabeçalho */}
+                    <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-outline-variant/20 dark:border-outline-variant/30">
+                      <span className="font-semibold text-sm text-on-surface dark:text-white truncate min-w-0">
+                        {genTitle}
+                        {genPaginas.length > 0 && (
+                          <span className="ml-2 text-xs text-on-surface-variant dark:text-white/50 font-normal">
+                            {genPaginas.length} página{genPaginas.length !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {isBatchMode && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={handleDiscardAndRegenerate}
+                              disabled={batchRegenerating || loading}
+                              className="px-3 py-1.5 text-xs font-semibold rounded-full border-2 border-primary/40 text-primary bg-primary/5 hover:bg-primary/10 transition-colors disabled:opacity-50 flex items-center gap-1"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">refresh</span>
+                              Refazer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { if (typeof window !== 'undefined') window.open('/preview'); processNextBatch(); }}
+                              className="px-3 py-1.5 text-xs font-semibold rounded-full bg-surface-container-high dark:bg-surface-high/45 text-on-surface dark:text-white hover:bg-surface-container dark:hover:bg-surface-high/60 transition-colors border border-outline-variant dark:border-outline-variant/40"
+                            >
+                              Próximo
+                            </button>
+                          </>
+                        )}
+                        <button
+                          type="button"
+                          onClick={openPreviewFull}
+                          className="px-3 py-1.5 text-xs font-semibold rounded-full border-2 border-primary/40 text-primary bg-primary/5 hover:bg-primary/10 dark:bg-primary/10 dark:hover:bg-primary/20 transition-colors flex items-center gap-1"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                          Ver preview
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDownloadPdfMain}
+                          disabled={pdfLoading}
+                          className="px-3 py-1.5 text-xs font-semibold rounded-full text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1"
+                          style={{ backgroundColor: '#446EFF' }}
+                        >
+                          <span className="material-symbols-outlined text-[14px]">download</span>
+                          {pdfLoading ? 'Aguardando...' : pdfReady ? '⚡ PDF' : 'Download PDF'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleReset}
+                          title="Gerar novo material"
+                          aria-label="Fechar e gerar novo material"
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-high/50 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Faixa horizontal de miniaturas */}
+                    <div className="px-3 py-3 overflow-x-auto">
+                      <div className="flex flex-row gap-2" style={{ width: 'max-content' }}>
+                        {genPaginas.map((p, i) => {
+                          const pagBg = String((p as Record<string, unknown>).cor_fundo || bgColor);
+                          const isAccent = String((p as Record<string, unknown>).tipo || '') === 'capa' || i === 0;
+                          return (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={openPreviewFull}
+                              title={`Página ${i + 1}`}
+                              className="flex-shrink-0 rounded border border-black/10 dark:border-white/15 overflow-hidden flex flex-col hover:opacity-90 transition-opacity cursor-pointer"
+                              style={{ width: 70, height: 99, backgroundColor: isAccent ? accentColor : pagBg }}
+                            >
+                              <div className="flex-1" />
+                              <div className="text-center pb-1" style={{ color: isAccent ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.35)', fontSize: 9, fontWeight: 700 }}>
+                                {i + 1}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Perguntas para reflexão */}
+                    {generatedData.perguntas && generatedData.perguntas.length > 0 && (
+                      <div className="px-4 py-3 border-t border-outline-variant/20 dark:border-outline-variant/30 bg-primary/5 dark:bg-primary/10">
+                        <p className="text-xs font-bold uppercase tracking-wider text-primary mb-2">Perguntas para reflexão</p>
+                        <ol className="list-decimal list-inside space-y-1.5 text-sm text-on-surface dark:text-white/90 leading-snug">
+                          {generatedData.perguntas.map((q, i) => (
+                            <li key={i} className="pl-0.5">{q}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {isBatchMode && loading && (
                 <p className="mt-6 text-xs text-on-surface-variant dark:text-white/70">
                   Lote: {batchIndex + 1} de {batchQueue.length}
                   {currentBatchFile && ` — ${currentBatchFile.name}`}
@@ -687,96 +874,7 @@ export default function Home() {
                 <ScriboLogo className="inline-block text-[#1a2dc2] dark:text-[#7B9CFF] opacity-40 dark:opacity-30" />
               </footer>
             </section>
-          )}
 
-          <AnimatePresence>
-            {generatedData && (
-              <div className="flex-1 flex flex-col min-h-0 w-full max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-4 overflow-hidden">
-                <div className="flex-1 min-h-0 flex flex-col bg-surface-container-lowest dark:bg-surface-container-low border border-outline-variant dark:border-outline-variant/35 rounded-xl shadow-sm dark:shadow-xl overflow-hidden">
-                  <div className="p-4 border-b border-outline-variant/50 dark:border-outline-variant/30 flex flex-wrap items-center justify-between gap-3 shrink-0 bg-surface-container-low/50 dark:bg-surface-high/60">
-                    <span className="text-on-surface dark:text-white font-semibold font-headline">Preview do documento</span>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={openPreviewFull}
-                        className="px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-full hover:brightness-110 transition-colors flex items-center gap-1 shadow-md shadow-primary/20"
-                      >
-                        <span className="material-symbols-outlined text-lg">open_in_new</span>
-                        Abrir preview completo
-                      </button>
-                      {isBatchMode ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (typeof window !== 'undefined') window.open('/preview');
-                              processNextBatch();
-                            }}
-                            className="px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-full hover:brightness-110 transition-colors flex items-center gap-1 shadow-md shadow-primary/25"
-                          >
-                            <span className="material-symbols-outlined text-lg">download</span>
-                            Download PDF
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleDiscardAndRegenerate}
-                            disabled={batchRegenerating || loading}
-                            className="px-4 py-2 border-2 border-primary/50 text-primary bg-primary/5 dark:bg-primary/10 text-sm font-semibold rounded-full hover:bg-primary/15 transition-colors flex items-center gap-1 disabled:opacity-50"
-                          >
-                            <span className="material-symbols-outlined text-lg">refresh</span>
-                            Descartar e gerar novamente
-                          </button>
-                          <button
-                            type="button"
-                            onClick={processNextBatch}
-                            className="px-4 py-2 bg-surface-container-high dark:bg-surface-high/45 text-on-surface dark:text-white text-sm font-semibold rounded-full hover:bg-surface-container dark:hover:bg-surface-high/60 transition-colors border border-outline-variant dark:border-outline-variant/40"
-                          >
-                            Próximo
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setGeneratedData(null)}
-                          className="px-4 py-2 bg-surface-container dark:bg-surface-high/40 text-on-surface dark:text-white text-sm font-semibold rounded-full hover:bg-surface-container-high dark:hover:bg-surface-high/55 transition-colors border-2 border-outline-variant dark:border-outline-variant/45"
-                        >
-                          Gerar novo
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  {generatedData.perguntas && generatedData.perguntas.length > 0 && (
-                    <div className="px-4 py-3 border-b border-outline-variant/40 dark:border-outline-variant/30 shrink-0 bg-primary/6 dark:bg-primary/10">
-                      <p className="text-xs font-bold uppercase tracking-wider text-primary mb-2">
-                        Perguntas para reflexão
-                      </p>
-                      <ol className="list-decimal list-inside space-y-2 text-sm text-on-surface dark:text-white/90 leading-snug">
-                        {generatedData.perguntas.map((q, i) => (
-                          <li key={i} className="pl-0.5">
-                            {q}
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
-                  )}
-                  <div
-                    className={`flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-[320px] dark:bg-[#16171b] ${
-                      generatedData.curso_id === 'geral' ||
-                      (generatedData.tema?.name || '').toLowerCase().includes('venda todo santo dia')
-                        ? 'bg-[#e6e6e4] dark:bg-[#1e1f24]'
-                        : 'bg-surface-bright'
-                    }`}
-                  >
-                    <SafeArea>
-                      <MermaidInit className="flex flex-col items-center">
-                        <MaterialPreviewBlocks data={generatedData} scale={0.35} />
-                      </MermaidInit>
-                    </SafeArea>
-                  </div>
-                </div>
-              </div>
-            )}
-          </AnimatePresence>
         </main>
 
       </div>
