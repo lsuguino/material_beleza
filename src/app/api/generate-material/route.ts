@@ -3,7 +3,7 @@ import type { TeachingMaterial } from '@/types/material';
 import type { CourseId, GenerationMode } from '@/lib/courseThemes';
 import { parseJsonFromAI } from '@/lib/parse-json-from-ai';
 import { ensureOpenRouterKey } from '@/lib/ensure-env';
-import { openRouterChatByTask } from '@/lib/openrouter';
+import { openRouterChatByTask, verifyOpenRouterApiKeyForCompletions } from '@/lib/openrouter';
 
 // Tempo máximo da rota (segundos). Aumentado para transcrições longas (ex.: Vercel Pro permite até 300).
 export const maxDuration = 300;
@@ -259,6 +259,12 @@ export async function POST(request: NextRequest) {
       { error: 'OPENROUTER_API_KEY não configurada. Adicione em .env.local' },
       { status: 503 }
     );
+  }
+  if (process.env.OPENROUTER_SKIP_KEY_VERIFY !== '1') {
+    const verified = await verifyOpenRouterApiKeyForCompletions(apiKey);
+    if (!verified.ok) {
+      return NextResponse.json({ error: verified.message }, { status: 401 });
+    }
   }
   process.env.OPENROUTER_API_KEY = apiKey;
   try {

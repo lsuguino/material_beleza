@@ -1,23 +1,108 @@
 import { normalizeOpenRouterApiKey } from '@/lib/openrouter-key';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const OPENROUTER_KEY_INFO_URL = 'https://openrouter.ai/api/v1/key';
 
-/** Referer padrão quando OPENROUTER_HTTP_REFERER não está definido (doc: opcional, mas alguns proxies exigem URL válida). */
+/** Referer padrão quando OPENROUTER_HTTP_REFERER não está definido (HTTPS costuma ser mais seguro com gateways). */
 function defaultOpenRouterReferer(): string {
   const explicit = process.env.OPENROUTER_HTTP_REFERER?.trim();
-  if (explicit) return explicit;
+  if (explicit) {
+    try {
+      const u = new URL(explicit);
+      if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
+    } catch {
+      /* ignora valor inválido */
+    }
+  }
   const vercel = process.env.VERCEL_URL?.trim();
   if (vercel) return vercel.startsWith('http') ? vercel : `https://${vercel}`;
-  return 'http://127.0.0.1:3000';
+  return 'https://127.0.0.1:3000';
 }
 
 function openRouterExtraHeaders(): Record<string, string> {
   const h: Record<string, string> = {};
   h['HTTP-Referer'] = defaultOpenRouterReferer();
   const title = process.env.OPENROUTER_X_TITLE?.trim() || 'scribo';
-  h['X-Title'] = title;
   h['X-OpenRouter-Title'] = title;
   return h;
+}
+
+export type OpenRouterKeyVerifyResult =
+  | { ok: true; label?: string; limitRemaining?: number | null }
+  | { ok: false; message: string };
+
+function parseOpenRouterKeyErrorBody(raw: string): string {
+  try {
+    const j = JSON.parse(raw) as { error?: { message?: string } };
+    const m = j.error?.message;
+    if (typeof m === 'string' && m.length > 0) return m;
+  } catch {
+    /* ignore */
+  }
+  return raw.slice(0, 280).trim();
+}
+
+type OpenRouterKeyInfoPayload = {
+  data?: {
+    label?: string;
+    limit_remaining?: number | null;
+    is_management_key?: boolean;
+  };
+};
+
+/**
+ * Valida a chave com GET /api/v1/key (documentação OpenRouter).
+ * Chaves de Management API não servem para chat/completions — detectamos antes de gastar tokens.
+ */
+export async function verifyOpenRouterApiKeyForCompletions(rawKey: string): Promise<OpenRouterKeyVerifyResult> {
+  const apiKey = normalizeOpenRouterApiKey(rawKey);
+  if (!apiKey) {
+    return { ok: false, message: 'OPENROUTER_API_KEY está vazia.' };
+  }
+
+  const res = await fetch(OPENROUTER_KEY_INFO_URL, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${apiKey}` },
+    cache: 'no-store',
+  });
+
+  const rawText = await res.text();
+
+  if (!res.ok) {
+    const detail = parseOpenRouterKeyErrorBody(rawText);
+    if (res.status === 401) {
+      return {
+        ok: false,
+        message: `OpenRouter recusou esta chave (401: ${detail}). Use uma chave criada em https://openrouter.ai/keys (API key para uso em apps — não a chave de Management em /settings/management-keys). Verifique créditos e crie uma chave nova se precisar.`,
+      };
+    }
+    return {
+      ok: false,
+      message: `OpenRouter rejeitou a verificação da chave (${res.status}): ${detail}`,
+    };
+  }
+
+  let payload: OpenRouterKeyInfoPayload;
+  try {
+    payload = JSON.parse(rawText) as OpenRouterKeyInfoPayload;
+  } catch {
+    return { ok: true };
+  }
+
+  const d = payload.data;
+  if (d?.is_management_key) {
+    return {
+      ok: false,
+      message:
+        'Esta chave é de Management API (só para administrar outras chaves). Para gerar material, crie uma chave de API normal em https://openrouter.ai/keys (não em Management keys).',
+    };
+  }
+
+  return {
+    ok: true,
+    label: typeof d?.label === 'string' ? d.label : undefined,
+    limitRemaining: d?.limit_remaining ?? undefined,
+  };
 }
 
 /** Claude Sonnet 4 (Anthropic via OpenRouter) — etapa de design/layout. */

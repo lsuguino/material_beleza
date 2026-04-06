@@ -15,7 +15,7 @@
     "images:book": "node scripts/generate-images-for-book.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
+    "@anthropic-ai/sdk": "^0.82.0",
     "@supabase/supabase-js": "^2.98.0",
     "axios": "^1.13.6",
     "chart.js": "^4.5.1",

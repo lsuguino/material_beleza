@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getFriendlyErrorMessage } from '@/lib/anthropic-error';
 import { ensureOpenRouterKey } from '@/lib/ensure-env';
-import { openRouterChatByTask } from '@/lib/openrouter';
+import { verifyOpenRouterApiKeyForCompletions } from '@/lib/openrouter';
 
 /**
  * GET /api/check-credits
- * Faz uma chamada mínima ao OpenRouter para verificar se a chave está válida e há créditos.
+ * Usa GET /api/v1/key (OpenRouter) para validar a chave sem gastar tokens em chat.
  */
 export async function GET() {
   const apiKey = await ensureOpenRouterKey();
@@ -18,20 +17,19 @@ export async function GET() {
 
   process.env.OPENROUTER_API_KEY = apiKey;
 
-  try {
-    await openRouterChatByTask('text_material', {
-      user: 'Responda só: OK',
-      max_tokens: 10,
-    });
-    return NextResponse.json({
-      ok: true,
-      message: 'Chave válida e créditos disponíveis. Você pode usar a Geração Inteligente.',
-    });
-  } catch (err) {
-    const message = getFriendlyErrorMessage(err);
-    return NextResponse.json(
-      { ok: false, error: message },
-      { status: 200 }
-    );
+  const verified = await verifyOpenRouterApiKeyForCompletions(apiKey);
+  if (!verified.ok) {
+    return NextResponse.json({ ok: false, error: verified.message }, { status: 200 });
   }
+
+  const extra =
+    verified.limitRemaining != null
+      ? ` Limite restante (USD): ~${verified.limitRemaining}.`
+      : '';
+  return NextResponse.json({
+    ok: true,
+    message: `Chave aceita pelo OpenRouter.${extra} Você pode usar a Geração Inteligente.`,
+    label: verified.label,
+    limitRemaining: verified.limitRemaining,
+  });
 }

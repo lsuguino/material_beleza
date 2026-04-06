@@ -16,11 +16,11 @@ Transforme a transcrição da sua aula (arquivo **VTT**) em uma **apostila de es
    npm install
    ```
 
-2. Crie um arquivo `.env.local` na raiz do projeto com sua chave da Anthropic (Claude):
+2. Copie `.env.example` para **`.env.local`** na raiz (nome exato: `.env.local`, com **env** — não `.ev.local`) e defina pelo menos `OPENROUTER_API_KEY`:
    ```
-   ANTHROPIC_API_KEY=sua-chave-aqui
+   OPENROUTER_API_KEY=sua-chave-aqui
    ```
-   (Obtenha em [console.anthropic.com](https://console.anthropic.com/) → API Keys.)
+   Chave em [openrouter.ai/keys](https://openrouter.ai/keys). Veja `.env.example` para variáveis opcionais (Gemini, OpenAI, etc.).
 
 3. Inicie o servidor:
    ```bash
@@ -41,7 +41,7 @@ Transforme a transcrição da sua aula (arquivo **VTT**) em uma **apostila de es
 - **Next.js 14** (App Router)
 - **TypeScript**
 - **Tailwind CSS**
-- **Anthropic API** (Claude) para resumo e estruturação do material
+- **OpenRouter** (modelos via API compatível com OpenAI) para geração de texto e design
 
 ---
 
