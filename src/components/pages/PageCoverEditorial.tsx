@@ -1,7 +1,8 @@
 'use client';
 
 import type { CSSProperties } from 'react';
-import { VTSD_COLOR, VTSD_MARGENS_A4, vtsdCoverWatermarkFromTitle } from '@/lib/vtsd-design-system';
+import { CAPA_PADRAO_VTSD } from '@/lib/courseThemes';
+import { VTSD_COLOR, VTSD_MARGENS_A4 } from '@/lib/vtsd-design-system';
 
 /** Capa no estilo Corporate Editorial (Web-to-Print) */
 
@@ -17,12 +18,9 @@ export interface PageCoverEditorialProps {
   excerpt?: string;
 }
 
-const PG = VTSD_MARGENS_A4.margens.topo_px;
-const SIDE = VTSD_MARGENS_A4.margens.lateral_px;
-const AREA_W = VTSD_MARGENS_A4.area_util.largura_px;
+const b = VTSD_MARGENS_A4.badge_pagina;
 
 function VtsdCoverBadge({ numero, bg }: { numero: number; bg: string }) {
-  const b = VTSD_MARGENS_A4.badge_pagina;
   return (
     <div
       className="absolute z-[2] flex items-center justify-center font-display font-semibold text-[11px] leading-[14px] pointer-events-none text-white"
@@ -42,8 +40,8 @@ function VtsdCoverBadge({ numero, bg }: { numero: number; bg: string }) {
 }
 
 /**
- * Capa VTSD alinhada ao layout A4_1_abertura (Book DS): fundo cinza, bloco teal com título,
- * faixa gradiente com watermark, faixa branca com texto e badge de página.
+ * Capa VTSD: arte oficial em SVG (`capa.svg`) + texto dinâmico.
+ * Posições alinhadas à referência `capa-com-informacoes.svg` em /public/capas/venda-todo-santo-dia/.
  */
 export function PageCoverEditorial({
   title,
@@ -56,18 +54,11 @@ export function PageCoverEditorial({
   excerpt,
 }: PageCoverEditorialProps) {
   if (variant === 'vtsd') {
-    const blocoEscuro = VTSD_COLOR.primary_darker;
-    const watermark = vtsdCoverWatermarkFromTitle(title);
     const stripText =
       (excerpt && excerpt.trim()) ||
       (subtitle && subtitle.trim()) ||
       `Material de apoio — ${nomeCurso}.`;
-
-    const headerH = 350;
-    const bandH = 210;
-    const gap = 10;
-    const whiteTop = PG + headerH + gap + bandH + gap;
-
+    const moduleLine = (subtitle && subtitle.trim()) || nomeCurso;
     const badgeNum = pageNumber ?? 1;
 
     return (
@@ -76,89 +67,44 @@ export function PageCoverEditorial({
         style={{
           width: 595,
           height: 842,
-          backgroundColor: VTSD_COLOR.fundo_externo,
           WebkitPrintColorAdjust: 'exact',
           printColorAdjust: 'exact',
         }}
       >
+        <img
+          src={CAPA_PADRAO_VTSD}
+          alt=""
+          width={595}
+          height={842}
+          className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
+          draggable={false}
+        />
         <div
-          className="absolute flex flex-col z-[1]"
+          className="absolute inset-0 z-[1] flex flex-col text-[#202020]"
           style={{
-            left: SIDE,
-            top: PG,
-            width: AREA_W,
-            height: headerH,
-            backgroundColor: blocoEscuro,
-            padding: '50px 50px 20px 50px',
+            padding: '56px 48px 120px 48px',
             boxSizing: 'border-box',
           }}
         >
-          <h1 className="font-sora font-bold text-[40px] leading-[48px] tracking-[-0.025em] text-white m-0">
+          <div className="flex items-start justify-between gap-4 text-[17px] sm:text-[19px] font-light tracking-tight leading-snug">
+            <span className="min-w-0 flex-1">{moduleLine}</span>
+            <div className="shrink-0 text-right">
+              <span className="block">Aula</span>
+              <span className="block font-semibold text-[28px] leading-tight tracking-tight">
+                Nº {String(badgeNum).padStart(2, '0')}
+              </span>
+            </div>
+          </div>
+          <h1
+            className="mt-5 font-sora font-bold text-[32px] leading-[1.12] tracking-[-0.02em] m-0 max-w-[95%]"
+            style={{ fontFamily: 'var(--font-sora), Sora, system-ui, sans-serif' }}
+          >
             {title}
           </h1>
-          {subtitle ? (
-            <p
-              className="font-display text-[17px] leading-[20px] mt-4 m-0"
-              style={{ color: VTSD_COLOR.primary_lighter }}
-            >
-              {subtitle}
-            </p>
+          {stripText ? (
+            <p className="mt-6 font-display text-[13px] leading-[1.45] m-0 max-w-full text-justify opacity-95">{stripText}</p>
           ) : null}
         </div>
-
-        <div
-          className="absolute z-0 overflow-hidden"
-          style={{
-            left: SIDE,
-            top: PG + headerH + gap,
-            width: AREA_W,
-            height: bandH,
-            background: `linear-gradient(95deg, #022f3f 0%, ${VTSD_COLOR.primary_darker} 22%, #047a8c 52%, ${VTSD_COLOR.primary_dark} 72%, #12a0b0 88%, #1eb4c4 100%)`,
-          }}
-          aria-hidden
-        >
-          <span
-            className="absolute font-sora font-bold select-none pointer-events-none whitespace-nowrap"
-            style={{
-              right: '24px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              fontSize: '110px',
-              lineHeight: 1,
-              color: 'rgba(255,255,255,0.12)',
-              letterSpacing: '-0.04em',
-            }}
-          >
-            {watermark}
-          </span>
-        </div>
-
-        <div
-          className="absolute z-[1]"
-          style={{
-            left: SIDE,
-            top: whiteTop,
-            width: AREA_W,
-            maxHeight: VTSD_MARGENS_A4.area_util.y_fim_px - whiteTop,
-            backgroundColor: VTSD_COLOR.fundo_page,
-            padding: '28px 50px 36px 50px',
-            boxSizing: 'border-box',
-          }}
-        >
-          <p
-            className="font-display text-[14px] leading-[22px] m-0 text-justify"
-            style={{ color: VTSD_COLOR.texto_800 }}
-          >
-            {stripText}
-          </p>
-          <p
-            className="font-display text-[10px] leading-[13px] mt-5 m-0 uppercase tracking-[0.12em]"
-            style={{ color: VTSD_COLOR.texto_600 }}
-          >
-            {nomeCurso}
-          </p>
-        </div>
-
         {showPageNumber ? <VtsdCoverBadge numero={badgeNum} bg={VTSD_COLOR.primary_dark} /> : null}
       </div>
     );

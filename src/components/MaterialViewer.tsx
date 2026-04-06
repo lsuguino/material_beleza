@@ -1,7 +1,8 @@
 'use client';
 
 import type { TeachingMaterial, MaterialBlock } from '@/types/material';
-import { COURSE_THEMES, type CourseId } from '@/lib/courseThemes';
+import { CAPA_PADRAO_VTSD, COURSE_THEMES, PAGINA_BOAS_VINDAS_VTSD, type CourseId } from '@/lib/courseThemes';
+import { VtsdWelcomeBody } from '@/components/pages/VtsdWelcomeBody';
 
 interface MaterialViewerProps {
   material: TeachingMaterial;
@@ -265,7 +266,9 @@ function CoverPlaceholderIllustration() {
 }
 
 export function MaterialViewer({ material, courseId = 'geral' }: MaterialViewerProps) {
-  const hasCoverImage = Boolean(material.coverImageUrl);
+  const coverSrc =
+    material.coverImageUrl?.trim() || (courseId === 'geral' ? CAPA_PADRAO_VTSD : undefined);
+  const hasCoverImage = Boolean(coverSrc);
   const theme = COURSE_THEMES[courseId];
   const isVtsd = courseId === 'geral';
   const lessonNumber = extractLessonNumber(material.title || '');
@@ -284,7 +287,7 @@ export function MaterialViewer({ material, courseId = 'geral' }: MaterialViewerP
       {/* Capa — curso VTSD com arte base e só textos variáveis */}
       {isVtsd && hasCoverImage ? (
         <header className="relative min-h-[720px] print:min-h-0 print:break-after-page overflow-hidden cover-page">
-          <img src={material.coverImageUrl} alt="" className="w-full h-full object-cover" />
+          <img src={coverSrc} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 p-8 md:p-10 flex flex-col text-[#202020]">
             <div className="flex items-start justify-between text-[20px] md:text-[26px] font-light tracking-tight">
               <span>{moduleName}</span>
@@ -308,7 +311,7 @@ export function MaterialViewer({ material, courseId = 'geral' }: MaterialViewerP
             {hasCoverImage ? (
               <div className="cover-image-frame relative w-full max-w-[240px] md:max-w-xs aspect-[4/5] md:aspect-square rounded-sm overflow-hidden shadow-lg border border-book-blue/20 print:shadow-md">
                 <img
-                  src={material.coverImageUrl}
+                  src={coverSrc}
                   alt=""
                   className="w-full h-full object-cover img-editorial"
                 />
@@ -343,14 +346,22 @@ export function MaterialViewer({ material, courseId = 'geral' }: MaterialViewerP
         </header>
       )}
 
-      {/* Página fixa de introdução após a capa (VTSD) */}
+      {/* Página fixa de boas-vindas após a capa (VTSD — mesmo conteúdo que PageIntro / vtsd-fixed-copy) */}
       {isVtsd && (
-        <section className="print:break-after-page bg-book-cream">
+        <section
+          className="relative print:break-after-page overflow-hidden bg-[#025468]"
+          style={{ aspectRatio: '595 / 842', minHeight: 'min(100vh, 842px)' }}
+        >
           <img
-            src="/images/Introducao-padrao-vtsd.png"
-            alt="Introdução"
-            className="w-full h-auto object-cover"
+            src={PAGINA_BOAS_VINDAS_VTSD}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            width={595}
+            height={842}
           />
+          <div className="relative z-10 px-8 py-10 md:px-12 md:py-12 max-w-3xl mx-auto">
+            <VtsdWelcomeBody variant="web" />
+          </div>
         </section>
       )}
 

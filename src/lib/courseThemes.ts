@@ -4,8 +4,29 @@
  */
 export type CourseId = 'geral' | 'marketing' | 'beleza' | 'saude' | 'design' | 'tecnologia';
 
-/** Caminho da capa padrão para o curso Venda Todo Santo Dia (geral) */
-export const CAPA_PADRAO_VTSD = '/capas/venda-todo-santo-dia.png';
+/**
+ * Curso que usa o design system VTSD (Figma / `vtsd-design-system.ts`, diagramação A4, cores da marca).
+ * Todo o fluxo de geração de materiais “editorial” está calibrado para este ID.
+ */
+export const VTSD_COURSE_ID = 'geral' as const satisfies CourseId;
+
+/** Capa oficial VTSD (arte A4 595×842), sem texto dinâmico — use com overlay no preview/PDF */
+export const CAPA_PADRAO_VTSD = '/capas/venda-todo-santo-dia/capa.svg';
+
+/** Referência de diagramação: mesma arte com títulos/aula na posição correta (só referência visual) */
+export const CAPA_VTSD_REFERENCIA_INFORMACOES = '/capas/venda-todo-santo-dia/capa-com-informacoes.svg';
+
+/** Página de boas-vindas (arte sem texto — conteúdo em HTML sobreposto; ver `vtsd-fixed-copy`) */
+export const PAGINA_BOAS_VINDAS_VTSD = '/capas/venda-todo-santo-dia/pagina-boas-vindas.svg';
+
+/** Referência com texto já diagramado (só referência visual / alinhamento) */
+export const PAGINA_BOAS_VINDAS_VTSD_REFERENCIA = '/capas/venda-todo-santo-dia/pagina-boas-vindas-referencia-com-texto.svg';
+
+/** Verdadeiro para o curso Venda Todo Santo Dia (`geral` ou nome do tema). */
+export function isVendaTodoSantoDiaCourse(courseId: string, temaName?: string): boolean {
+  if (courseId === VTSD_COURSE_ID) return true;
+  return (temaName || '').toLowerCase().includes('venda todo santo dia');
+}
 
 export interface CourseTheme {
   id: CourseId;
@@ -25,7 +46,7 @@ export const COURSE_THEMES: Record<CourseId, CourseTheme> = {
   geral: {
     id: 'geral',
     name: 'Venda Todo Santo Dia',
-    // Design system Figma VTSD — marca teal + A4 595×842
+    /** Tokens alinhados a `@/lib/vtsd-design-system` (único curso com DS editorial completo). */
     primary: '#0599A8',
     primaryLight: '#03DFE6',
     primaryDark: '#025468',

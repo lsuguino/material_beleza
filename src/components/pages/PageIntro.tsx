@@ -2,13 +2,8 @@
 
 import { ContentBlocksRenderer, renderParagraphParts, type ContentBlockItem } from '@/components/ContentBlocksRenderer';
 import { contentBlocksTextCharCount, MIN_CHARS_TEXT_IN_BLOCKS } from '@/lib/normalize-content-blocks';
-import {
-  VTSD_INTRO_BODY_PARAGRAPHS,
-  VTSD_INTRO_SIGNOFF_LINES,
-  VTSD_WELCOME_KICKER,
-  VTSD_WELCOME_TITLE_LINE_1,
-  VTSD_WELCOME_TITLE_LINE_2,
-} from '@/lib/vtsd-fixed-copy';
+import { PAGINA_BOAS_VINDAS_VTSD } from '@/lib/courseThemes';
+import { VtsdWelcomeBody } from '@/components/pages/VtsdWelcomeBody';
 
 /** Template: imagem de topo sangrada + bloco de cor lateral (Corporate Editorial) */
 
@@ -74,37 +69,31 @@ export function PageIntro({
   if (vtsdWelcome && variant === 'vtsd') {
     return (
       <section
-        className={pageClass}
+        className={`${pageClass} vtsd-welcome-page--svg relative overflow-hidden`}
         style={
           {
+            width: 595,
+            height: 842,
+            minHeight: 842,
             '--print-primary': primary,
             '--print-primary-light': primary,
             '--print-accent': accent,
           } as React.CSSProperties
         }
       >
-        <div className="page-body vtsd-welcome-body">
-          <header className="vtsd-welcome-header">
-            <p className="vtsd-welcome-kicker">{VTSD_WELCOME_KICKER}</p>
-            <h2 className="vtsd-welcome-title">
-              <span className="vtsd-welcome-title-line">{VTSD_WELCOME_TITLE_LINE_1}</span>
-              <span className="vtsd-welcome-title-line">{VTSD_WELCOME_TITLE_LINE_2}</span>
-            </h2>
-            <div className="vtsd-welcome-title-accent" aria-hidden />
-          </header>
-          {renderParagraphParts(VTSD_INTRO_BODY_PARAGRAPHS, 'vtsd-welcome-para')}
-          <div className="vtsd-welcome-signoff">
-            {VTSD_INTRO_SIGNOFF_LINES.map((line, i) => (
-              <p key={i}>{line}</p>
-            ))}
-          </div>
-        </div>
+        <img
+          src={PAGINA_BOAS_VINDAS_VTSD}
+          alt=""
+          width={595}
+          height={842}
+          className="vtsd-welcome-bg pointer-events-none absolute inset-0 z-0 h-full w-full object-cover select-none"
+          draggable={false}
+        />
+        <VtsdWelcomeBody className="page-body vtsd-welcome-body" variant="print" />
         <div className="page-sidebar" aria-hidden />
-        <footer className="page-footer vtsd-welcome-footer">
-          <span className="vtsd-footer-wordmark">venda todo santo dia</span>
-          {showPageNumber && typeof pageNumber === 'number' ? (
-            <span>Página {pageNumber}</span>
-          ) : null}
+        <footer className="page-footer vtsd-welcome-footer vtsd-welcome-footer--on-svg">
+          <span className="vtsd-footer-wordmark sr-only">venda todo santo dia</span>
+          {showPageNumber && typeof pageNumber === 'number' ? <span>Página {pageNumber}</span> : null}
         </footer>
       </section>
     );

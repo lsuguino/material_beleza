@@ -1,6 +1,8 @@
 /**
  * Design system — Venda Todo Santo Dia (Figma).
  * Materiais A4 PDF: apenas fontes Sora (títulos/números) e Inter (demais textos).
+ *
+ * Curso aplicável: `VTSD_COURSE_ID` / `isVendaTodoSantoDiaCourse` em `@/lib/courseThemes` (id `geral`).
  */
 
 export const VTSD_META = {

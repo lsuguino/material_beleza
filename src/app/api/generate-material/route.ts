@@ -8,7 +8,7 @@ import { openRouterChatByTask } from '@/lib/openrouter';
 // Tempo máximo da rota (segundos). Aumentado para transcrições longas (ex.: Vercel Pro permite até 300).
 export const maxDuration = 300;
 
-const VTSD_COVER_IMAGE = '/images/capa-vtsd.jpg';
+const VTSD_COVER_IMAGE = '/capas/venda-todo-santo-dia/capa.svg';
 const VTSD_INTRO_IMAGE = '/images/Introducao-padrao-vtsd.png';
 const VTSD_SUMMARY_IMAGE = '/images/sumario-vtsd.png';
 

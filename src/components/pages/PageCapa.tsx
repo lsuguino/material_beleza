@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { CAPA_PADRAO_VTSD } from '@/lib/courseThemes';
 
 /** Objeto tema com cores (ex.: CourseTheme) */
@@ -44,13 +43,13 @@ export function PageCapa({
           height: 842,
         }}
       >
-        <Image
+        <img
           src={CAPA_PADRAO_VTSD}
           alt={`Capa do curso ${nomeCurso}`}
-          fill
-          className="object-cover object-center"
-          sizes="595px"
-          priority
+          width={595}
+          height={842}
+          className="absolute inset-0 h-full w-full object-cover object-center"
+          draggable={false}
         />
       </div>
     );

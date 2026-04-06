@@ -1,4 +1,4 @@
-import type { CourseTheme } from '@/lib/courseThemes';
+import { isVendaTodoSantoDiaCourse, type CourseTheme } from '@/lib/courseThemes';
 import { openRouterChatByTask } from '@/lib/openrouter';
 import { parseJsonFromAI } from '@/lib/parse-json-from-ai';
 import { VTSD_COLOR, VTSD_LAYOUT_A4, VTSD_MARGENS_A4, VTSD_PAGE } from '@/lib/vtsd-design-system';
@@ -99,7 +99,7 @@ export async function generateDesign(
     backgroundColor: tema.backgroundColor ?? '#F8F7E8',
   });
   const conteudoJson = JSON.stringify(conteudo);
-  const isVTSD = tema.id === 'geral' || tema.name.toLowerCase().includes('venda todo santo dia');
+  const isVTSD = isVendaTodoSantoDiaCourse(tema.id, tema.name);
   const vtsdInstruction = isVTSD ? VTSD_REFERENCE_DESIGN_SYSTEM : '';
 
   const userContent = `Tema: ${temaJson}
