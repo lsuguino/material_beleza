@@ -10,6 +10,7 @@ import { DropzoneParticles } from '@/components/DropzoneParticles';
 import { ScriboLogo } from '@/components/ScriboLogo';
 import { useScriboUi } from '@/context/ScriboUiContext';
 import { COURSE_PICKER_OPTIONS } from '@/lib/coursePickerOptions';
+import { ClipboardQuestionRegular } from '@dev-mbr/icons';
 
 const STORAGE_KEY = 'rtg-preview-data';
 
@@ -510,25 +511,28 @@ export default function Home() {
                       </div>
 
                       <div>
-                        <div className="flex items-start gap-3 rounded-xl border-2 border-outline-variant/25 dark:border-outline-variant/35 bg-surface-container-lowest/90 dark:bg-surface-low/35 px-3 py-3 sm:px-4 text-left">
-                          <input
-                            id="com-perguntas"
-                            type="checkbox"
-                            checked={comPerguntas}
-                            onChange={(e) => setComPerguntas(e.target.checked)}
-                            disabled={loading}
-                            className="mt-0.5 h-4 w-4 shrink-0 rounded border-outline-variant text-primary focus:ring-2 focus:ring-primary/40"
-                          />
-                          <label htmlFor="com-perguntas" className="cursor-pointer min-w-0">
-                            <span className="font-semibold text-sm text-on-surface dark:text-white block">
-                              Gerar material com perguntas de estudo
-                            </span>
-                            <span className="text-on-surface-variant dark:text-white/70 text-xs mt-1 block leading-relaxed">
-                              Quando marcado, na primeira geração o sistema também elabora 3 perguntas sobre o tema com base no
-                              seu arquivo.
-                            </span>
-                          </label>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => !loading && setComPerguntas((v) => !v)}
+                          disabled={loading}
+                          aria-pressed={comPerguntas}
+                          title="Na primeira geração, o sistema também elabora 3 perguntas sobre o tema com base no seu arquivo."
+                          aria-label={
+                            comPerguntas
+                              ? 'Desativar perguntas de estudo na geração'
+                              : 'Incluir perguntas de estudo na primeira geração'
+                          }
+                          className={`w-full flex items-center justify-center gap-3 rounded-full border-2 px-4 py-3 font-bold text-base transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                            comPerguntas
+                              ? 'border-primary/90 dark:border-primary/55 bg-primary/15 dark:bg-primary/20 text-primary dark:text-primary shadow-lg shadow-primary/20 ring-2 ring-primary/35'
+                              : 'border-primary/30 dark:border-primary/50 bg-primary/5 dark:bg-primary/10 text-primary hover:bg-primary/10 dark:hover:bg-primary/20'
+                          }`}
+                        >
+                          <ClipboardQuestionRegular size={24} className="shrink-0" />
+                          <span className="text-center sm:text-left leading-tight">
+                            Gerar material com perguntas de estudo
+                          </span>
+                        </button>
                       </div>
 
                       <div className="pt-2 space-y-4">

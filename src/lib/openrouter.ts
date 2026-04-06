@@ -1,4 +1,24 @@
+import { normalizeOpenRouterApiKey } from '@/lib/openrouter-key';
+
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+/** Referer padrão quando OPENROUTER_HTTP_REFERER não está definido (doc: opcional, mas alguns proxies exigem URL válida). */
+function defaultOpenRouterReferer(): string {
+  const explicit = process.env.OPENROUTER_HTTP_REFERER?.trim();
+  if (explicit) return explicit;
+  const vercel = process.env.VERCEL_URL?.trim();
+  if (vercel) return vercel.startsWith('http') ? vercel : `https://${vercel}`;
+  return 'http://127.0.0.1:3000';
+}
+
+function openRouterExtraHeaders(): Record<string, string> {
+  const h: Record<string, string> = {};
+  h['HTTP-Referer'] = defaultOpenRouterReferer();
+  const title = process.env.OPENROUTER_X_TITLE?.trim() || 'scribo';
+  h['X-Title'] = title;
+  h['X-OpenRouter-Title'] = title;
+  return h;
+}
 
 /** Claude Sonnet 4 (Anthropic via OpenRouter) — etapa de design/layout. */
 export const OPENROUTER_MODEL_CLAUDE_SONNET_4 = 'anthropic/claude-sonnet-4';
@@ -50,10 +70,11 @@ export async function openRouterChat(params: {
   temperature?: number;
   model?: string;
 }): Promise<string> {
-  const apiKey = process.env.OPENROUTER_API_KEY?.trim();
+  const apiKey = normalizeOpenRouterApiKey(process.env.OPENROUTER_API_KEY);
   if (!apiKey) {
     throw new Error('OPENROUTER_API_KEY não configurada');
   }
+  process.env.OPENROUTER_API_KEY = apiKey;
 
   const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
   if (params.system?.trim()) {
@@ -64,11 +85,8 @@ export async function openRouterChat(params: {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${apiKey}`,
     'Content-Type': 'application/json',
+    ...openRouterExtraHeaders(),
   };
-  const referer = process.env.OPENROUTER_HTTP_REFERER?.trim();
-  if (referer) headers['HTTP-Referer'] = referer;
-  const title = process.env.OPENROUTER_X_TITLE?.trim();
-  if (title) headers['X-Title'] = title;
 
   const res = await fetch(OPENROUTER_URL, {
     method: 'POST',
@@ -185,11 +203,12 @@ export async function openRouterGenerateImage(prompt: string): Promise<string | 
   const model = getOpenRouterImageModel();
   if (!model) return null;
 
-  const apiKey = process.env.OPENROUTER_API_KEY?.trim();
+  const apiKey = normalizeOpenRouterApiKey(process.env.OPENROUTER_API_KEY);
   if (!apiKey) {
     console.warn('[openrouter-image] OPENROUTER_API_KEY ausente');
     return null;
   }
+  process.env.OPENROUTER_API_KEY = apiKey;
 
   const didacticPrefix =
     'Professional clean educational illustration for a printed course handout (A4), clear composition, minimal overlaid text. ';
@@ -198,11 +217,8 @@ export async function openRouterGenerateImage(prompt: string): Promise<string | 
   const headers: Record<string, string> = {
     Authorization: `Bearer ${apiKey}`,
     'Content-Type': 'application/json',
+    ...openRouterExtraHeaders(),
   };
-  const referer = process.env.OPENROUTER_HTTP_REFERER?.trim();
-  if (referer) headers['HTTP-Referer'] = referer;
-  const title = process.env.OPENROUTER_X_TITLE?.trim();
-  if (title) headers['X-Title'] = title;
 
   const res = await fetch(OPENROUTER_URL, {
     method: 'POST',

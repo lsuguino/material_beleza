@@ -24,6 +24,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@dev-mbr/icons": [
+        "./src/vendor/dev-mbr-icons.tsx"
       ]
     },
     "target": "ES2017"

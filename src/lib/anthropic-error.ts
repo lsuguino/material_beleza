@@ -41,6 +41,9 @@ function toFriendlyMessage(englishMessage: string): string {
   ) {
     return 'Saldo ou créditos insuficientes no provedor de IA (OpenRouter). Acesse openrouter.ai → Credits / Billing e adicione créditos.';
   }
+  if (lower.includes('user not found')) {
+    return 'OpenRouter não reconheceu esta chave (401). Confira em openrouter.ai/keys se a chave está ativa, se há créditos e crie uma chave nova se necessário. Em .env use só o valor da chave (sem a palavra Bearer) e sem espaços ou quebras de linha.';
+  }
   if (
     lower.includes('invalid_api_key') ||
     lower.includes('authentication') ||
@@ -48,7 +51,7 @@ function toFriendlyMessage(englishMessage: string): string {
     lower.includes('401') ||
     lower.includes('unauthorized')
   ) {
-    return 'Chave da API inválida ou expirada. Verifique OPENROUTER_API_KEY no arquivo .env.local.';
+    return 'Chave da API inválida ou expirada. Verifique OPENROUTER_API_KEY (openrouter.ai/keys) e créditos na conta.';
   }
   if (lower.includes('rate limit') || lower.includes('overloaded')) {
     return 'Muitas requisições no momento. Aguarde alguns segundos e tente novamente.';
@@ -74,6 +77,7 @@ export function getFriendlyErrorMessage(err: unknown): string {
       raw.includes('credit balance') ||
       raw.includes('too low') ||
       raw.includes('invalid_request_error') ||
+      raw.includes('OpenRouter') ||
       fromJson
     ) {
       return toFriendlyMessage(raw);
