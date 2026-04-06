@@ -1003,7 +1003,7 @@ article .material-highlight {
     background: #fff !important;
   }
   @page {
-    size: A4;
+    size: 595px 842px;
     margin: 0;
   }
 }
@@ -1031,13 +1031,23 @@ article .material-highlight {
   .page-a4 {
     box-shadow: none;
     margin: 0;
-    width: 210mm;
-    min-height: 297mm;
+    /* Manter 595px × 842px — conteúdo projetado nessa escala */
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+  /* Layout do preview: liberar fluxo para paginação correta */
+  .preview-layout {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .preview-canvas {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
   @page {
-    size: A4;
+    size: 595px 842px;
     margin: 0;
   }
 }

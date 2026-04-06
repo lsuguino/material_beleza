@@ -58,7 +58,7 @@ export function PageCoverEditorial({
       (excerpt && excerpt.trim()) ||
       (subtitle && subtitle.trim()) ||
       `Material de apoio — ${nomeCurso}.`;
-    const moduleLine = (subtitle && subtitle.trim()) || nomeCurso;
+    const moduleLine = nomeCurso;
     const badgeNum = pageNumber ?? 1;
 
     return (

@@ -18,8 +18,8 @@ export async function generatePDF(
   try {
     const page = await browser.newPage();
 
-    // Viewport largo o suficiente para que o layout não comprima as páginas
-    await page.setViewport({ width: 1400, height: 900 });
+    // Viewport igual ao papel para que 1px = 1px no PDF
+    await page.setViewport({ width: 595, height: 842 });
 
     // Injeta localStorage antes de qualquer script da página ser executado
     if (localStorageData && Object.keys(localStorageData).length > 0) {
@@ -36,7 +36,8 @@ export async function generatePDF(
     });
 
     const pdfBuffer = await page.pdf({
-      format: 'A4',
+      width: '595px',
+      height: '842px',
       printBackground: true,
       margin: {
         top: 0,
