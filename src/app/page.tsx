@@ -642,10 +642,8 @@ export default function Home() {
                 )}
               </AnimatePresence>
 
-              <footer className="mt-16 py-10 border-t border-outline-variant/40 dark:border-outline-variant/28 text-center">
-                <p className="text-on-surface-variant dark:text-white/65 text-sm">
-                  © {new Date().getFullYear()} scribo — materiais didáticos com IA.
-                </p>
+              <footer className="mt-16 py-10 text-center">
+                <ScriboLogo className="inline-block text-[#1a2dc2] dark:text-[#7B9CFF] opacity-40 dark:opacity-30" />
               </footer>
             </section>
           )}
