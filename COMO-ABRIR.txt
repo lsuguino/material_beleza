@@ -1,0 +1,39 @@
+===============================================
+  DESIGN BELEZA - Como abrir a pagina
+===============================================
+
+IMPORTANTE: Nao rode "npm run dev" no CMD aberto em System32.
+O npm precisa ser executado DENTRO da pasta do projeto.
+
+FORMA MAIS FACIL:
+  Duplo clique em: INICIAR-SERVIDOR.bat
+  (ele abre na pasta certa e inicia o servidor)
+
+OU PELO CMD:
+
+1) Abra o CMD (Prompt de Comando).
+
+2) Vá para a pasta do projeto:
+   cd /d e:\design_beleza
+
+3) Inicie o servidor:
+   npm run dev
+
+3) ESPERE aparecer no terminal algo como:
+   "Ready in 2s"
+   "Local: http://localhost:3000"
+
+4) So DEPOIS abra no navegador: http://localhost:3000
+
+Se a porta 3000 estiver em uso, o Next.js mostrara outra (ex: 3001).
+Use a URL que aparecer no terminal.
+
+-----------------------------------------------
+Opcao mais estavel (modo producao):
+-----------------------------------------------
+  npm run build
+  npm run start
+
+Depois abra http://localhost:3000
+
+===============================================

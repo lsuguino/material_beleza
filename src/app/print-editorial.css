@@ -1,0 +1,884 @@
+/**
+ * Web-to-Print — Corporate Editorial Design
+ * A4 (210mm × 297mm), Grid Assimétrico, Color Blocking, numeração com counter(page)
+ * Cada section.page inicia em nova folha na impressão.
+ */
+
+/* ========== Variáveis CSS (rebranding) ========== */
+:root {
+  --print-primary: #0f1823;
+  --print-primary-light: #1e293b;
+  --print-accent: #006eff;
+  --print-paper: #f8f9fa;
+  --print-ink: #1a1a1a;
+  --print-ink-muted: #64748b;
+  --print-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ========== Base: página A4 + tipografia editorial ========== */
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  height: 297mm;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--print-font-sans);
+  font-size: 1rem;
+  background: var(--print-paper);
+  color: var(--print-ink);
+  page-break-after: always;
+  break-after: page;
+  text-rendering: optimizeLegibility;
+}
+
+/* Refinamento editorial: evita linhas órfãs/viúvas e legibilidade */
+.page p,
+.page li {
+  orphans: 3;
+  widows: 3;
+  text-rendering: optimizeLegibility;
+  hyphens: auto;
+  line-height: 1.6;
+}
+
+.page h1,
+.page h2 {
+  letter-spacing: 0.04em;
+}
+
+/* Última folha no preview: @media print → .preview-page-wrap:last-child .page */
+
+/* ========== Grid utilitário 12 colunas ========== */
+.page-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0 1rem;
+  min-height: 100%;
+  align-content: start;
+}
+
+/* Colunas semânticas: alternar layout só trocando a classe na section */
+.col-sidebar { grid-column: span 4; }
+.col-main { grid-column: span 8; }
+.col-full { grid-column: span 12; }
+.col-half { grid-column: span 6; }
+
+/* Colunas numéricas (1–12) para controle fino */
+.col-1 { grid-column: span 1; }
+.col-2 { grid-column: span 2; }
+.col-3 { grid-column: span 3; }
+.col-4 { grid-column: span 4; }
+.col-5 { grid-column: span 5; }
+.col-6 { grid-column: span 6; }
+.col-7 { grid-column: span 7; }
+.col-8 { grid-column: span 8; }
+.col-9 { grid-column: span 9; }
+.col-10 { grid-column: span 10; }
+.col-11 { grid-column: span 11; }
+.col-12 { grid-column: span 12; }
+
+/* Rodapé fixo com numeração automática */
+.page-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 12mm;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8mm;
+  font-size: 10px;
+  color: var(--print-ink-muted);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--print-paper);
+}
+
+/* Numeração via counter(page) apenas em impressão (em tela mostraremos número explícito) */
+
+/* Página par/ímpar: numeração alternada como em livro físico (ímpar = direita, par = esquerda) */
+.page:nth-of-type(odd) .page-footer {
+  flex-direction: row;
+  justify-content: space-between;
+}
+.page:nth-of-type(even) .page-footer {
+  flex-direction: row-reverse;
+  justify-content: space-between;
+}
+
+/* Preview em tela: tamanho A4 em px (igual capa 595×842) */
+@media screen {
+  .page {
+    width: 595px;
+    min-height: 842px;
+    height: 842px;
+  }
+}
+
+/* ========== Template: .page-summary — barra lateral colorida + lista numerada ========== */
+.page-summary {
+  display: grid;
+  grid-template-columns: 28mm 1fr;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "sidebar content"
+    "sidebar footer";
+  min-height: 297mm;
+}
+
+.page-summary .page-sidebar {
+  grid-area: sidebar;
+  background: var(--print-primary);
+  color: #fff;
+  padding: 12mm 6mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.page-summary .page-sidebar-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  margin: 0 auto;
+}
+
+.page-summary .page-body {
+  grid-area: content;
+  padding: 12mm 10mm 14mm 10mm;
+  overflow: hidden;
+}
+
+.page-summary .page-body h2 {
+  font-size: 1.25em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--print-primary);
+  margin: 0 0 6mm 0;
+}
+
+.page-summary .page-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.page-summary .page-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 4mm;
+  margin-bottom: 4mm;
+  font-size: 1rem;
+  line-height: 1.6;
+  orphans: 3;
+  widows: 3;
+  text-rendering: optimizeLegibility;
+  hyphens: auto;
+}
+
+.page-summary .page-list-num {
+  flex-shrink: 0;
+  width: 6mm;
+  height: 6mm;
+  background: var(--print-primary);
+  color: #fff;
+  font-size: 8pt;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-summary .page-footer {
+  grid-area: footer;
+}
+
+/* ========== Template: .page-intro — imagem de topo sangrada + bloco de cor lateral ========== */
+.page-intro {
+  display: grid;
+  grid-template-columns: 1fr 25mm;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "content sidebar"
+    "footer footer";
+  min-height: 297mm;
+}
+
+/* page-image removido: neste fluxo não há imagem real */
+
+.page-intro .page-body {
+  grid-area: content;
+  padding: 8mm 10mm 14mm 10mm;
+  overflow: hidden;
+}
+
+.page-intro .page-body h2 {
+  font-size: 1.5em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--print-primary);
+  margin: 0 0 4mm 0;
+}
+
+.page-intro .page-body p {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 4mm 0;
+  orphans: 3;
+  widows: 3;
+  text-rendering: optimizeLegibility;
+  hyphens: auto;
+  text-align: justify;
+  text-wrap: pretty;
+}
+
+.page-intro .page-sidebar {
+  grid-area: sidebar;
+  background: var(--print-accent);
+  min-height: 0;
+}
+
+.page-intro .page-footer {
+  grid-area: footer;
+}
+
+/* ========== VTSD (Venda Todo Santo Dia) — Design System Figma A4 ========== */
+.vtsd-editorial {
+  background: #ffffff;
+  color: #383838;
+}
+
+.vtsd-editorial .page-body h2 {
+  font-family: 'Sora', var(--print-font-sans);
+  font-weight: 700;
+  color: #0599a8;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.vtsd-editorial .page-body p,
+.vtsd-editorial .page-body li {
+  font-family: 'Inter', var(--print-font-sans);
+  color: #717171;
+  line-height: 22px;
+  font-size: 13px;
+  text-align: justify;
+  hyphens: auto;
+  text-wrap: pretty;
+}
+
+.vtsd-editorial.page-intro {
+  grid-template-columns: 1fr 22mm;
+}
+
+.vtsd-editorial.page-intro .page-sidebar {
+  background: #0599a8;
+}
+
+.vtsd-editorial.page-double-column .page-divider {
+  height: 4px;
+  margin: 0;
+  background: #025468;
+}
+
+.vtsd-editorial .page-footer {
+  border-top: 1px solid rgba(56, 56, 56, 0.12);
+  background: #ffffff;
+  color: #717171;
+  font-family: 'Inter', var(--print-font-sans);
+  font-weight: 600;
+}
+
+.vtsd-editorial .page-footer span:last-child {
+  color: #0599a8;
+}
+
+/* Capa VTSD: layout em page-a4 (Book DS / A4_1_abertura), não usa .page-cover editorial */
+
+.vtsd-editorial.page-summary .page-sidebar {
+  background: #025468;
+}
+
+.vtsd-editorial.page-summary .page-sidebar-title {
+  color: #b4f8fb;
+}
+
+.vtsd-editorial.page-summary .page-list-num {
+  background: #0599a8;
+}
+
+/* ========== Template: .page-double-column — duas colunas + linha divisória superior ========== */
+.page-double-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "line line"
+    "col1 col2"
+    "footer footer";
+  gap: 0 8mm;
+  min-height: 297mm;
+}
+
+.page-double-column .page-divider {
+  grid-area: line;
+  height: 3px;
+  background: var(--print-primary);
+  margin: 0 10mm;
+}
+
+.page-double-column .page-col {
+  padding: 8mm 0 14mm 0;
+  overflow: hidden;
+}
+
+.page-double-column .page-col:first-of-type {
+  padding-left: 10mm;
+}
+
+.page-double-column .page-col:last-of-type {
+  padding-right: 10mm;
+}
+
+.page-double-column .page-body h2 {
+  font-size: 1.125em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--print-primary);
+  margin: 0 0 4mm 0;
+}
+
+.page-double-column .page-body p {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 3mm 0;
+  orphans: 3;
+  widows: 3;
+  text-rendering: optimizeLegibility;
+  hyphens: auto;
+  text-align: justify;
+  text-wrap: pretty;
+}
+
+.page-double-column .page-footer {
+  grid-area: footer;
+  grid-column: 1 / -1;
+}
+
+/* ========== Capa simples (opcional) ========== */
+.page-cover {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20mm;
+}
+
+.page-cover .page-cover-title {
+  font-size: 2em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--print-primary);
+  margin: 0 0 4mm 0;
+}
+
+/* Imagens de fundo e conteúdo: preencher grid sem distorcer */
+.page .page-image,
+.page [class*="page-image"],
+.page [style*="background-image"] {
+  background-size: cover;
+  background-position: center;
+}
+.page img {
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Placeholders: imagem pendente (data-prompt) e bloco Mermaid */
+.page img[src="pending"] {
+  min-height: 80px;
+  background: var(--print-primary-light);
+  color: rgba(255, 255, 255, 0.5);
+}
+.page .mermaid {
+  font-family: var(--print-font-sans);
+  font-size: 0.7rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.page .content-block-image {
+  margin: 0.5rem 0;
+}
+
+.page-cover .page-cover-subtitle {
+  font-size: 1rem;
+  color: var(--print-ink-muted);
+}
+
+.page-cover .page-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+/* ========== Contra capa — Resumo de Palestra Master Fluxo ========== */
+.page-contracapa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20mm;
+  position: relative;
+}
+
+.page-contracapa-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8mm;
+}
+
+.page-contracapa-line {
+  width: 48px;
+  height: 3px;
+  background: var(--print-primary);
+  border-radius: 2px;
+}
+
+.page-contracapa-curso {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--print-primary);
+}
+
+.page-contracapa-master {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--print-ink-muted);
+}
+
+.page-contracapa .page-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+/* ========== Venda Todo Santo Dia — design system editorial (folha cheia) ==========
+   Documento em folha cheia (não “cartão”), SEM faixa vertical de cor em toda a altura.
+   Acento: borda esquerda fina + traço curto sob o título (verde do tema). Tipografia sans única. */
+.page.vtsd-editorial {
+  background: #ffffff;
+  color: #1a1a1b;
+}
+
+/* Intro: uma coluna; barra lateral colorida do template base fica oculta */
+.page-intro.vtsd-editorial {
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "content"
+    "footer";
+}
+
+.page-intro.vtsd-editorial .page-sidebar {
+  display: none;
+}
+
+.page-intro.vtsd-editorial .page-body {
+  padding: 14mm 18mm 18mm 15mm;
+  border-left: 4px solid var(--print-accent);
+  box-sizing: border-box;
+}
+
+.page-intro.vtsd-editorial .page-body h2 {
+  font-family: 'Sora', var(--print-font-sans);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.25;
+  color: #0d0d0d;
+  margin: 0 0 3mm 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.page-intro.vtsd-editorial .page-body h2::after {
+  content: '';
+  display: block;
+  width: 2.75rem;
+  height: 3px;
+  margin-top: 4mm;
+  margin-bottom: 6mm;
+  background: var(--print-accent);
+  border-radius: 1px;
+}
+
+.page-intro.vtsd-editorial .page-body p {
+  font-family: 'Inter', var(--print-font-sans);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 22px;
+  color: #383838;
+  text-align: justify;
+  hyphens: auto;
+  text-wrap: pretty;
+}
+
+/* VTSD — boas-vindas: degradê (fallback sem arte SVG) */
+.page-intro.vtsd-editorial.vtsd-welcome-page:not(.vtsd-welcome-page--svg) {
+  background: linear-gradient(
+    148deg,
+    #1aadbd 0%,
+    #1399a4 22%,
+    #0d8494 42%,
+    #066d7d 62%,
+    #025468 82%,
+    #023d52 100%
+  ) !important;
+  color: #0d0d0d;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Boas-vindas com arte oficial em SVG (pagina-boas-vindas.svg) — texto claro sobre fundo #025468 */
+.page-intro.vtsd-editorial.vtsd-welcome-page.vtsd-welcome-page--svg {
+  background: transparent !important;
+  color: #ffffff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page-intro.vtsd-welcome-page.vtsd-welcome-page--svg .vtsd-welcome-kicker {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.page-intro.vtsd-welcome-page.vtsd-welcome-page--svg .vtsd-welcome-title {
+  color: #ffffff !important;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-body {
+  position: relative;
+  z-index: 1;
+  border-left: none !important;
+  padding: 12mm 14mm 10mm 15mm !important;
+  overflow: hidden;
+  background: transparent !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-kicker {
+  font-family: 'Inter', var(--print-font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: #0d0d0d;
+  margin: 0 0 2mm 0;
+  letter-spacing: 0.01em;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-title {
+  font-family: 'Sora', var(--print-font-sans);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  color: #0d0d0d;
+  margin: 0 0 3.5mm 0;
+  line-height: 1.05;
+  text-transform: none;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-title-line {
+  display: block;
+  font-size: clamp(26px, 8mm, 32px);
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-title-accent {
+  width: 36mm;
+  height: 3px;
+  background: #ffffff;
+  border-radius: 1px;
+  margin: 0 0 5mm 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-body > p,
+.page-intro.vtsd-welcome-page .vtsd-welcome-body ul,
+.page-intro.vtsd-welcome-page .vtsd-welcome-body li {
+  font-family: 'Inter', var(--print-font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  color: #ffffff;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-body > p {
+  margin: 0 0 3mm 0;
+  text-align: justify;
+  hyphens: auto;
+  text-wrap: pretty;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-signoff {
+  margin-top: 3mm;
+}
+
+.page-intro.vtsd-welcome-page .vtsd-welcome-signoff p {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #ffffff;
+  margin: 0 0 0.8mm 0;
+}
+
+.page-intro.vtsd-welcome-page:not(.vtsd-welcome-page--svg) .page-footer.vtsd-welcome-footer {
+  position: relative;
+  z-index: 1;
+  background: #ffffff !important;
+  border-top: 1px solid rgba(13, 13, 13, 0.08) !important;
+  color: #383838 !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page-intro.vtsd-welcome-page.vtsd-welcome-page--svg .page-footer.vtsd-welcome-footer--on-svg {
+  position: absolute;
+  right: 12mm;
+  bottom: 10mm;
+  left: auto;
+  z-index: 2;
+  width: auto;
+  min-height: 0;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: 10px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page-intro.vtsd-welcome-page:not(.vtsd-welcome-page--svg) .vtsd-footer-wordmark {
+  font-family: 'Sora', var(--print-font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: #0599a8 !important;
+}
+
+/* VTSD — conclusão (SVG de fundo + texto HTML, alinhado à página de boas-vindas) */
+.page-conclusao-vtsd.vtsd-conclusao-page--svg {
+  background: transparent !important;
+  color: #ffffff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page-conclusao-vtsd .vtsd-conclusao-body {
+  position: relative;
+  z-index: 1;
+  border-left: none !important;
+  padding: 11mm 14mm 26mm 15mm !important;
+  overflow: hidden;
+  max-width: 100%;
+  background: transparent !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page-conclusao-vtsd .vtsd-conclusao-header {
+  margin: 0 0 4mm 0;
+}
+
+.page-conclusao-vtsd .vtsd-conclusao-title {
+  font-family: 'Sora', var(--print-font-sans);
+  font-weight: 700;
+  font-size: clamp(26px, 7.5mm, 38px);
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  color: #ffffff !important;
+  margin: 0 0 3mm 0;
+}
+
+.page-conclusao-vtsd .vtsd-conclusao-title-accent {
+  width: 32mm;
+  height: 3px;
+  background: #ffffff;
+  border-radius: 1px;
+  margin: 0 0 5mm 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page-conclusao-vtsd .vtsd-conclusao-body > p.vtsd-conclusao-para,
+.page-conclusao-vtsd .vtsd-conclusao-body > p {
+  font-family: 'Inter', var(--print-font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.96) !important;
+  margin: 0 0 2.8mm 0;
+  text-align: justify;
+  hyphens: auto;
+  text-wrap: pretty;
+}
+
+.page-conclusao-vtsd .page-footer.vtsd-conclusao-footer--on-svg {
+  position: absolute;
+  right: 12mm;
+  bottom: 10mm;
+  left: auto;
+  z-index: 2;
+  width: auto;
+  min-height: 0;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: 10px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Duas colunas: mesma lógica — sem tarja lateral; traço esquerdo na página */
+.page-double-column.vtsd-editorial {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "line line"
+    "col1 col2"
+    "footer footer";
+  gap: 0 11mm;
+  border-left: 4px solid var(--print-accent);
+  box-sizing: border-box;
+}
+
+.page-double-column.vtsd-editorial .page-divider {
+  display: none;
+}
+
+.page-double-column.vtsd-editorial .page-col:first-of-type {
+  padding-left: 14mm;
+  padding-top: 8mm;
+}
+
+.page-double-column.vtsd-editorial .page-col:last-of-type {
+  padding-right: 16mm;
+  padding-top: 8mm;
+}
+
+.page-double-column.vtsd-editorial .page-body h2 {
+  font-family: 'Sora', var(--print-font-sans);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: #0d0d0d;
+  margin: 0 0 2mm 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.page-double-column.vtsd-editorial .page-col.page-body:first-of-type h2::after {
+  content: '';
+  display: block;
+  width: 2rem;
+  height: 2px;
+  margin-top: 3mm;
+  margin-bottom: 5mm;
+  background: var(--print-accent);
+  border-radius: 1px;
+}
+
+.page-double-column.vtsd-editorial .page-body p,
+.page-double-column.vtsd-editorial .page-col li {
+  font-family: 'Inter', var(--print-font-sans);
+  font-size: 13px;
+  line-height: 22px;
+  color: #383838;
+  text-align: justify;
+  hyphens: auto;
+  text-wrap: pretty;
+}
+
+.page.vtsd-editorial .page-footer {
+  background: #ffffff;
+  border-top: 1px solid rgba(26, 26, 27, 0.07);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(26, 26, 27, 0.45);
+}
+
+/* ========== Impressão: cada .page em nova folha ========== */
+@media print {
+  /* Alinhado ao arte VTSD 595×842 @ 96dpi (mesmo @page que globals.css) */
+  @page {
+    size: 157.48mm 222.95mm;
+    margin: 0;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 157.48mm !important;
+    min-height: 222.95mm !important;
+    height: 222.95mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .image-placeholder-prompt {
+    display: none !important;
+  }
+
+  /* Cada folha está dentro de .preview-page-wrap; .page era sempre :last-child do pai → folha extra */
+  .preview-page-wrap:last-child .page {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Numeração automática: counter(page) é definido pelo navegador em @media print */
+  .page-footer .page-number::after {
+    content: counter(page);
+  }
+
+  /* Página par/ímpar na impressão: numeração alternada */
+  .page:nth-of-type(odd) .page-footer {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .page:nth-of-type(even) .page-footer {
+    flex-direction: row-reverse;
+    justify-content: space-between;
+  }
+
+  /* Container do preview: sem escala, fluxo normal para impressão */
+  .print-content {
+    display: block !important;
+    transform: none !important;
+  }
+}
