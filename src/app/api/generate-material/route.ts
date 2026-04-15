@@ -3,7 +3,7 @@ import type { MaterialBlock, TeachingMaterial } from '@/types/material';
 import type { CourseId, GenerationMode } from '@/lib/courseThemes';
 import { parseJsonFromAI } from '@/lib/parse-json-from-ai';
 import { ensureOpenRouterKey } from '@/lib/ensure-env';
-import { generateMaterialImage } from '@/lib/gemini-nano-banana-images';
+import { generateMaterialImage } from '@/lib/gemini-nano-banana-images'; 
 import {
   openRouterChatByTask,
   openRouterGenerateImage,
