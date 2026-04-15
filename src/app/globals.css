@@ -1,0 +1,1249 @@
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@24,400,0&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.cdnfonts.com/css/transforma-script');
+@import url('https://fonts.cdnfonts.com/css/transforma-sans');
+
+.material-icons-round {
+  font-family: 'Material Icons Round';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  display: inline-block;
+  white-space: nowrap;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass,
+.glass-dark,
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.neon-border {
+  border: 1px solid rgba(0, 242, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+}
+
+.neon-text-glow {
+  text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+}
+
+.neon-glow-primary {
+  box-shadow: 0 0 20px rgba(43, 75, 238, 0.4);
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #0f0f0f;
+  --paper: #F9FAFB;
+  --primary: #135bec;
+  --accent: #135bec;
+  --mute: #6b6b6b;
+  /* Scribo — shell (claro); --scribo-primary/on-primary vêm do ScriboUiProvider */
+  --scribo-bg: #faf8ff;
+  --scribo-on-surface: #1a1b20;
+  --scribo-on-surface-variant: #434655;
+  --scribo-surface-lowest: #ffffff;
+  --scribo-surface-low: #f4f3fa;
+  --scribo-surface-container: #eeedf4;
+  --scribo-surface-high: #e8e7ee;
+  --scribo-surface-highest: #e2e2e9;
+  --scribo-outline-variant: #c4c5d8;
+  --scribo-header-bg: rgba(250, 248, 255, 0.92);
+  --scribo-surface-bright: #faf8ff;
+  --scribo-primary: #1a2dc2;
+  --scribo-on-primary: #ffffff;
+  --scribo-primary-rgb: 26 45 194;
+  --scribo-on-primary-rgb: 255 255 255;
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-lexend: 'Lexend', system-ui, sans-serif;
+  --font-material-serif: 'Lora', Georgia, serif;
+  /* VTSD / Figma — materiais A4 */
+  --cor-primary: #03DFE6;
+  --cor-primary-dark: #0599A8;
+  --cor-primary-darker: #025468;
+  --cor-primary-light: #5DECF2;
+  --cor-primary-lighter: #B4F8FB;
+  --cor-texto-900: #0D0D0D;
+  --cor-texto-800: #383838;
+  --cor-texto-700: #717171;
+  --cor-fundo-page: #FFFFFF;
+  --cor-fundo-box: #ffffff;
+  --cor-fundo-subtle: #F6F6F6;
+  --cor-fundo-externo: #ffffff;
+  --fonte-body: 13px;
+  --entrelinha-body: 22px;
+  --fonte-h1: 32px;
+  --entrelinha-h1: 35px;
+  --fonte-h2: 22px;
+  --entrelinha-h2: 26px;
+  /* Margens A4 — Book DS (área útil y 50–792; badge y 812) */
+  --pg-top: 50px;
+  --pg-bottom: 50px;
+  --pg-side: 50px;
+  --area-util-h: 742px;
+  --area-util-w: 495px;
+}
+
+/* ====== PROTEÇÃO FÍSICA A4 — overflow NUNCA vaza ====== */
+.page-a4 {
+  width: 595px !important;
+  height: 842px !important;
+  overflow: hidden !important;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* Todos os containers de texto dentro de A4 */
+.page-a4 > div,
+.page-a4 > aside,
+.page-a4 > section {
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+html.dark {
+  /* Fundo único solicitado; cards levemente mais claros para hierarquia */
+  --scribo-bg: #16171b;
+  --scribo-on-surface: #ffffff;
+  --scribo-on-surface-variant: #b4b8c4;
+  --scribo-surface-lowest: #1c1d22;
+  --scribo-surface-low: #212228;
+  --scribo-surface-container: #26272e;
+  --scribo-surface-high: #2c2d35;
+  --scribo-surface-highest: #32333c;
+  --scribo-outline-variant: #3f414d;
+  --scribo-header-bg: rgba(22, 23, 27, 0.92);
+  --scribo-surface-bright: #16171b;
+  color-scheme: dark;
+}
+
+/* Lista nativa do <select>: alinhar opções ao fundo da página (suporte varia por SO/navegador) */
+select option,
+select optgroup {
+  background-color: var(--scribo-bg);
+  color: var(--scribo-on-surface);
+}
+
+/* Modo escuro: evitar borda clara padrão do SO no <select> (Chrome/Edge/Windows) */
+html.dark select {
+  border-color: transparent !important;
+}
+
+/* Garantir que a página principal ocupe e mostre o conteúdo */
+html, body { min-height: 100%; }
+body { display: flex; flex-direction: column; }
+
+/* Temas por curso: sobrescrevem --primary no material */
+.theme-geral { --theme-primary: #0599A8; --theme-primary-dark: #025468; --theme-accent: #B4F8FB; }
+.theme-marketing { --theme-primary: #7c3aed; --theme-primary-dark: #5b21b6; --theme-accent: #a78bfa; }
+.theme-beleza { --theme-primary: #db2777; --theme-primary-dark: #be185d; --theme-accent: #f472b6; }
+.theme-saude { --theme-primary: #059669; --theme-primary-dark: #047857; --theme-accent: #34d399; }
+.theme-design { --theme-primary: #ea580c; --theme-primary-dark: #c2410c; --theme-accent: #fb923c; }
+.theme-tecnologia { --theme-primary: #0891b2; --theme-primary-dark: #0e7490; --theme-accent: #22d3ee; }
+.theme-master-fluxo { --theme-primary: #1e3a5f; --theme-primary-dark: #0f2744; --theme-accent: #d4a853; }
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 2.5s ease-in-out infinite;
+}
+
+/* Área de upload — partículas azuis em fade, movimento e pulsação */
+@keyframes dropzone-blue-fade-pulse {
+  0%,
+  100% {
+    opacity: 0.22;
+    filter: blur(10px);
+  }
+  50% {
+    opacity: 0.72;
+    filter: blur(16px);
+  }
+}
+
+@keyframes dropzone-blue-drift-1 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(55%, 35%);
+  }
+  50% {
+    transform: translate(25%, 85%);
+  }
+  75% {
+    transform: translate(-30%, 40%);
+  }
+}
+
+@keyframes dropzone-blue-drift-2 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(-45%, 55%);
+  }
+  66% {
+    transform: translate(35%, -25%);
+  }
+}
+
+@keyframes dropzone-blue-drift-3 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(70%, -20%);
+  }
+  40% {
+    transform: translate(20%, 60%);
+  }
+  60% {
+    transform: translate(-50%, 30%);
+  }
+  80% {
+    transform: translate(40%, 10%);
+  }
+}
+
+@keyframes dropzone-blue-drift-4 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-60%, -40%);
+  }
+}
+
+@keyframes dropzone-blue-drift-5 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(30%, -50%);
+  }
+  50% {
+    transform: translate(-35%, 45%);
+  }
+  75% {
+    transform: translate(50%, 20%);
+  }
+}
+
+@keyframes dropzone-blue-drift-6 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  40% {
+    transform: translate(65%, 50%);
+  }
+  80% {
+    transform: translate(-25%, -35%);
+  }
+}
+
+.dropzone-blue-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dropzone-particle-outer {
+  pointer-events: none;
+}
+
+.dropzone-particle-drift {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  will-change: transform, opacity, filter;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.dropzone-particle-blob {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 32% 32%,
+    rgb(var(--scribo-primary-rgb) / 0.55) 0%,
+    rgb(var(--scribo-primary-rgb) / 0.18) 42%,
+    transparent 68%
+  );
+}
+
+.dropzone-particle-blob--accent {
+  background: radial-gradient(
+    circle at 40% 40%,
+    rgb(var(--scribo-primary-rgb) / 0.65) 0%,
+    rgb(var(--scribo-primary-rgb) / 0.2) 50%,
+    transparent 72%
+  );
+}
+
+.dropzone-particle-blob--dense {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgb(var(--scribo-primary-rgb) / 0.7) 0%,
+    rgb(var(--scribo-primary-rgb) / 0.22) 48%,
+    transparent 70%
+  );
+}
+
+.dropzone-particle-drift--1 {
+  animation-name: dropzone-blue-drift-1, dropzone-blue-fade-pulse;
+  animation-duration: 22s, 3.4s;
+  animation-delay: 0s, 0.2s;
+}
+
+.dropzone-particle-drift--2 {
+  animation-name: dropzone-blue-drift-2, dropzone-blue-fade-pulse;
+  animation-duration: 18s, 2.8s;
+  animation-delay: -4s, -0.5s;
+}
+
+.dropzone-particle-drift--3 {
+  animation-name: dropzone-blue-drift-3, dropzone-blue-fade-pulse;
+  animation-duration: 26s, 3.8s;
+  animation-delay: -8s, 0.8s;
+}
+
+.dropzone-particle-drift--4 {
+  animation-name: dropzone-blue-drift-4, dropzone-blue-fade-pulse;
+  animation-duration: 14s, 2.2s;
+  animation-delay: -2s, 0s;
+}
+
+.dropzone-particle-drift--5 {
+  animation-name: dropzone-blue-drift-5, dropzone-blue-fade-pulse;
+  animation-duration: 20s, 3.1s;
+  animation-delay: -6s, -1s;
+}
+
+.dropzone-particle-drift--6 {
+  animation-name: dropzone-blue-drift-6, dropzone-blue-fade-pulse;
+  animation-duration: 16s, 2.5s;
+  animation-delay: -10s, 0.4s;
+}
+
+.dropzone-particle-drift--7 {
+  animation-name: dropzone-blue-drift-2, dropzone-blue-fade-pulse;
+  animation-duration: 24s, 3.6s;
+  animation-delay: -12s, -0.8s;
+}
+
+.dropzone-particle-drift--8 {
+  animation-name: dropzone-blue-drift-1, dropzone-blue-fade-pulse;
+  animation-duration: 17s, 2.1s;
+  animation-delay: -5s, 1.1s;
+}
+
+.dropzone-particle-drift--9 {
+  animation-name: dropzone-blue-drift-5, dropzone-blue-fade-pulse;
+  animation-duration: 21s, 3.3s;
+  animation-delay: -14s, 0s;
+}
+
+.dropzone-particle-drift--10 {
+  animation-name: dropzone-blue-drift-3, dropzone-blue-fade-pulse;
+  animation-duration: 23s, 4s;
+  animation-delay: -3s, 0.6s;
+}
+
+/* Partículas extras — slots 11-20 (aparecem ao selecionar arquivo) */
+.dropzone-particle-drift--11 {
+  animation-name: dropzone-blue-drift-4, dropzone-blue-fade-pulse;
+  animation-duration: 19s, 3.0s;
+  animation-delay: -7s, -0.3s;
+}
+.dropzone-particle-drift--12 {
+  animation-name: dropzone-blue-drift-2, dropzone-blue-fade-pulse;
+  animation-duration: 15s, 2.4s;
+  animation-delay: -3s, 0.7s;
+}
+.dropzone-particle-drift--13 {
+  animation-name: dropzone-blue-drift-5, dropzone-blue-fade-pulse;
+  animation-duration: 25s, 3.9s;
+  animation-delay: -11s, -0.9s;
+}
+.dropzone-particle-drift--14 {
+  animation-name: dropzone-blue-drift-1, dropzone-blue-fade-pulse;
+  animation-duration: 20s, 2.7s;
+  animation-delay: -9s, 1.2s;
+}
+.dropzone-particle-drift--15 {
+  animation-name: dropzone-blue-drift-3, dropzone-blue-fade-pulse;
+  animation-duration: 13s, 2.0s;
+  animation-delay: -1s, 0.1s;
+}
+.dropzone-particle-drift--16 {
+  animation-name: dropzone-blue-drift-6, dropzone-blue-fade-pulse;
+  animation-duration: 22s, 3.5s;
+  animation-delay: -16s, -0.6s;
+}
+.dropzone-particle-drift--17 {
+  animation-name: dropzone-blue-drift-4, dropzone-blue-fade-pulse;
+  animation-duration: 17s, 2.9s;
+  animation-delay: -4s, 0.9s;
+}
+.dropzone-particle-drift--18 {
+  animation-name: dropzone-blue-drift-2, dropzone-blue-fade-pulse;
+  animation-duration: 27s, 4.2s;
+  animation-delay: -13s, -0.4s;
+}
+.dropzone-particle-drift--19 {
+  animation-name: dropzone-blue-drift-5, dropzone-blue-fade-pulse;
+  animation-duration: 16s, 2.3s;
+  animation-delay: -6s, 0.5s;
+}
+.dropzone-particle-drift--20 {
+  animation-name: dropzone-blue-drift-3, dropzone-blue-fade-pulse;
+  animation-duration: 21s, 3.2s;
+  animation-delay: -18s, -1.1s;
+}
+
+/* Partículas — estado ativo (arquivo selecionado): velocidade ~2.5× e mais vívidas */
+.dropzone-blue-particles--active .dropzone-particle-blob {
+  opacity: 0.9;
+}
+.dropzone-blue-particles--active .dropzone-particle-drift {
+  animation-timing-function: ease-in-out;
+}
+.dropzone-blue-particles--active .dropzone-particle-drift--1  { animation-duration: 3.5s, 0.55s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--2  { animation-duration: 2.8s, 0.45s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--3  { animation-duration: 4.2s, 0.6s;  }
+.dropzone-blue-particles--active .dropzone-particle-drift--4  { animation-duration: 2.4s, 0.38s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--5  { animation-duration: 3.2s, 0.5s;  }
+.dropzone-blue-particles--active .dropzone-particle-drift--6  { animation-duration: 2.6s, 0.42s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--7  { animation-duration: 4.0s, 0.58s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--8  { animation-duration: 2.9s, 0.36s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--9  { animation-duration: 3.4s, 0.52s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--10 { animation-duration: 3.8s, 0.64s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--11 { animation-duration: 3.2s, 0.5s;  }
+.dropzone-blue-particles--active .dropzone-particle-drift--12 { animation-duration: 2.5s, 0.4s;  }
+.dropzone-blue-particles--active .dropzone-particle-drift--13 { animation-duration: 4.0s, 0.65s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--14 { animation-duration: 3.2s, 0.46s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--15 { animation-duration: 2.2s, 0.34s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--16 { animation-duration: 3.6s, 0.56s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--17 { animation-duration: 2.8s, 0.48s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--18 { animation-duration: 4.4s, 0.7s;  }
+.dropzone-blue-particles--active .dropzone-particle-drift--19 { animation-duration: 2.6s, 0.38s; }
+.dropzone-blue-particles--active .dropzone-particle-drift--20 { animation-duration: 3.4s, 0.54s; }
+
+/* Fade-pulse mais intenso no estado ativo */
+.dropzone-blue-particles--active .dropzone-particle-drift {
+  --fade-min: 0.45;
+  --fade-max: 0.95;
+}
+
+/* Geração: orbes mais lentos + pulso suave (respiração) */
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--1 {
+  animation-duration: 36s, 9s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--2 {
+  animation-duration: 28s, 7.5s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--3 {
+  animation-duration: 42s, 10s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--4 {
+  animation-duration: 24s, 6.5s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--5 {
+  animation-duration: 32s, 8.5s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--6 {
+  animation-duration: 26s, 7s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--7 {
+  animation-duration: 38s, 9.5s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--8 {
+  animation-duration: 30s, 7.8s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--9 {
+  animation-duration: 34s, 8.2s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--10 {
+  animation-duration: 40s, 10s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--11 {
+  animation-duration: 33s, 8.4s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--12 {
+  animation-duration: 27s, 7.2s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--13 {
+  animation-duration: 41s, 10.2s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--14 {
+  animation-duration: 31s, 8s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--15 {
+  animation-duration: 22s, 6s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--16 {
+  animation-duration: 37s, 9.2s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--17 {
+  animation-duration: 29s, 7.6s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--18 {
+  animation-duration: 44s, 11s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--19 {
+  animation-duration: 25s, 6.8s;
+}
+.dropzone-blue-particles--generating.dropzone-blue-particles--active .dropzone-particle-drift--20 {
+  animation-duration: 35s, 8.8s;
+}
+
+@keyframes generation-workspace-breath {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.06);
+  }
+  50% {
+    transform: scale(1.012);
+    box-shadow: 0 28px 60px -12px rgb(var(--scribo-primary-rgb) / 0.12);
+  }
+}
+
+.generation-workspace-breath {
+  animation: generation-workspace-breath 5.5s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .generation-workspace-breath {
+    animation: none;
+  }
+  .dropzone-particle-drift {
+    animation: none !important;
+    opacity: 0.28;
+    filter: blur(8px);
+  }
+}
+
+/* Número editorial (estilo de revista) */
+.editorial-number {
+  font-size: 3rem;
+  line-height: 1;
+  font-weight: 200;
+  color: var(--primary);
+  opacity: 0.4;
+}
+
+/* Estilo “sketchy” para destaque em títulos (referência editorial) */
+.sketchy-circle {
+  position: relative;
+}
+.sketchy-circle::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: -10px;
+  right: -10px;
+  bottom: -5px;
+  border: 2px solid var(--primary);
+  border-radius: 48% 52% 50% 50% / 40% 40% 60% 60%;
+  transform: rotate(-2deg);
+  opacity: 0.7;
+  pointer-events: none;
+}
+.sketchy-underline {
+  position: relative;
+}
+.sketchy-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 100% 10% 80% 0%;
+  opacity: 0.6;
+  transform: scaleX(1.05);
+}
+
+/* Imagens editoriais: grayscale com hover para cor */
+.img-editorial {
+  filter: grayscale(100%);
+  transition: filter 0.7s ease;
+}
+.img-editorial:hover {
+  filter: grayscale(0);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--scribo-bg);
+}
+
+body {
+  font-family: var(--font-display), system-ui, sans-serif;
+  color: var(--scribo-on-surface);
+  background: var(--scribo-bg);
+  min-height: 100%;
+}
+
+/* Canvas grid — fundo definido para destacar o conteúdo */
+.canvas-grid {
+  background-color: #e2e8f0; /* slate-200 */
+  background-image: radial-gradient(rgba(15, 23, 42, 0.12) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.dark .canvas-grid {
+  background-color: #0f172a;
+  background-image: radial-gradient(rgba(148, 163, 184, 0.15) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Contraste forçado: header e caixa de upload (evitar texto ilegível) */
+header .header-brand,
+header .header-brand-design {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+header .header-brand .header-brand-beleza {
+  color: #135bec !important;
+  font-weight: 700 !important;
+}
+.dark header .header-brand,
+.dark header .header-brand-design {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+.dark header .header-brand .header-brand-beleza {
+  color: #135bec !important;
+  font-weight: 700 !important;
+}
+.upload-card {
+  color: #0f172a !important;
+}
+.upload-card .upload-card-title,
+.upload-card .upload-card-desc,
+.upload-card .upload-card-features {
+  color: #0f172a !important;
+}
+.upload-card .upload-card-desc {
+  color: #1e293b !important;
+}
+/* Modo escuro: card com fundo escuro e texto claro para visibilidade */
+.dark .upload-card {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
+  color: #f1f5f9 !important;
+}
+.dark .upload-card .upload-card-title,
+.dark .upload-card .upload-card-desc,
+.dark .upload-card .upload-card-features {
+  color: #f1f5f9 !important;
+}
+.dark .upload-card .upload-card-desc {
+  color: #cbd5e1 !important;
+}
+.dark .upload-card .upload-card-icon-wrap {
+  background-color: rgba(59, 130, 246, 0.35) !important;
+  border-color: rgba(96, 165, 250, 0.5) !important;
+  color: #93c5fd !important;
+}
+.dark .upload-card .upload-card-icon-wrap .material-icons-round {
+  color: #93c5fd !important;
+}
+/* Pill do header no dark: mais visível */
+.dark .header-pill {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #f1f5f9 !important;
+}
+.dark .header-pill span {
+  color: inherit !important;
+}
+/* Checkmarks da lista no dark: verde mais claro */
+.dark .upload-card .upload-card-features .material-icons-round {
+  color: #4ade80 !important;
+}
+
+/* Material didático: usa tema do curso (--theme-primary) quando definido */
+.material-article .material-viewer-header .material-label,
+.material-article .material-label {
+  color: var(--theme-primary, #135bec) !important;
+}
+.dark .material-article .material-viewer-header .material-label,
+.dark .material-article .material-label {
+  color: var(--theme-primary, #135bec) !important;
+}
+.material-viewer-header .material-title,
+.material-viewer-header .material-subtitle,
+.material-viewer-header .material-summary {
+  color: #0a0a0a !important; /* preto */
+}
+.dark .material-viewer-header .material-title,
+.dark .material-viewer-header .material-subtitle,
+.dark .material-viewer-header .material-summary {
+  color: #0a0a0a !important;
+}
+/* Modo escuro: fundo claro no material para texto #0a0a0a legível */
+.dark .material-article,
+.dark .material-viewer-header,
+.dark .material-article .material-content,
+.dark .material-article .material-card,
+.dark .material-article footer {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+.dark .material-article .material-card {
+  border: 1px solid #e2e8f0 !important;
+}
+article .material-heading,
+article .material-paragraph,
+article .material-body {
+  color: #0a0a0a !important;
+}
+.dark .material-article .material-heading,
+.dark .material-article .material-paragraph,
+.dark .material-article .material-body {
+  color: #0a0a0a !important;
+}
+article .material-highlight {
+  color: var(--theme-primary, #135bec) !important;
+  font-weight: 600 !important;
+}
+.dark .material-article .material-highlight {
+  color: var(--theme-primary, #135bec) !important;
+}
+article .chart-title,
+article .chart-label,
+article .chart-value { color: #0a0a0a !important; }
+.dark .material-article .chart-title,
+.dark .material-article .chart-label,
+.dark .material-article .chart-value {
+  color: #0a0a0a !important;
+}
+
+/* Texto do material sempre preto (destaques em azul não mudam) */
+article .material-body,
+article .material-paragraph,
+article p:not(.material-highlight),
+article li,
+article blockquote {
+  color: #0a0a0a !important;
+}
+article .material-highlight {
+  color: #135bec !important;
+  font-weight: 600 !important;
+}
+.dark .material-article .material-body,
+.dark .material-article .material-paragraph,
+.dark .material-article p:not(.material-highlight),
+.dark .material-article li,
+.dark .material-article blockquote {
+  color: #0a0a0a !important;
+}
+.dark .material-article .material-highlight {
+  color: #135bec !important;
+}
+/* Caixas e gráficos: texto #0a0a0a no modo escuro */
+.dark .material-article .material-card p,
+.dark .material-article .material-card span,
+.dark .material-article .material-card li {
+  color: #0a0a0a !important;
+}
+.dark .material-article .material-card .material-highlight {
+  color: #135bec !important;
+}
+
+/* Capa: fundo e contraste em ambos os temas */
+.cover-page .material-subtitle {
+  color: #0a0a0a !important;
+}
+.dark .cover-page .material-subtitle {
+  color: #0a0a0a !important;
+}
+.dark .cover-page {
+  background: linear-gradient(135deg, #f8fafc 0%, #fff 50%, rgba(19, 91, 236, 0.06) 100%) !important;
+}
+
+/* Diagramação de livro: paleta creme + azul escuro */
+.book-layout {
+  --book-cream: #f8f6f2;
+  --book-blue: #1e3a5f;
+}
+.book-layout .cover-page,
+.book-layout .material-content,
+.book-layout footer {
+  background-color: var(--book-cream) !important;
+}
+.dark .book-layout .cover-page,
+.dark .book-layout .material-content,
+.dark .book-layout footer {
+  background-color: #f5f2ed !important;
+}
+.book-layout .material-card {
+  border-color: rgba(30, 58, 95, 0.2) !important;
+  background-color: #fff !important;
+}
+.book-layout .material-card[class*="border-l-"] {
+  border-left-color: var(--book-blue) !important;
+}
+.dark .book-layout .material-card {
+  background-color: #fcfbf9 !important;
+  border-color: rgba(30, 58, 95, 0.25) !important;
+}
+.book-layout .material-highlight,
+.book-layout .text-primary {
+  color: var(--theme-primary, var(--book-blue)) !important;
+}
+.book-layout .material-label,
+.book-layout .material-title {
+  color: var(--theme-primary-dark, var(--book-blue)) !important;
+}
+.material-article .material-card[class*="border-l-"] {
+  border-left-color: var(--theme-primary, #135bec) !important;
+}
+.material-article .text-primary {
+  color: var(--theme-primary, #135bec) !important;
+}
+.book-toc {
+  background-color: var(--book-blue) !important;
+}
+.dark .book-toc {
+  background-color: #1a3252 !important;
+}
+
+/* Faixa lateral das seções internas — mesma lógica visual do sumário (cor da marca + título vertical) */
+.book-section-rail {
+  background-color: var(--theme-primary-dark, var(--book-blue));
+  color: #fff;
+}
+.book-layout .book-section-rail {
+  background: var(--theme-primary-dark, var(--book-blue)) !important;
+}
+@media print {
+  .book-section-rail {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .book-internal-section-wrap {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+/* A4 deitada: conteúdo em 2 colunas (diagramação de livro) */
+.book-section-body {
+  column-fill: balance;
+  column-gap: 3rem;
+}
+@media (min-width: 1024px) {
+  .book-section-body {
+    column-count: 2;
+  }
+}
+.book-section-body > * {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Texto corrido da apostila (visualização web): justificado */
+.book-layout .book-section-body .material-paragraph,
+.book-layout .book-section-body p.material-body {
+  text-align: justify;
+  hyphens: auto;
+  text-wrap: pretty;
+}
+
+/* Header: "Novo arquivo" e "Exportar PDF" sempre legíveis */
+.header-btn-new {
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+.dark .header-btn-new {
+  color: #0f172a !important;
+}
+.header-btn-export {
+  background-color: #135bec !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(19, 91, 236, 0.4) !important;
+}
+.dark .header-btn-export {
+  background-color: #135bec !important;
+  color: #ffffff !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #135bec;
+}
+
+/*
+ * Folha = grade 595×842 px a 96 CSS px/in (sem zoom na impressão — evita header/rodapé “descendo”).
+ * 595/96*25,4 ≈ 157,48 mm × 842/96*25,4 ≈ 222,95 mm
+ */
+@page {
+  size: 157.48mm 222.95mm;
+  margin: 0;
+}
+
+/* Livro (MaterialViewer): A4 paisagem + margens — não afeta /preview */
+@page book-landscape {
+  size: A4 landscape;
+  margin: 12mm 15mm 12mm 15mm;
+}
+
+@media print {
+  html {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Ocultar tudo que não é o material (libera espaço para paginação) */
+  .no-print {
+    display: none !important;
+  }
+  .book-layout {
+    page: book-landscape;
+  }
+  /* Container principal: em fluxo para o navegador paginar em A4 */
+  body > div {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+  body > div > main {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  main > div {
+    display: block !important;
+    padding: 0 !important;
+    background: none !important;
+    background-image: none !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  .print-content {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+    box-sizing: border-box !important;
+  }
+  .print-content article {
+    width: 100% !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #fff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  /* Cada seção pode quebrar para nova página; evita cortar seção no meio */
+  .print-content section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .print-content .material-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  /* Permitir quebra entre parágrafos/listas se necessário */
+  .print-content p,
+  .print-content ul,
+  .print-content blockquote {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .editorial-number { opacity: 0.6; }
+  /* Garantir texto preto no PDF (exceto destaques) */
+  .print-content .material-body,
+  .print-content .material-title,
+  .print-content .material-subtitle,
+  .print-content .material-summary,
+  .print-content .material-heading,
+  .print-content .material-label,
+  .print-content .chart-title,
+  .print-content .chart-label,
+  .print-content .chart-value {
+    color: #0a0a0a !important;
+  }
+  .print-content .material-label {
+    color: var(--theme-primary, #135bec) !important;
+  }
+  .print-content .material-highlight {
+    color: var(--theme-primary, #135bec) !important;
+  }
+  /* Diagramação de livro no PDF: cor do tema para títulos e destaques */
+  .print-content .book-layout .material-label,
+  .print-content .book-layout .material-title,
+  .print-content .book-layout .material-heading,
+  .print-content .book-layout .book-section-num {
+    color: var(--theme-primary-dark, #1e3a5f) !important;
+  }
+  .print-content .book-layout .material-highlight {
+    color: var(--theme-primary-dark, #1e3a5f) !important;
+  }
+  .print-content .book-toc {
+    background: var(--theme-primary-dark, #1e3a5f) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Capa: quebra de página após + layout imagem à esquerda */
+  .cover-page {
+    display: flex !important;
+    flex-direction: row !important;
+    min-height: 0 !important;
+    padding: 12px 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  /* Sumário: quebra de página após (conteúdo inicia na próxima) */
+  .material-toc {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  /* A4 deitada: conteúdo em 2 colunas na impressão */
+  .book-section-body {
+    column-count: 2 !important;
+    column-gap: 2.5rem !important;
+  }
+  .book-content-landscape {
+    max-width: none !important;
+  }
+  .cover-image-column {
+    width: 38% !important;
+    min-width: 38% !important;
+    max-width: 38% !important;
+    flex-shrink: 0 !important;
+    padding: 8px 12px 8px 0 !important;
+  }
+  .cover-image-frame,
+  .cover-placeholder {
+    width: 100% !important;
+    max-width: 100% !important;
+    aspect-ratio: 1 !important;
+  }
+  .cover-text-column {
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 8px 0 8px 12px !important;
+  }
+  .cover-initial {
+    font-size: 3.5rem !important;
+  }
+  /* Sumário: título e texto em preto, números em azul no PDF */
+  .material-toc h2,
+  .material-toc li {
+    color: #0a0a0a !important;
+  }
+  .material-toc .text-primary {
+    color: #135bec !important;
+  }
+}
+
+/* Preview: impressão PDF — esconde sidebar, só páginas A4 com quebra */
+@media print {
+  .preview-sidebar {
+    display: none !important;
+  }
+  .preview-canvas {
+    padding: 0 !important;
+    background: #fff !important;
+    max-width: none !important;
+    gap: 0 !important;
+  }
+  .preview-canvas .flex.flex-col.gap-8 {
+    gap: 0 !important;
+  }
+  /* Centralização em tela vira “faixa” em A4: preencher largura da folha */
+  .preview-canvas .flex.flex-col.items-center {
+    align-items: stretch !important;
+    width: 100% !important;
+  }
+  .material-preview-stack {
+    align-items: stretch !important;
+    width: 100% !important;
+    transform: none !important;
+    min-height: unset !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 0 !important;
+  }
+  /* Uma folha lógica por .page-a4 — não forçar break-after:auto no wrap (brigava com page-break-after da página) */
+  /*
+   * Evitar break-inside nos wrappers: altura > caixa impressa empurra o lote inteiro
+   * para a página seguinte → folhas em branco entre capítulos.
+   */
+  .preview-page-wrap {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    max-width: none !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+  .print-editorial-page {
+    width: 100% !important;
+    max-width: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+  .preview-layout {
+    background: #fff !important;
+  }
+}
+
+/* Classe base para páginas A4 */
+.page-a4 {
+  width: 595px;
+  min-height: 842px;
+  background: white;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Sora', sans-serif;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  margin: 0 auto;
+  page-break-after: always;
+}
+
+@media print {
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background: white !important;
+  }
+  body {
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  /*
+   * Altura fixa como na tela — height:auto quebra flex (h-full) no print e desloca header/rodapé.
+   * Sem break-inside:avoid na própria página (conflito com paginação do Chromium).
+   */
+  .page-a4 {
+    box-shadow: none;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 595px !important;
+    min-height: 842px !important;
+    height: 842px !important;
+    max-height: 842px !important;
+    max-width: none !important;
+    overflow: hidden !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Flex + min-h-0 + overflow-hidden quebra altura da coluna principal na impressão */
+  .page-a4 .min-h-0.overflow-hidden {
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+  .page-a4 > .flex-1.min-w-0.overflow-hidden {
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+  .page-a4 > .h-full.overflow-hidden {
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+  /* Layout do preview: liberar fluxo para paginação correta */
+  .preview-layout {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .preview-canvas {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+}

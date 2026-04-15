@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Material didático — scribo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: #e2e8f0; font-family: 'Lexend', system-ui, sans-serif; }
+    :root {
+      --print-primary: #0f1823;
+      --print-primary-light: #1e293b;
+      --print-accent: #006eff;
+      --print-paper: #f8f9fa;
+      --print-ink: #1a1a1a;
+      --print-ink-muted: #64748b;
+      --print-font-sans: 'Lexend', system-ui, -apple-system, sans-serif;
+    }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      height: 297mm;
+      margin: 0 auto 16px;
+      padding: 0;
+      position: relative;
+      overflow: hidden;
+      font-family: var(--print-font-sans);
+      font-size: 1rem;
+      background: var(--print-paper);
+      color: var(--print-ink);
+      page-break-after: always;
+      break-after: page;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      text-rendering: optimizeLegibility;
+    }
+    .page p, .page li {
+      orphans: 3;
+      widows: 3;
+      text-rendering: optimizeLegibility;
+      hyphens: auto;
+      line-height: 1.6;
+    }
+    .page h1, .page h2 { letter-spacing: 0.04em; }
+    .page:last-child { page-break-after: auto; break-after: auto; }
+    .page:nth-of-type(odd) .page-footer { flex-direction: row; justify-content: space-between; }
+    .page:nth-of-type(even) .page-footer { flex-direction: row-reverse; justify-content: space-between; }
+    .page .page-image, .page [class*="page-image"] { background-size: cover; background-position: center; }
+    .page img { object-fit: cover; object-position: center; width: 100%; height: 100%; display: block; }
+    /* Grid utilitário 12 colunas */
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 0 1rem;
+      min-height: 100%;
+      align-content: start;
+    }
+    .col-sidebar { grid-column: span 4; }
+    .col-main { grid-column: span 8; }
+    .col-full { grid-column: span 12; }
+    .col-half { grid-column: span 6; }
+    .col-1 { grid-column: span 1; }
+    .col-2 { grid-column: span 2; }
+    .col-3 { grid-column: span 3; }
+    .col-4 { grid-column: span 4; }
+    .col-5 { grid-column: span 5; }
+    .col-6 { grid-column: span 6; }
+    .col-7 { grid-column: span 7; }
+    .col-8 { grid-column: span 8; }
+    .col-9 { grid-column: span 9; }
+    .col-10 { grid-column: span 10; }
+    .col-11 { grid-column: span 11; }
+    .col-12 { grid-column: span 12; }
+    .page-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 12mm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8mm;
+      font-size: 10px;
+      color: var(--print-ink-muted);
+      border-top: 1px solid rgba(0,0,0,0.08);
+      background: var(--print-paper);
+    }
+    .page-footer .page-number::after { content: counter(page); }
+    .page-summary {
+      display: grid;
+      grid-template-columns: 28mm 1fr;
+      grid-template-rows: 1fr auto;
+      grid-template-areas: "sidebar content" "sidebar footer";
+      min-height: 297mm;
+    }
+    .page-summary .page-sidebar {
+      grid-area: sidebar;
+      background: var(--print-primary);
+      color: #fff;
+      padding: 12mm 6mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .page-summary .page-sidebar-title {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      white-space: nowrap;
+      margin: 0 auto;
+    }
+    .page-summary .page-body { grid-area: content; padding: 12mm 10mm 14mm 10mm; overflow: hidden; }
+    .page-summary .page-body h2 { font-size: 1.25em; font-weight: 700; letter-spacing: 0.04em; color: var(--print-primary); margin: 0 0 6mm 0; }
+    .page-summary .page-list { list-style: none; padding: 0; margin: 0; }
+    .page-summary .page-list li { display: flex; align-items: flex-start; gap: 4mm; margin-bottom: 4mm; font-size: 1rem; line-height: 1.6; orphans: 3; widows: 3; text-rendering: optimizeLegibility; hyphens: auto; }
+    .page-summary .page-list-num {
+      flex-shrink: 0;
+      width: 6mm;
+      height: 6mm;
+      background: var(--print-primary);
+      color: #fff;
+      font-size: 8pt;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .page-summary .page-footer { grid-area: footer; }
+    .page-intro {
+      display: grid;
+      grid-template-columns: 1fr 25mm;
+      grid-template-rows: 85mm 1fr auto;
+      grid-template-areas: "image image" "content sidebar" "footer footer";
+      min-height: 297mm;
+    }
+    .page-intro .page-image {
+      grid-area: image;
+      background: var(--print-primary-light);
+      background-size: cover;
+      background-position: center;
+      width: 100%;
+      min-height: 85mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.5);
+      font-size: 10px;
+      overflow: hidden;
+    }
+    .page-intro .page-image img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+    .page-intro .page-body { grid-area: content; padding: 8mm 10mm 14mm 10mm; overflow: hidden; }
+    .page-intro .page-body h2 { font-size: 1.5em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--print-primary); margin: 0 0 4mm 0; }
+    .page-intro .page-body p { font-size: 1rem; line-height: 1.6; margin: 0 0 4mm 0; orphans: 3; widows: 3; text-rendering: optimizeLegibility; hyphens: auto; }
+    .page-intro .page-sidebar { grid-area: sidebar; background: var(--print-accent); min-height: 0; }
+    .page-intro .page-footer { grid-area: footer; }
+    .page-double-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas: "line line" "col1 col2" "footer footer";
+      gap: 0 8mm;
+      min-height: 297mm;
+    }
+    .page-double-column .page-divider { grid-area: line; height: 3px; background: var(--print-primary); margin: 0 10mm; }
+    .page-double-column .page-col { padding: 8mm 0 14mm 0; overflow: hidden; }
+    .page-double-column .page-col:first-of-type { padding-left: 10mm; }
+    .page-double-column .page-col:last-of-type { padding-right: 10mm; }
+    .page-double-column .page-body h2 { font-size: 1.125em; font-weight: 700; letter-spacing: 0.04em; color: var(--print-primary); margin: 0 0 4mm 0; }
+    .page-double-column .page-body p { font-size: 1rem; line-height: 1.6; margin: 0 0 3mm 0; orphans: 3; widows: 3; text-rendering: optimizeLegibility; hyphens: auto; }
+    .page-double-column .page-footer { grid-area: footer; grid-column: 1 / -1; }
+    .page-cover {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20mm;
+    }
+    .page-cover .page-cover-title { font-size: 2em; font-weight: 800; letter-spacing: 0.04em; color: var(--print-primary); margin: 0 0 4mm 0; }
+    .page-cover .page-cover-subtitle { font-size: 1rem; color: var(--print-ink-muted); }
+    .page-cover .page-footer { position: absolute; bottom: 0; left: 0; right: 0; }
+    @media print {
+      body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page:nth-of-type(odd) .page-footer { flex-direction: row; justify-content: space-between; }
+      .page:nth-of-type(even) .page-footer { flex-direction: row-reverse; justify-content: space-between; }
+      .page {
+        width: 210mm !important;
+        min-height: 297mm !important;
+        height: auto !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+      .page:last-child { page-break-after: auto !important; break-after: auto !important; }
+      @page { size: A4; margin: 0; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page-footer .page-number::after { content: counter(page); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Capa -->
+  <section class="page page-cover">
+    <h1 class="page-cover-title">Material didático</h1>
+    <p class="page-cover-subtitle">scribo — Gerador de materiais</p>
+    <p class="page-cover-subtitle" style="margin-top: auto; font-size: 10px;">Curso de exemplo</p>
+    <footer class="page-footer">
+      <span>scribo</span>
+      <span class="page-number">Página </span>
+    </footer>
+  </section>
+
+  <!-- Template: barra lateral + lista numerada -->
+  <section class="page page-summary">
+    <div class="page-sidebar">
+      <span class="page-sidebar-title">Conteúdo</span>
+    </div>
+    <div class="page-body">
+      <h2>Principais tópicos</h2>
+      <ul class="page-list">
+        <li><span class="page-list-num">1</span><span>Introdução ao tema e objetivos de aprendizagem.</span></li>
+        <li><span class="page-list-num">2</span><span>Conceitos fundamentais e definições importantes.</span></li>
+        <li><span class="page-list-num">3</span><span>Aplicação prática e exemplos do dia a dia.</span></li>
+        <li><span class="page-list-num">4</span><span>Resumo e próximos passos recomendados.</span></li>
+      </ul>
+    </div>
+    <footer class="page-footer">
+      <span>scribo</span>
+      <span class="page-number">Página </span>
+    </footer>
+  </section>
+
+  <!-- Template: imagem topo + bloco lateral -->
+  <section class="page page-intro">
+    <div class="page-image">[ Imagem de topo ]</div>
+    <div class="page-body">
+      <h2>Introdução</h2>
+      <p>Este material foi gerado com o estilo Corporate Editorial Design, utilizando grid assimétrico, color blocking e tipografia sans-serif. Cada seção ocupa uma página A4 na impressão.</p>
+      <p>O rodapé utiliza numeração automática via <code>counter(page)</code> e as cores podem ser alteradas pelas variáveis CSS para rebranding.</p>
+    </div>
+    <div class="page-sidebar" aria-hidden></div>
+    <footer class="page-footer">
+      <span>scribo</span>
+      <span class="page-number">Página </span>
+    </footer>
+  </section>
+
+  <!-- Template: duas colunas + linha divisória -->
+  <section class="page page-double-column">
+    <div class="page-divider" aria-hidden></div>
+    <div class="page-col page-body">
+      <h2>Coluna esquerda</h2>
+      <p>Texto da primeira coluna. O layout divide o conteúdo em duas colunas com uma linha superior na cor primária, mantendo hierarquia visual e legibilidade.</p>
+      <p>Ideal para comparar tópicos ou apresentar conteúdo em paralelo.</p>
+    </div>
+    <div class="page-col page-body">
+      <h2>Coluna direita</h2>
+      <p>Texto da segunda coluna. O design segue as diretrizes de Web-to-Print com tamanho A4 (210mm × 297mm) e quebra de página automática.</p>
+      <p>Use <code>npm run pdf</code> para gerar o PDF a partir deste HTML.</p>
+    </div>
+    <footer class="page-footer">
+      <span>scribo</span>
+      <span class="page-number">Página </span>
+    </footer>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#004d40',
+        edgeLabelBackground: '#ffffff',
+        tertiaryColor: '#f4f4f4'
+      }
+    });
+  </script>
+</body>
+</html>
