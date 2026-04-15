@@ -22,6 +22,39 @@ interface InlinePreviewProps {
 
 const NON_REGENERABLE_TYPES = new Set(['capa', 'contracapa', 'sumario_ref', 'sumario', 'intro_ref', 'conclusao_ref']);
 
+/** Lê mensagem útil quando a API falha (JSON ou HTML/timeout da Vercel). */
+async function readApiErrorMessage(res: Response, fallback: string): Promise<string> {
+  const body = await res.text();
+  const ct = res.headers.get('content-type') ?? '';
+  if (ct.includes('application/json') || body.trimStart().startsWith('{')) {
+    try {
+      const j = JSON.parse(body) as { error?: string };
+      if (typeof j.error === 'string' && j.error.length > 0) return j.error;
+    } catch {
+      /* ignorar */
+    }
+  }
+  const lower = body.toLowerCase();
+  if (
+    res.status === 504 ||
+    res.status === 408 ||
+    lower.includes('invocation timeout') ||
+    lower.includes('function_invocation_timeout') ||
+    lower.includes('an error occurred with your deployment')
+  ) {
+    return 'Tempo esgotado no servidor. No plano gratuito da Vercel o limite da função costuma ser curto (~10s); a edição com IA pode demorar mais. No painel da Vercel (Settings → Functions) aumente a duração máxima ou use um plano que permita funções mais longas; também vale tentar uma instrução mais curta.';
+  }
+  if (res.status === 503) {
+    return 'Serviço indisponível. Confira OPENROUTER ou OPENROUTER_API_KEY nas variáveis de ambiente do projeto e faça redeploy.';
+  }
+  if (res.status === 413) {
+    return 'Requisição muito grande; reduza o material ou a transcrição.';
+  }
+  const stripped = body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (stripped.length > 0 && stripped.length < 280) return stripped.slice(0, 240);
+  return `${fallback} (HTTP ${res.status})`;
+}
+
 type LayoutOptionItem = { value: string; label: string; icon: string };
 
 /** Catálogo completo de layouts no editor (filtrado por tipo de página abaixo). */
@@ -183,8 +216,7 @@ export function InlinePreview({
         }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Erro ao reorganizar.' }));
-        throw new Error((err as { error?: string }).error || `Erro ${res.status}`);
+        throw new Error(await readApiErrorMessage(res, 'Erro ao reorganizar.'));
       }
       const updated = (await res.json()) as PreviewData;
       await applyUpdate(updated);
@@ -219,8 +251,7 @@ export function InlinePreview({
         }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Erro ao editar.' }));
-        throw new Error((err as { error?: string }).error || `Erro ${res.status}`);
+        throw new Error(await readApiErrorMessage(res, 'Erro ao editar.'));
       }
       const updated = (await res.json()) as PreviewData;
       await applyUpdate(updated);
@@ -306,8 +337,7 @@ export function InlinePreview({
           }),
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: 'Erro ao gerar imagem.' }));
-          throw new Error((err as { error?: string }).error || `Erro ${res.status}`);
+          throw new Error(await readApiErrorMessage(res, 'Erro ao gerar imagem.'));
         }
         const updated = (await res.json()) as PreviewData;
         await applyUpdate(updated);

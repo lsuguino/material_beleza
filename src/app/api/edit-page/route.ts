@@ -20,7 +20,16 @@ interface EditPageRequest {
 
 export async function POST(req: NextRequest) {
   try {
-    await ensureOpenRouterKey();
+    const apiKey = await ensureOpenRouterKey();
+    if (!apiKey) {
+      return NextResponse.json(
+        {
+          error:
+            'Chave OpenRouter não configurada no servidor. Na Vercel, adicione OPENROUTER_API_KEY ou OPENROUTER nas Environment Variables do projeto e faça um novo deploy.',
+        },
+        { status: 503 },
+      );
+    }
 
     const body = (await req.json()) as EditPageRequest;
     const { existingData, pageIndex, instruction, modo, transcription } = body;
