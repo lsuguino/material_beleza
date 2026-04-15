@@ -1,4 +1,4 @@
-import { normalizeOpenRouterApiKey } from '@/lib/openrouter-key';
+import { normalizeOpenRouterApiKey, syncOpenRouterKeyFromEnvAliases } from '@/lib/openrouter-key';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OPENROUTER_KEY_INFO_URL = 'https://openrouter.ai/api/v1/key';
@@ -184,6 +184,7 @@ type OpenRouterChatParams = {
 };
 
 async function openRouterChatWithModel(model: string, params: OpenRouterChatParams): Promise<string> {
+  syncOpenRouterKeyFromEnvAliases();
   const apiKey = normalizeOpenRouterApiKey(process.env.OPENROUTER_API_KEY);
   if (!apiKey) {
     throw new Error('OPENROUTER_API_KEY não configurada');
@@ -373,6 +374,7 @@ export function extractImageUrlFromOpenRouterMessage(message: Record<string, unk
 export async function openRouterGenerateImage(prompt: string): Promise<string | null> {
   const model = getOpenRouterImageModel();
 
+  syncOpenRouterKeyFromEnvAliases();
   const apiKey = normalizeOpenRouterApiKey(process.env.OPENROUTER_API_KEY);
   if (!apiKey) {
     console.warn('[openrouter-image] OPENROUTER_API_KEY ausente');

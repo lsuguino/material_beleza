@@ -1,6 +1,10 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
-import { isPlausibleOpenRouterKeyShape, normalizeOpenRouterApiKey } from '@/lib/openrouter-key';
+import {
+  isPlausibleOpenRouterKeyShape,
+  normalizeOpenRouterApiKey,
+  syncOpenRouterKeyFromEnvAliases,
+} from '@/lib/openrouter-key';
 
 function stripBom(raw: string): string {
   return raw.replace(/^\uFEFF/, '');
@@ -67,14 +71,20 @@ function isPlausibleGeminiKey(s: string | undefined | null): boolean {
  * 3) Qualquer valor não vazio do arquivo, depois do env.
  */
 export async function ensureOpenRouterKey(): Promise<string | null> {
-  const keyRaw = process.env.OPENROUTER_API_KEY;
   const fromFile = await loadEnvVarFromFiles('OPENROUTER_API_KEY');
-  const key = normalizeOpenRouterApiKey(keyRaw);
+  const fromFileAlias = await loadEnvVarFromFiles('OPENROUTER');
   const fileNorm = normalizeOpenRouterApiKey(fromFile);
+  const fileAliasNorm = normalizeOpenRouterApiKey(fromFileAlias);
+
+  syncOpenRouterKeyFromEnvAliases();
+  const keyRaw = process.env.OPENROUTER_API_KEY;
+  const key = normalizeOpenRouterApiKey(keyRaw);
 
   if (isPlausibleOpenRouterKeyShape(fileNorm)) return commitOpenRouterKey(fileNorm);
+  if (isPlausibleOpenRouterKeyShape(fileAliasNorm)) return commitOpenRouterKey(fileAliasNorm);
   if (isPlausibleOpenRouterKeyShape(key)) return commitOpenRouterKey(key);
   if (fileNorm) return commitOpenRouterKey(fileNorm);
+  if (fileAliasNorm) return commitOpenRouterKey(fileAliasNorm);
   if (key) return commitOpenRouterKey(key);
   return null;
 }
@@ -89,21 +99,39 @@ function isPlausibleAnthropicKey(s: string | undefined | null): boolean {
  * Ordem: chave plausível em process.env → chave plausível em .env.local / .env → qualquer valor não vazio.
  */
 export async function ensureAnthropicKey(): Promise<string | null> {
-  const keyRaw = process.env.ANTHROPIC_API_KEY?.trim();
   const fromFile = await loadEnvVarFromFiles('ANTHROPIC_API_KEY');
+  const fromFileAlias = await loadEnvVarFromFiles('ANTHROPIC');
+  const keyRaw = process.env.ANTHROPIC_API_KEY?.trim();
+  const aliasEnv = process.env.ANTHROPIC?.trim() ?? process.env.ANTHROPIC_KEY?.trim();
 
-  if (isPlausibleAnthropicKey(keyRaw)) {
-    process.env.ANTHROPIC_API_KEY = keyRaw!;
-    return keyRaw!;
-  }
   if (isPlausibleAnthropicKey(fromFile)) {
     process.env.ANTHROPIC_API_KEY = fromFile!;
     return fromFile!;
   }
-  if (keyRaw) return keyRaw;
+  if (isPlausibleAnthropicKey(fromFileAlias)) {
+    process.env.ANTHROPIC_API_KEY = fromFileAlias!;
+    return fromFileAlias!;
+  }
+  if (isPlausibleAnthropicKey(keyRaw)) {
+    process.env.ANTHROPIC_API_KEY = keyRaw!;
+    return keyRaw!;
+  }
+  if (isPlausibleAnthropicKey(aliasEnv)) {
+    process.env.ANTHROPIC_API_KEY = aliasEnv!;
+    return aliasEnv!;
+  }
   if (fromFile) {
     process.env.ANTHROPIC_API_KEY = fromFile;
     return fromFile;
+  }
+  if (fromFileAlias) {
+    process.env.ANTHROPIC_API_KEY = fromFileAlias;
+    return fromFileAlias;
+  }
+  if (keyRaw) return keyRaw;
+  if (aliasEnv) {
+    process.env.ANTHROPIC_API_KEY = aliasEnv;
+    return aliasEnv;
   }
   return null;
 }
@@ -111,19 +139,38 @@ export async function ensureAnthropicKey(): Promise<string | null> {
 /** Chave Google AI (Gemini) para geração de imagens (Nano Banana). Opcional. */
 export async function ensureGeminiApiKey(): Promise<string | null> {
   const fromFile = await loadEnvVarFromFiles('GEMINI_API_KEY');
+  const fromFileAlias = await loadEnvVarFromFiles('GEMINI');
   const key = process.env.GEMINI_API_KEY?.trim();
+  const aliasEnv = process.env.GEMINI?.trim() ?? process.env.GEMINI_KEY?.trim();
   const fileNorm = fromFile?.trim();
+  const fileAliasNorm = fromFileAlias?.trim();
 
   if (isPlausibleGeminiKey(fileNorm)) {
     const k = fileNorm as string;
     process.env.GEMINI_API_KEY = k;
     return k;
   }
+  if (isPlausibleGeminiKey(fileAliasNorm)) {
+    process.env.GEMINI_API_KEY = fileAliasNorm!;
+    return fileAliasNorm!;
+  }
   if (isPlausibleGeminiKey(key)) return key!;
+  if (isPlausibleGeminiKey(aliasEnv)) {
+    process.env.GEMINI_API_KEY = aliasEnv!;
+    return aliasEnv!;
+  }
   if (fileNorm) {
     process.env.GEMINI_API_KEY = fileNorm;
     return fileNorm;
   }
+  if (fileAliasNorm) {
+    process.env.GEMINI_API_KEY = fileAliasNorm;
+    return fileAliasNorm;
+  }
   if (key) return key;
+  if (aliasEnv) {
+    process.env.GEMINI_API_KEY = aliasEnv;
+    return aliasEnv;
+  }
   return null;
 }

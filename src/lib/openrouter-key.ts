@@ -16,3 +16,19 @@ export function isPlausibleOpenRouterKeyShape(s: string | undefined | null): boo
   const t = s.trim();
   return t.length >= 20 && t.startsWith('sk-or-');
 }
+
+/**
+ * Copia chaves do ambiente para `OPENROUTER_API_KEY` quando o deploy usa nome curto
+ * (ex.: `OPENROUTER` na Vercel em vez de `OPENROUTER_API_KEY`).
+ */
+export function syncOpenRouterKeyFromEnvAliases(): void {
+  const primary = normalizeOpenRouterApiKey(process.env.OPENROUTER_API_KEY);
+  if (primary) {
+    process.env.OPENROUTER_API_KEY = primary;
+    return;
+  }
+  const fromAlias = normalizeOpenRouterApiKey(
+    process.env.OPENROUTER ?? process.env.OPENROUTER_KEY ?? process.env.OPENROUTER_API
+  );
+  if (fromAlias) process.env.OPENROUTER_API_KEY = fromAlias;
+}

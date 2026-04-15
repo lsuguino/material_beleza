@@ -1,4 +1,5 @@
 import Anthropic, { APIError } from '@anthropic-ai/sdk';
+import { ensureAnthropicKey } from '@/lib/ensure-env';
 
 /** Retorna o modelo Anthropic para a tarefa dada. Configurável por env. */
 export function getAnthropicModelForTask(task: 'text_material' | 'design'): string {
@@ -25,6 +26,7 @@ export async function anthropicChat(params: {
   temperature?: number;
   model?: string;
 }): Promise<string> {
+  await ensureAnthropicKey();
   const client = getAnthropicClient();
   const model = params.model ?? getAnthropicModelForTask('text_material');
 
