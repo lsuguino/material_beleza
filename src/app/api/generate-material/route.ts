@@ -9,7 +9,7 @@ import {
   openRouterGenerateImage,
   verifyOpenRouterApiKeyForCompletions,
 } from '@/lib/openrouter';
-import { getFewShotSuffixForTeachingMaterial } from '@/lib/training-few-shot';
+import { getFewShotSuffixForTeachingMaterial } from '@/lib/training-few-shot'; 
 
 // Tempo máximo da rota (segundos). Aumentado para transcrições longas (ex.: Vercel Pro permite até 300).
 export const maxDuration = 300;
