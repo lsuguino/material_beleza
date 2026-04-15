@@ -7,6 +7,10 @@ import { MermaidInit } from '@/components/MermaidInit';
 import { usePreviewScroll } from '@/hooks/usePreviewScroll';
 import { savePreviewDataToClient } from '@/lib/preview-storage';
 import { TRANSCRIPTION_MAX_CHARS } from '@/lib/api-payload-limits';
+import {
+  mergeEditedPageRestoringMedia,
+  prepareExistingPageForEditApi,
+} from '@/lib/page-edit-api-payload';
 import { VTSD_COLOR } from '@/lib/vtsd-design-system';
 
 interface InlinePreviewProps {
@@ -49,7 +53,7 @@ async function readApiErrorMessage(res: Response, fallback: string): Promise<str
     return 'Serviço indisponível. Confira OPENROUTER ou OPENROUTER_API_KEY nas variáveis de ambiente do projeto e faça redeploy.';
   }
   if (res.status === 413) {
-    return 'Requisição muito grande para o servidor (limite ~4,5MB na Vercel). Reduza a transcrição ou páginas com imagens muito pesadas; em “editar instrução” o app já envia só a página atual.';
+    return 'Requisição muito grande para o servidor (limite ~4,5MB na Vercel). Tente de novo: imagens em base64 são omitidas do envio automaticamente. Se persistir, reduza a transcrição ou o texto da página.';
   }
   const stripped = body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   if (stripped.length > 0 && stripped.length < 280) return stripped.slice(0, 240);
@@ -246,6 +250,8 @@ export function InlinePreview({
       const existingPage = designData?.paginas?.[pageIndex] as Record<string, unknown> | undefined;
       if (!existingPage) return;
 
+      const existingPageForApi = prepareExistingPageForEditApi(existingPage);
+
       const res = await fetch('/api/edit-page', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -254,7 +260,7 @@ export function InlinePreview({
           instruction: editInstruction.trim(),
           modo,
           transcription,
-          existingPage,
+          existingPage: existingPageForApi,
         }),
       });
       if (!res.ok) {
@@ -266,14 +272,18 @@ export function InlinePreview({
 
       if ('updatedPage' in json && 'pageIndex' in json) {
         const { updatedPage, pageIndex: idx } = json;
+        const mergedPage = mergeEditedPageRestoringMedia(
+          existingPage,
+          updatedPage as Record<string, unknown>,
+        );
         const conteudoData = data.conteudo;
         const dd = data.design || data.conteudo;
         if (!dd?.paginas) return;
         const newDesignPaginas = [...dd.paginas];
-        newDesignPaginas[idx] = updatedPage as (typeof newDesignPaginas)[number];
+        newDesignPaginas[idx] = mergedPage as (typeof newDesignPaginas)[number];
         const newConteudoPaginas = conteudoData?.paginas ? [...conteudoData.paginas] : null;
         if (newConteudoPaginas && idx < newConteudoPaginas.length) {
-          newConteudoPaginas[idx] = updatedPage as (typeof newConteudoPaginas)[number];
+          newConteudoPaginas[idx] = mergedPage as (typeof newConteudoPaginas)[number];
         }
         await applyUpdate({
           ...data,
