@@ -10,7 +10,7 @@ interface EditPageRequest {
     design?: { titulo?: string; subtitulo_curso?: string; paginas?: Array<Record<string, unknown>> };
     tema?: Record<string, unknown>;
     curso_id?: string;
-    perguntas?: string[];
+    perguntas?: string[]; 
   };
   pageIndex: number;
   instruction: string;
