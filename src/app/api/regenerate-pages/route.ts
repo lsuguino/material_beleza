@@ -9,6 +9,7 @@ import {
 import { COURSE_THEMES, type CourseId } from '@/lib/courseThemes';
 import { VTSD_COLOR } from '@/lib/vtsd-design-system';
 import { budgetCharsForLayout, splitBlocoPrincipalIntoChunks } from '@/lib/paginate-content-pages';
+import { TRANSCRIPTION_MAX_CHARS } from '@/lib/api-payload-limits';
 import { ensureOpenRouterKey } from '@/lib/ensure-env';
 
 export const maxDuration = 120;
@@ -111,7 +112,11 @@ function pickBestLayout(
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as RegenerateRequest;
-    const { existingData, pageIndices, curso_id, modo, transcription } = body;
+    const { existingData, pageIndices, curso_id, modo, transcription: transcriptionRaw } = body;
+    const transcription =
+      typeof transcriptionRaw === 'string'
+        ? transcriptionRaw.slice(0, TRANSCRIPTION_MAX_CHARS)
+        : undefined;
 
     if (!existingData || !Array.isArray(pageIndices) || pageIndices.length === 0) {
       return NextResponse.json({ error: 'Dados inválidos.' }, { status: 400 });

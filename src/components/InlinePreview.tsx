@@ -6,6 +6,7 @@ import { PageThumbnail } from '@/components/PageThumbnail';
 import { MermaidInit } from '@/components/MermaidInit';
 import { usePreviewScroll } from '@/hooks/usePreviewScroll';
 import { savePreviewDataToClient } from '@/lib/preview-storage';
+import { TRANSCRIPTION_MAX_CHARS } from '@/lib/api-payload-limits';
 import { VTSD_COLOR } from '@/lib/vtsd-design-system';
 
 interface InlinePreviewProps {
@@ -48,7 +49,7 @@ async function readApiErrorMessage(res: Response, fallback: string): Promise<str
     return 'Serviço indisponível. Confira OPENROUTER ou OPENROUTER_API_KEY nas variáveis de ambiente do projeto e faça redeploy.';
   }
   if (res.status === 413) {
-    return 'Requisição muito grande; reduza o material ou a transcrição.';
+    return 'Requisição muito grande para o servidor (limite ~4,5MB na Vercel). Reduza a transcrição ou páginas com imagens muito pesadas; em “editar instrução” o app já envia só a página atual.';
   }
   const stripped = body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   if (stripped.length > 0 && stripped.length < 280) return stripped.slice(0, 240);
@@ -203,7 +204,8 @@ export function InlinePreview({
     setRegenerating(true);
     setRegeneratingPages(new Set(selectedPages));
     try {
-      const transcription = file ? await file.text() : undefined;
+      const rawTx = file ? await file.text() : undefined;
+      const transcription = rawTx ? rawTx.slice(0, TRANSCRIPTION_MAX_CHARS) : undefined;
       const res = await fetch('/api/regenerate-pages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -238,23 +240,51 @@ export function InlinePreview({
     setActionLoading('edit');
     setRegeneratingPages(new Set([pageIndex]));
     try {
-      const transcription = file ? await file.text() : undefined;
+      const rawTx = file ? await file.text() : undefined;
+      const transcription = rawTx ? rawTx.slice(0, TRANSCRIPTION_MAX_CHARS) : undefined;
+      const designData = data.design || data.conteudo;
+      const existingPage = designData?.paginas?.[pageIndex] as Record<string, unknown> | undefined;
+      if (!existingPage) return;
+
       const res = await fetch('/api/edit-page', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          existingData: data,
           pageIndex,
           instruction: editInstruction.trim(),
           modo,
           transcription,
+          existingPage,
         }),
       });
       if (!res.ok) {
         throw new Error(await readApiErrorMessage(res, 'Erro ao editar.'));
       }
-      const updated = (await res.json()) as PreviewData;
-      await applyUpdate(updated);
+      const json = (await res.json()) as
+        | PreviewData
+        | { updatedPage: Record<string, unknown>; pageIndex: number };
+
+      if ('updatedPage' in json && 'pageIndex' in json) {
+        const { updatedPage, pageIndex: idx } = json;
+        const conteudoData = data.conteudo;
+        const dd = data.design || data.conteudo;
+        if (!dd?.paginas) return;
+        const newDesignPaginas = [...dd.paginas];
+        newDesignPaginas[idx] = updatedPage as (typeof newDesignPaginas)[number];
+        const newConteudoPaginas = conteudoData?.paginas ? [...conteudoData.paginas] : null;
+        if (newConteudoPaginas && idx < newConteudoPaginas.length) {
+          newConteudoPaginas[idx] = updatedPage as (typeof newConteudoPaginas)[number];
+        }
+        await applyUpdate({
+          ...data,
+          design: data.design ? { ...data.design, paginas: newDesignPaginas } : undefined,
+          conteudo: conteudoData
+            ? { ...conteudoData, paginas: newConteudoPaginas || newDesignPaginas }
+            : undefined,
+        });
+      } else {
+        await applyUpdate(json as PreviewData);
+      }
       setEditInstruction('');
     } catch (err) {
       console.error('[handleEditInstruction]', err);

@@ -1,3 +1,4 @@
+import { TRANSCRIPTION_MAX_CHARS } from '@/lib/api-payload-limits';
 import { openRouterChatByTask } from '@/lib/openrouter';
 import { parseJsonFromAI } from '@/lib/parse-json-from-ai';
 import { getSkillsSummaryForPrompt } from '@/lib/skills/load-skills';
@@ -483,7 +484,7 @@ export async function applyPageInstruction(
   const currentItens = Array.isArray(existingPage.itens) ? existingPage.itens : [];
   const currentDestaques = Array.isArray(existingPage.destaques) ? existingPage.destaques : [];
   const currentCitacao = String(existingPage.citacao ?? '');
-  const transcricaoEnviada = transcricao ? transcricao.slice(0, 50000) : '';
+  const transcricaoEnviada = transcricao ? transcricao.slice(0, TRANSCRIPTION_MAX_CHARS) : '';
 
   const systemPrompt = `Você é um especialista em materiais didáticos. O usuário quer fazer uma alteração pontual em uma página de material didático.
 
