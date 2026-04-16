@@ -28,6 +28,27 @@ interface EditPageRequest {
   transcription?: string;
 }
 
+function withOptionalTitles(
+  updatedPage: Record<string, unknown>,
+  existingPage: Record<string, unknown>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...updatedPage };
+
+  const normalizeField = (field: 'titulo_bloco' | 'subtitulo' | 'titulo') => {
+    const updated = String(updatedPage[field] ?? '').trim();
+    const existing = String(existingPage[field] ?? '').trim();
+    const finalValue = updated || existing;
+    if (finalValue) out[field] = finalValue;
+    else delete out[field];
+  };
+
+  normalizeField('titulo_bloco');
+  normalizeField('subtitulo');
+  normalizeField('titulo');
+
+  return out;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const apiKey = await ensureOpenRouterKey();
@@ -55,12 +76,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Dados inválidos.' }, { status: 400 });
       }
       const modoContent: ModoContent = modo === 'resumido' ? 'resumido' : 'completo';
-      const updatedPage = await applyPageInstruction(
+      const updatedPageRaw = await applyPageInstruction(
         existingPage,
         instruction.trim(),
         transcription,
         modoContent,
       );
+      const updatedPage = withOptionalTitles(updatedPageRaw, existingPage);
       return NextResponse.json({ updatedPage, pageIndex });
     }
 
@@ -83,12 +105,13 @@ export async function POST(req: NextRequest) {
     const modoContent: ModoContent = modo === 'resumido' ? 'resumido' : 'completo';
     const existingPage = designData.paginas[pageIndex];
 
-    const updatedPage = await applyPageInstruction(
+    const updatedPageRaw = await applyPageInstruction(
       existingPage,
       instruction.trim(),
       transcription,
       modoContent,
     );
+    const updatedPage = withOptionalTitles(updatedPageRaw, existingPage);
 
     // Build updated PreviewData (payload completo — legado)
     const newDesignPaginas = [...designData.paginas];

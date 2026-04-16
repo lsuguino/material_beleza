@@ -12,7 +12,7 @@ import { COURSE_PICKER_OPTIONS } from '@/lib/coursePickerOptions';
 import { ScribolitoWalk } from '@/components/ScribolitoWalk';
 import { IconBell, IconSun, IconMoon, IconMinimize, IconMaximize, IconCourse, IconMaterialType, IconBookOpen, IconResume, IconActivity, IconSettings } from '@/components/RtgIcons';
 import { GENERATION_PHRASES, pickPhraseIndex } from '@/lib/generation-phrases';
-import { clearPreviewDataFromClient, savePreviewDataToClient } from '@/lib/preview-storage';
+import { clearPreviewDataFromClient, loadPreviewDataFromClient, savePreviewDataToClient } from '@/lib/preview-storage';
 import { buildPlainTextFromPreview } from '@/lib/previewPlainText';
 import { InlinePreview } from '@/components/InlinePreview';
 
@@ -112,6 +112,27 @@ export default function Home() {
 
   const isBatchMode = batchQueue.length > 0;
   const currentBatchFile = batchCurrentFile || (batchQueue.length > 0 ? batchQueue[batchIndex] : null);
+
+  // Recupera preview persistido após refresh/reload para não "voltar ao início"
+  // durante ações longas (ex.: geração/download de PDF).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (generatedData || loading || isBatchMode) return;
+      try {
+        const restored = await loadPreviewDataFromClient();
+        if (!cancelled && restored && typeof restored === 'object') {
+          setGeneratedData(restored as PreviewData);
+          setShowPreview(true);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [generatedData, loading, isBatchMode]);
 
   useEffect(() => {
     if (loadingWasActive.current && !loading && generatedData && notifyWhenDone) {
@@ -358,7 +379,7 @@ export default function Home() {
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1500);
     } catch (err) {
       console.error('[handleDownloadPdfMain]', err);
       alert(err instanceof Error ? err.message : 'Erro inesperado ao gerar o PDF. Tente novamente.');
@@ -383,7 +404,7 @@ export default function Home() {
     document.body.appendChild(a);
     a.click();
     a.remove();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
   }, [generatedData]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {

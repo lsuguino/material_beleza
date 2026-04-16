@@ -261,9 +261,11 @@ export async function POST(req: NextRequest) {
     const uniqueTopics: Array<{ titulo: string; subtitulo: string }> = [];
     const seenTitulos = new Set<string>();
     for (const c of collected) {
-      if (c.tituloBloco && !seenTitulos.has(c.tituloBloco)) {
-        seenTitulos.add(c.tituloBloco);
-        uniqueTopics.push({ titulo: c.tituloBloco, subtitulo: c.subtitulo });
+      const cleanTitulo = String(c.tituloBloco || '').trim();
+      const cleanSubtitulo = String(c.subtitulo || '').trim();
+      if (cleanTitulo && !seenTitulos.has(cleanTitulo)) {
+        seenTitulos.add(cleanTitulo);
+        uniqueTopics.push({ titulo: cleanTitulo, subtitulo: cleanSubtitulo });
       }
     }
 
@@ -322,9 +324,8 @@ export async function POST(req: NextRequest) {
       const chunk = chunks[i] || '';
       const layout = targetLayouts[i];
 
-      // Atribuir tópico
-      const topicIdx = Math.min(i, uniqueTopics.length - 1);
-      const topic = uniqueTopics[topicIdx] || { titulo: collected[0]?.tituloBloco || '', subtitulo: '' };
+      // Atribuir tópico apenas quando existir título válido.
+      const topic = i < uniqueTopics.length ? uniqueTopics[i] : undefined;
 
       // Itens/destaques/citação — distribuir entre as páginas
       const sourceIdx = Math.min(i, collected.length - 1);
@@ -364,10 +365,15 @@ export async function POST(req: NextRequest) {
       // Visual meta — distribuir entre as páginas
       const vMeta = i < allVisualMetas.length ? allVisualMetas[i] : {};
 
+      const existingPage = paginas[idx];
+      const existingTitulo = String(existingPage.titulo_bloco ?? '').trim();
+      const existingSubtitulo = String(existingPage.subtitulo ?? '').trim();
+
+      const finalTitulo = String(topic?.titulo ?? existingTitulo).trim();
+      const finalSubtitulo = String(topic?.subtitulo ?? existingSubtitulo).trim();
+
       const reorganizedPage: Record<string, unknown> = {
         tipo: 'conteudo',
-        titulo_bloco: topic.titulo,
-        subtitulo: topic.subtitulo,
         bloco_principal: chunk,
         content_blocks: contentBlocks.length > 0 ? contentBlocks : undefined,
         itens: source?.itens?.length ? source.itens : [],
@@ -377,8 +383,11 @@ export async function POST(req: NextRequest) {
         ...designFields,
       };
 
+      // Só inclui título/subtítulo quando houver valor real.
+      if (finalTitulo) reorganizedPage.titulo_bloco = finalTitulo;
+      if (finalSubtitulo) reorganizedPage.subtitulo = finalSubtitulo;
+
       // Preservar capitulo_seq
-      const existingPage = paginas[idx];
       if (existingPage.capitulo_seq !== undefined) {
         reorganizedPage.capitulo_seq = existingPage.capitulo_seq;
       }

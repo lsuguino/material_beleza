@@ -89,7 +89,7 @@ export default function PreviewPage() {
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1500);
     } catch (err) {
       console.error('[handleDownloadPdf]', err);
       alert(err instanceof Error ? err.message : 'Erro ao gerar PDF. Tente novamente.');
@@ -114,7 +114,7 @@ export default function PreviewPage() {
     document.body.appendChild(a);
     a.click();
     a.remove();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
   }, [data]);
 
   const isVtsdPreview =

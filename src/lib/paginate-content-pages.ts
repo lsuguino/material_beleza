@@ -8,18 +8,18 @@
  * 3. Cada página deve usar no máximo ~80% da área útil (respiro visual)
  */
 
-/** Fator de preenchimento máximo da área útil — ligeiramente conservador para reduzir corte no rodapé/laterais no PDF. */
-const MAX_FILL_RATIO = 0.86;
+/** Fator de preenchimento máximo da área útil — menos conservador para reduzir folhas com muito branco. */
+const MAX_FILL_RATIO = 0.94;
 /**
  * Tolerância menor de overflow:
  * quando passar do limite, tende a quebrar antes para evitar páginas visualmente apertadas.
  */
-const SOFT_SPLIT_OVERFLOW_CHARS = 60;
+const SOFT_SPLIT_OVERFLOW_CHARS = 100;
 /**
  * Permite continuação mesmo quando o bloco restante é menor,
  * evitando espremer texto no fim da página atual.
  */
-const MIN_SECOND_CHUNK_CHARS = 120;
+const MIN_SECOND_CHUNK_CHARS = 90;
 
 /**
  * Budget de caracteres por layout — baseado na área REAL disponível no Figma,
@@ -337,8 +337,8 @@ function verticalExtrasReserve(layout: string, page: Record<string, unknown>): n
 function effectiveBodyCharBudget(layout: string, page: Record<string, unknown>): number {
   const base = budgetCharsForLayout(layout);
   const raw = verticalExtrasReserve(layout, page);
-  const reserve = Math.min(2400, Math.ceil(raw * 1.18));
-  return Math.max(200, base - reserve);
+  const reserve = Math.min(2400, Math.ceil(raw * 1.02));
+  return Math.max(240, base - reserve);
 }
 
 function collectStepItems(page: Record<string, unknown>): string[] {

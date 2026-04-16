@@ -1,5 +1,6 @@
 'use client';
 
+import { useLayoutEffect, useMemo, useState } from 'react';
 import { ContentBlocksRenderer, type ContentBlockItem } from '@/components/ContentBlocksRenderer';
 import type { LayoutTipo } from '@/lib/design-agent';
 import { excerptDistinctFromSources } from '@/lib/dedupe-vtt-excerpts';
@@ -45,6 +46,68 @@ function limitParagraphs(paras: string[], maxChars: number): string[] {
     }
   }
   return result;
+}
+
+function createMeasureRoot(widthPx: number, heightPx: number): HTMLDivElement {
+  const root = document.createElement('div');
+  root.style.position = 'fixed';
+  root.style.left = '-10000px';
+  root.style.top = '0';
+  root.style.width = `${widthPx}px`;
+  root.style.height = `${heightPx}px`;
+  root.style.overflow = 'hidden';
+  root.style.visibility = 'hidden';
+  root.style.pointerEvents = 'none';
+  root.style.background = '#fff';
+  root.style.boxSizing = 'border-box';
+  // Defaults similares aos parágrafos VTSD
+  root.style.fontFamily = 'Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+  root.style.fontSize = '13px';
+  root.style.lineHeight = '22px';
+  root.style.textAlign = 'justify';
+  (root.style as unknown as { hyphens?: string }).hyphens = 'auto';
+  return root;
+}
+
+function appendParagraph(root: HTMLElement, text: string, opts?: { italic?: boolean }) {
+  const p = document.createElement('p');
+  p.style.margin = '0 0 12px 0';
+  p.style.padding = '0';
+  if (opts?.italic) p.style.fontStyle = 'italic';
+  p.textContent = text;
+  root.appendChild(p);
+}
+
+function fitParagraphsByMeasuring(args: {
+  paragraphs: string[];
+  buildStatic: (root: HTMLDivElement) => void;
+  maxHeightPx: number;
+  widthPx: number;
+}): string[] {
+  const { paragraphs, buildStatic, maxHeightPx, widthPx } = args;
+  if (paragraphs.length === 0) return [];
+  const root = createMeasureRoot(widthPx, maxHeightPx);
+  document.body.appendChild(root);
+  try {
+    const fits = (count: number) => {
+      root.innerHTML = '';
+      buildStatic(root);
+      for (let i = 0; i < count; i++) appendParagraph(root, paragraphs[i] ?? '');
+      return root.scrollHeight <= root.clientHeight + 1;
+    };
+
+    // Busca binária pelo maior prefixo que cabe.
+    let lo = 0;
+    let hi = paragraphs.length;
+    while (lo < hi) {
+      const mid = Math.ceil((lo + hi) / 2);
+      if (fits(mid)) lo = mid;
+      else hi = mid - 1;
+    }
+    return paragraphs.slice(0, Math.max(1, lo));
+  } finally {
+    root.remove();
+  }
 }
 
 /** Página de continuação: último parágrafo curto vira citação em caixa (estilo Print 1). */
@@ -368,6 +431,106 @@ export function PageConteudo({
     return !structuredTexts.has(clean) && !/^\d+[.)]*\s*$/.test(p.trim());
   });
 
+  const [fitParasState, setFitParasState] = useState<Record<string, string[]>>({});
+
+  const fitKey = useMemo(() => {
+    const sig = filteredParagrafos.join('\n').slice(0, 1400);
+    const hasImg = Boolean(imagemGerada);
+    const hasQuote = Boolean(String(citacao ?? '').trim());
+    const hasTop = Boolean(String(destaques?.[0] ?? '').trim());
+    const hasBottom = Boolean(String(destaques?.[1] ?? '').trim());
+    return `${layout_tipo}|p=${filteredParagrafos.length}|img=${hasImg ? 1 : 0}|q=${hasQuote ? 1 : 0}|t=${hasTop ? 1 : 0}|b=${hasBottom ? 1 : 0}|${sig}`;
+  }, [layout_tipo, filteredParagrafos, imagemGerada, citacao, destaques]);
+
+  useLayoutEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (!filteredParagrafos.length) return;
+    // Executa fit apenas para layouts VTSD que hoje truncam agressivamente.
+    const layout = String(layout_tipo || '');
+    if (layout !== 'A4_2_continuacao' && layout !== 'A4_2_conteudo_misto' && layout !== 'A4_7_sidebar_conteudo') return;
+    if (fitParasState[fitKey]) return;
+
+    try {
+      // Área útil base (y=50..792). Ajustes por layout abaixo.
+      const pageH = VTSD_MARGENS_A4.canvas.altura_px;
+      const areaTop = VTSD_MARGENS_A4.margens.topo_px;
+      const areaBottom = VTSD_MARGENS_A4.margens.base_px;
+      const areaH = pageH - areaTop - areaBottom;
+
+      if (layout === 'A4_2_continuacao') {
+        // Continuacao: barra 6px + paddingTop 30 + paddingBottom PG dentro do body.
+        const barH = 6;
+        const padTop = 30;
+        const padBottom = VTSD_MARGENS_A4.margens.base_px;
+        const maxH = areaH - barH - padTop - Math.max(0, padBottom - 10);
+        const width = VTSD_MARGENS_A4.area_util.largura_px;
+        const fitted = fitParagraphsByMeasuring({
+          paragraphs: filteredParagrafos,
+          widthPx: width,
+          maxHeightPx: Math.max(120, maxH),
+          buildStatic: (_root) => {
+            // Sem elementos estáticos aqui: quote/steps entram abaixo no render real.
+          },
+        });
+        setFitParasState((s) => ({ ...s, [fitKey]: fitted }));
+        return;
+      }
+
+      if (layout === 'A4_2_conteudo_misto') {
+        // Conteúdo misto: sidebar + coluna; topo (dica) opcional; quote opcional; imagem opcional.
+        const sidebarW = 236;
+        const colPadLeft = 20;
+        const colPadRight = VTSD_MARGENS_A4.margens.lateral_px;
+        const colW = VTSD_MARGENS_A4.canvas.largura_px - sidebarW - colPadLeft - colPadRight;
+
+        // Reserva vertical aproximada dos blocos “fixos” desse layout.
+        const hasTopBand = Boolean(String(destaques?.[0] ?? '').trim());
+        const hasQuote = Boolean(String(citacao ?? '').trim());
+        const hasImg = Boolean(imagemGerada);
+        const topBandReserve = hasTopBand ? 120 : 0;
+        const quoteReserve = hasQuote ? 140 : 0;
+        const imgReserve = hasImg ? 150 : 0;
+        const baseReserve = 90; // paddings/margens internas
+        const maxH = Math.max(140, areaH - topBandReserve - quoteReserve - imgReserve - baseReserve);
+
+        const fitted = fitParagraphsByMeasuring({
+          paragraphs: filteredParagrafos,
+          widthPx: Math.max(180, colW),
+          maxHeightPx: maxH,
+          buildStatic: (_root) => {
+            // Static blocks reservados via maxH; nada a renderizar aqui.
+          },
+        });
+        setFitParasState((s) => ({ ...s, [fitKey]: fitted }));
+        return;
+      }
+
+      if (layout === 'A4_7_sidebar_conteudo') {
+        // Sidebar conteúdo: coluna principal mais larga; pode ter steps/quote.
+        const sidebarW = 225;
+        const colPadLeft = 20;
+        const colPadRight = VTSD_MARGENS_A4.margens.lateral_px;
+        const colW = VTSD_MARGENS_A4.canvas.largura_px - sidebarW - colPadLeft - colPadRight;
+        const hasQuote = Boolean(String(citacao ?? '').trim());
+        const hasSteps = Array.isArray(itens) && itens.length > 0;
+        const quoteReserve = hasQuote ? 140 : 0;
+        const stepsReserve = hasSteps ? 220 : 0;
+        const baseReserve = 90;
+        const maxH = Math.max(160, areaH - quoteReserve - stepsReserve - baseReserve);
+
+        const fitted = fitParagraphsByMeasuring({
+          paragraphs: filteredParagrafos,
+          widthPx: Math.max(200, colW),
+          maxHeightPx: maxH,
+          buildStatic: (_root) => {},
+        });
+        setFitParasState((s) => ({ ...s, [fitKey]: fitted }));
+      }
+    } catch {
+      // Se medição falhar (fonts não carregadas, etc.), mantém fallback por chars.
+    }
+  }, [layout_tipo, filteredParagrafos, fitKey, fitParasState, imagemGerada, citacao, destaques, itens]);
+
   const proporcao = getProporcaoClasses(pagina.proporcao_colunas);
   const blocoEscuro = tema.primaryDark || VTSD_COLOR.primary_darker;
   const blocoMedio = tema.primary || VTSD_COLOR.primary_dark;
@@ -517,7 +680,7 @@ export function PageConteudo({
 
   /** Continuação de capítulo: header teal fino + corpo bem diagramado. Sem label "CONTINUAÇÃO". */
   if (layoutEfetivo === 'A4_2_continuacao') {
-    const limitedParas = limitParagraphs(filteredParagrafos, 700);
+    const limitedParas = fitParasState[fitKey] ?? limitParagraphs(filteredParagrafos, 700);
     const { body, quote } = splitContinuationBodyQuote(limitedParas);
     return (
       <div
@@ -570,7 +733,7 @@ export function PageConteudo({
   }
 
   if (layoutEfetivo === 'A4_2_conteudo_misto') {
-    const bodyParas = limitParagraphs(filteredParagrafos, 460);
+    const bodyParas = fitParasState[fitKey] ?? limitParagraphs(filteredParagrafos, 460);
     const calloutHtml = excerptDistinctFromSources(destaques[0], bodyParas);
     /** Texto da faixa superior: evita sumir com o layout quando o de-dup zera o trecho mas `destaques` existe. */
     const topBandBody = (calloutHtml || String(destaques?.[0] ?? '').trim()).trim();
@@ -622,7 +785,7 @@ export function PageConteudo({
         >
           {bodyParas.slice(0, 2).map((p, i) => (
             <p key={i} className="font-display text-[13px] leading-[22px] mb-3 m-0 text-justify hyphens-auto" style={{ color: VTSD_COLOR.texto_700 }}>
-              {truncateAtSentence(p, 350)}
+              {p}
             </p>
           ))}
           {pullQuote ? (
@@ -639,7 +802,7 @@ export function PageConteudo({
           ) : null}
           <div className={`flex gap-3 mt-2 ${imagemGerada ? 'items-start' : 'flex-col'}`}>
             <div className={imagemGerada ? 'flex-1 min-w-0' : 'w-full'}>
-              {bodyParas.slice(2, 4).map((p, i) => (
+              {bodyParas.slice(2).map((p, i) => (
                 <p key={i} className="font-display italic text-[13px] leading-[22px] mb-2 m-0 text-justify hyphens-auto" style={{ color: VTSD_COLOR.texto_800 }}>
                   {p}
                 </p>
@@ -687,6 +850,61 @@ export function PageConteudo({
             <ContentBlocksRenderer blocks={extraContentBlocks} />
           </div>
         ) : null}
+        </div>
+        <BadgePagina numero={numeroPagina} bg={blocoMedio} />
+      </div>
+    );
+  }
+
+  if (layoutEfetivo === 'A4_7_sidebar_conteudo') {
+    const limitedParasSidebar = fitParasState[fitKey] ?? limitParagraphs(filteredParagrafos, 460);
+    const sidebarW = 225;
+    const steps = itens.slice(0, 4);
+    const citacaoBloco = excerptDistinctFromSources(citacao, [...limitedParasSidebar, ...steps]);
+    return (
+      <div className="page-a4 relative flex flex-col overflow-hidden" style={{ width: 595, height: 842, backgroundColor: VTSD_COLOR.fundo_page }}>
+        <div className="flex-1 min-h-0 flex overflow-hidden">
+          <VtsdChapterSidebar
+            widthPx={sidebarW}
+            capituloNumero={capituloNumero}
+            titulo={titulo || ''}
+            subtitulo={subtitulo}
+            nomeCurso={nomeCurso}
+            blocoEscuro={blocoEscuro}
+            blocoMedio={blocoMedio}
+          />
+          <div
+            className="flex-1 min-w-0 min-h-0 overflow-hidden"
+            style={{
+              paddingTop: PG,
+              paddingBottom: PG,
+              paddingLeft: 20,
+              paddingRight: SIDE,
+              boxSizing: 'border-box',
+            }}
+          >
+            {limitedParasSidebar.map((p, i) => (
+              <p key={i} className="font-display text-[13px] leading-[22px] mb-3 m-0 text-justify hyphens-auto" style={{ color: VTSD_COLOR.texto_700 }}>
+                {p}
+              </p>
+            ))}
+            {citacaoBloco ? (
+              <blockquote
+                className="font-display italic text-[13px] leading-[22px] m-0 my-4 py-3 px-5 text-justify hyphens-auto"
+                style={{
+                  color: VTSD_COLOR.texto_700,
+                  borderLeft: `3px solid ${blocoMedio}`,
+                  backgroundColor: VTSD_COLOR.fundo_subtle,
+                  borderRadius: 4,
+                }}
+              >
+                {truncateAtSentence(citacaoBloco, 260)}
+              </blockquote>
+            ) : null}
+            {steps.length > 0 ? (
+              <VtsdNumberedSteps steps={steps} blocoMedio={blocoMedio} max={4} className="mt-2" />
+            ) : null}
+          </div>
         </div>
         <BadgePagina numero={numeroPagina} bg={blocoMedio} />
       </div>
@@ -832,53 +1050,6 @@ export function PageConteudo({
             <ContentBlocksRenderer blocks={extraContentBlocks} />
           </div>
         ) : null}
-        <BadgePagina numero={numeroPagina} bg={blocoMedio} />
-      </div>
-    );
-  }
-
-  if (layoutEfetivo === 'A4_7_sidebar_conteudo') {
-    const steps = (itens.length ? itens : destaques.length ? destaques : []).slice(0, 5);
-    const limitedParasSidebar = limitParagraphs(filteredParagrafos, 460);
-    const citacaoBloco = excerptDistinctFromSources(citacao, [...limitedParasSidebar, ...steps]);
-    return (
-      <div className="page-a4 relative overflow-hidden flex" style={{ width: 595, height: 842 }}>
-        <VtsdChapterSidebar
-          widthPx={242}
-          capituloNumero={capituloNumero}
-          titulo={titulo || ''}
-          subtitulo={subtitulo}
-          nomeCurso={nomeCurso}
-          blocoEscuro={blocoEscuro}
-          blocoMedio={blocoMedio}
-        />
-        <div
-          className="flex-1 min-h-0 flex flex-col overflow-hidden box-border"
-          style={{
-            backgroundColor: VTSD_COLOR.fundo_box,
-            padding: `24px ${SIDE}px 56px 32px`,
-            boxSizing: 'border-box',
-          }}
-        >
-          {limitedParasSidebar.map((p, i) => (
-            <p key={i} className="font-display text-[13px] leading-[22px] mb-3 m-0 text-justify hyphens-auto" style={{ color: VTSD_COLOR.texto_800 }}>
-              {p}
-            </p>
-          ))}
-          {citacaoBloco ? (
-            <blockquote
-              className="font-display italic text-[13px] leading-[22px] m-0 mb-4 py-[15px] px-5 break-inside-avoid text-justify hyphens-auto"
-              style={{
-                color: VTSD_COLOR.texto_700,
-                border: `1px solid ${VTSD_COLOR.texto_600}`,
-                borderRadius: '0 15px 15px 0',
-              }}
-            >
-              {citacaoBloco}
-            </blockquote>
-          ) : null}
-          {steps.length ? <VtsdNumberedSteps steps={steps} blocoMedio={blocoMedio} /> : null}
-        </div>
         <BadgePagina numero={numeroPagina} bg={blocoMedio} />
       </div>
     );
