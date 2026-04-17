@@ -536,58 +536,19 @@ export function PageConteudo({
   const blocoMedio = tema.primary || VTSD_COLOR.primary_dark;
   const cyanMarca = tema.primaryLight || VTSD_COLOR.primary;
 
-  // ——— Mapeamento: TODOS os layouts → renderizadores VTSD (nunca legados) ———
-  // Os novos templates são renderizados pelo FigmaTemplateRenderer primeiro.
-  // Se não tiver renderizador Figma dedicado, cai aqui nos 5 VTSD base.
-  const LAYOUT_MAP: Record<string, string> = {
-    // Aberturas
-    'A4_1_abertura_split': 'A4_3_sidebar_steps',
-    'A4_1_abertura_imagem': 'A4_1_abertura',
-    'A4_1_abertura_invertida': 'A4_7_sidebar_conteudo',
-    'A4_1_abertura_full': 'A4_1_abertura',
-    // Texto (os que não têm FigmaTemplate dedicado)
-    'A4_2_duas_colunas': 'A4_7_sidebar_conteudo',
-    'A4_2_duas_colunas_num': 'A4_7_sidebar_conteudo',
-    // Sidebar/Processo
-    'A4_3_processo_etapas': 'A4_3_sidebar_steps',
-    // Dados visuais
-    'A4_4_cards_grid': 'A4_4_magazine',
-    'A4_4_comparativo': 'A4_2_conteudo_misto',
-    'A4_4_pros_contras': 'A4_2_conteudo_misto',
-    // Diagramas
-    'A4_5_tabela': 'A4_4_magazine',
-    'A4_5_organograma': 'A4_4_magazine',
-    'A4_5_mapa_mental': 'A4_4_magazine',
-    'A4_5_timeline': 'A4_3_sidebar_steps',
-    'A4_5_infografico': 'A4_4_magazine',
-    'A4_5_grafico_analise': 'A4_4_magazine',
-    // Listas e FAQ
-    'A4_6_faq': 'A4_2_conteudo_misto',
-    'A4_6_lista_icones': 'A4_7_sidebar_conteudo',
-    'A4_6_texto_completo': 'A4_2_conteudo_misto',
-    // Destaques (os que não têm FigmaTemplate dedicado)
-    'A4_8_nota_importante': 'A4_2_conteudo_misto',
-    'A4_8_testemunho': 'A4_2_conteudo_misto',
-    'A4_8_imagem_overlay': 'A4_4_magazine',
-    'A4_8_imagem_sidebar': 'A4_7_sidebar_conteudo',
-    // Atividades
-    'A4_9_checklist': 'A4_2_conteudo_misto',
-    'A4_9_exercicio': 'A4_2_conteudo_misto',
-    'A4_9_resumo_capitulo': 'A4_2_conteudo_misto',
-    'A4_9_conceitos_chave': 'A4_7_sidebar_conteudo',
-    // Sumário
-    'A4_0_sumario': 'A4_2_conteudo_misto',
-    // Legados → redirecionar para VTSD
-    'header_destaque': 'A4_2_conteudo_misto',
-    'dois_colunas': 'A4_7_sidebar_conteudo',
-    'citacao_grande': 'A4_2_conteudo_misto',
-    'lista_icones': 'A4_7_sidebar_conteudo',
-    'dados_grafico': 'A4_4_magazine',
-    'imagem_lateral': 'A4_4_magazine',
-    'imagem_top': 'A4_4_magazine',
-  };
-
-  // Resolve o layout efetivo: se é um novo tipo, mapeia para um renderizador existente
+  // ——— LAYOUT_MAP removido (PR "Figma fiel no app") ———
+  // As 35 entradas anteriores redirecionavam silenciosamente A4_* para um dos 6
+  // handlers internos (aproximação), causando "fuga do Figma". Política atual
+  // (ver docs/figma-source-of-truth.json + src/components/pages/FigmaTemplateRenderer.tsx):
+  //
+  //   - Dispatch primário via MaterialPreviewBlocks → renderFigmaTemplate.
+  //   - Layouts sem renderer fiel caem em TemplateInertFallback (B1: warn+badge
+  //     em dev, inerte em prod) — nunca aproximam para outro layout.
+  //
+  // Este arquivo (PageConteudo) permanece somente para referência de
+  // implementação legada dos 6 handlers D (abaixo). Não é mais consumido em
+  // runtime por caminhos VTSD. Manter sem LAYOUT_MAP evita regressão.
+  const LAYOUT_MAP: Record<string, string> = {};
   const layoutEfetivo = LAYOUT_MAP[layout_tipo] || layout_tipo;
 
   // ——— Layouts A4 design system VTSD (Figma) ———

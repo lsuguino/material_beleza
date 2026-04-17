@@ -275,15 +275,314 @@ export function TemplateDestaqueNumerico({
   );
 }
 
+// ============================================================
+// TEMPLATE: Abertura de Capítulo (header teal + imagem + texto intro)
+// Figma: "Início de Capítulo" (A4_1_abertura)
+// ============================================================
+export function TemplateAberturaCapitulo({
+  titulo, subtitulo, paragrafos, imagemUrl, numeroPagina, capituloNumero
+}: TemplateProps) {
+  const hasImage = isRenderableImageUrl(imagemUrl);
+  return (
+    <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      {/* Header teal */}
+      <div style={FIGMA_CSS.headerTeal} className="flex-shrink-0">
+        {capituloNumero !== undefined && (
+          <p style={{ ...FIGMA_CSS.labelCyan, margin: 0, marginBottom: 8 }}>Capítulo {capituloNumero}</p>
+        )}
+        <h1 style={FIGMA_CSS.h1White}>{titulo}</h1>
+        {subtitulo && (
+          <p style={{ ...FIGMA_CSS.labelCyan, marginTop: 12 }}>{subtitulo}</p>
+        )}
+      </div>
+      {/* Body */}
+      <div style={FIGMA_CSS.bodyBlock} className="flex flex-col overflow-hidden">
+        {hasImage && (
+          <div style={{
+            width: '100%', height: 260, backgroundColor: FIGMA_COLORS.lightBg,
+            borderRadius: 4, overflow: 'hidden', marginBottom: 20, flexShrink: 0,
+          }}>
+            <img src={imagemUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+        )}
+        {paragrafos.map((p, i) => (
+          <p key={i} style={{ ...FIGMA_CSS.bodyGray, marginBottom: 12 }}>{p}</p>
+        ))}
+      </div>
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// ============================================================
+// TEMPLATE: Sidebar larga + passos numerados
+// Figma: "Miolo - Processo em Etapas" (A4_3_sidebar_steps legado VTSD)
+// ============================================================
+export function TemplateSidebarSteps({
+  titulo, subtitulo, itens, numeroPagina, capituloNumero
+}: TemplateProps) {
+  const steps = itens.slice(0, 6);
+  return (
+    <div className="page-a4 relative overflow-hidden flex flex-row" style={FIGMA_CSS.page}>
+      {/* Sidebar larga teal */}
+      <div style={FIGMA_CSS.sidebar225} className="flex flex-col">
+        {capituloNumero !== undefined && (
+          <p style={{ ...FIGMA_CSS.labelCyan, margin: 0, marginBottom: 12 }}>
+            Capítulo {capituloNumero}
+          </p>
+        )}
+        <h2 style={FIGMA_CSS.h2White}>{titulo}</h2>
+        {subtitulo && (
+          <p style={{ ...FIGMA_CSS.bodyGray, color: FIGMA_COLORS.cyanLight, marginTop: 16 }}>
+            {subtitulo}
+          </p>
+        )}
+        <div style={{ flex: 1 }} />
+        {capituloNumero !== undefined && (
+          <p style={{ ...FIGMA_CSS.displayNumber, marginTop: 'auto' }}>
+            {String(capituloNumero).padStart(2, '0')}
+          </p>
+        )}
+      </div>
+      {/* Coluna de etapas */}
+      <div style={{
+        flex: 1, padding: '50px 50px 30px 20px',
+        display: 'flex', flexDirection: 'column', gap: 16,
+        overflow: 'hidden', boxSizing: 'border-box',
+      }}>
+        {steps.map((item, i) => {
+          const sep = item.search(/[:\-–]/);
+          const head = sep > 0 ? item.slice(0, sep).trim() : item;
+          const body = sep > 0 ? item.slice(sep + 1).trim() : '';
+          return (
+            <div key={i} style={{
+              borderBottom: `1px solid ${FIGMA_COLORS.lightBg}`, paddingBottom: 12,
+            }}>
+              <p style={{ ...FIGMA_CSS.statNumber, fontSize: 20 }}>
+                {String(i + 1).padStart(2, '0')}
+              </p>
+              <h3 style={{ ...FIGMA_CSS.h3Dark, marginTop: 4 }}>{head}</h3>
+              {body && <p style={{ ...FIGMA_CSS.bodyGray, marginTop: 4 }}>{body}</p>}
+            </div>
+          );
+        })}
+      </div>
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// ============================================================
+// TEMPLATE: Magazine (título + imagem/gráfico + texto + conceito-chave)
+// Figma: "Miolo - Texto com Gráfico" (A4_4_magazine)
+// ============================================================
+export function TemplateMagazine({
+  titulo, paragrafos, destaques, imagemUrl, numeroPagina
+}: TemplateProps) {
+  const hasImage = isRenderableImageUrl(imagemUrl);
+  const conceitoChave = destaques[0];
+  return (
+    <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      {/* Header */}
+      <div style={{ padding: '50px 50px 20px 50px' }} className="flex-shrink-0">
+        <h1 style={FIGMA_CSS.h1Teal}>{titulo}</h1>
+      </div>
+      {/* Body */}
+      <div style={{
+        padding: '0 50px 20px 50px', flex: '1 1 0',
+        display: 'flex', flexDirection: 'column', gap: 20,
+        overflow: 'hidden', boxSizing: 'border-box',
+      }}>
+        {hasImage && (
+          <div style={{
+            width: '100%', height: 220, backgroundColor: FIGMA_COLORS.lightBg,
+            borderRadius: 4, overflow: 'hidden', flexShrink: 0,
+          }}>
+            <img src={imagemUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+        )}
+        {paragrafos.map((p, i) => (
+          <p key={i} style={FIGMA_CSS.bodyGray}>{p}</p>
+        ))}
+        {conceitoChave && (
+          <div style={{
+            backgroundColor: FIGMA_COLORS.tealDark,
+            padding: '16px 20px', borderRadius: 4, marginTop: 'auto',
+          }}>
+            <p style={{ ...FIGMA_CSS.labelCyan, marginBottom: 6 }}>CONCEITO-CHAVE</p>
+            <p style={{ ...FIGMA_CSS.bodyGray, color: FIGMA_COLORS.white }}>{conceitoChave}</p>
+          </div>
+        )}
+      </div>
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// ============================================================
+// TEMPLATE: Sidebar + conteúdo rico (pullquote + steps + callout)
+// Figma: "Miolo - Sidebar com Conteúdo" (A4_7_sidebar_conteudo)
+// ============================================================
+export function TemplateSidebarConteudo({
+  titulo, paragrafos, destaques, citacao, itens, numeroPagina, capituloNumero
+}: TemplateProps) {
+  return (
+    <div className="page-a4 relative overflow-hidden flex flex-row" style={FIGMA_CSS.page}>
+      {/* Sidebar larga teal */}
+      <div style={FIGMA_CSS.sidebar225} className="flex flex-col">
+        {capituloNumero !== undefined && (
+          <p style={{ ...FIGMA_CSS.labelCyan, margin: 0 }}>Capítulo {capituloNumero}</p>
+        )}
+        <h2 style={{ ...FIGMA_CSS.h2White, marginTop: 12 }}>{titulo}</h2>
+        <div style={{ flex: 1 }} />
+        {capituloNumero !== undefined && (
+          <p style={FIGMA_CSS.displayNumber}>
+            {String(capituloNumero).padStart(2, '0')}
+          </p>
+        )}
+      </div>
+      {/* Conteúdo rico */}
+      <div style={{
+        flex: 1, padding: '50px 50px 30px 20px',
+        display: 'flex', flexDirection: 'column', gap: 20,
+        overflow: 'hidden', boxSizing: 'border-box',
+      }}>
+        {paragrafos.map((p, i) => (
+          <p key={i} style={FIGMA_CSS.bodyGray}>{p}</p>
+        ))}
+        {citacao && <blockquote style={FIGMA_CSS.quoteBlock}>{citacao}</blockquote>}
+        {itens.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {itens.slice(0, 4).map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <p style={{ ...FIGMA_CSS.labelTeal, minWidth: 24, margin: 0 }}>
+                  {String(i + 1).padStart(2, '0')}
+                </p>
+                <p style={{ ...FIGMA_CSS.bodyGray, margin: 0 }}>{item}</p>
+              </div>
+            ))}
+          </div>
+        )}
+        {destaques.length > 0 && (
+          <div style={{
+            backgroundColor: FIGMA_COLORS.tealDark,
+            padding: '12px 16px', borderRadius: 4,
+          }}>
+            <p style={{ ...FIGMA_CSS.bodyGray, color: FIGMA_COLORS.white, margin: 0 }}>
+              {destaques[0]}
+            </p>
+          </div>
+        )}
+      </div>
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// ============================================================
+// TEMPLATE: Continuação (barra teal topo + corpo + barra teal rodapé)
+// Figma spec (sem frame): A4_2_continuacao — pipeline-only do paginador
+// ============================================================
+export function TemplateContinuacao({
+  paragrafos, citacao, numeroPagina
+}: TemplateProps) {
+  return (
+    <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      <TealBar />
+      <div style={{
+        padding: '30px 50px 50px 50px', flex: '1 1 0',
+        display: 'flex', flexDirection: 'column', gap: 20,
+        overflow: 'hidden', boxSizing: 'border-box',
+      }}>
+        {paragrafos.map((p, i) => (
+          <p key={i} style={FIGMA_CSS.bodyGray}>{p}</p>
+        ))}
+        {citacao && <blockquote style={FIGMA_CSS.quoteBlock}>{citacao}</blockquote>}
+      </div>
+      <TealBar />
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// ============================================================
+// FALLBACK B1: layout sem renderer implementado (dev-warn + badge em dev,
+// inerte em produção — nunca aproxima silenciosamente).
+// ============================================================
+export function LayoutNotImplementedBadge({ layoutTipo }: { layoutTipo: string }) {
+  if (typeof process === 'undefined' || process.env.NODE_ENV !== 'development') return null;
+  return (
+    <div
+      style={{
+        position: 'absolute', top: 8, right: 8, zIndex: 9999,
+        background: '#dc2626', color: '#ffffff',
+        padding: '4px 8px', borderRadius: 4,
+        fontSize: 10, fontFamily: 'monospace', fontWeight: 600,
+        pointerEvents: 'none',
+      }}
+      aria-hidden
+    >
+      LAYOUT_NOT_IMPLEMENTED: {layoutTipo}
+    </div>
+  );
+}
+
+export function TemplateInertFallback(
+  props: TemplateProps & { layoutTipo: string }
+) {
+  const { titulo, paragrafos, citacao, numeroPagina, layoutTipo } = props;
+  return (
+    <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      <LayoutNotImplementedBadge layoutTipo={layoutTipo} />
+      <div style={{
+        padding: '50px', flex: '1 1 0',
+        display: 'flex', flexDirection: 'column', gap: 16,
+        overflow: 'hidden', boxSizing: 'border-box',
+      }}>
+        {titulo && <h1 style={FIGMA_CSS.h1Teal}>{titulo}</h1>}
+        {paragrafos.map((p, i) => (
+          <p key={i} style={FIGMA_CSS.bodyGray}>{p}</p>
+        ))}
+        {citacao && <blockquote style={FIGMA_CSS.quoteBlock}>{citacao}</blockquote>}
+      </div>
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// Warn-once para evitar ruído em dev (um por layoutTipo).
+const warnedLayouts = new Set<string>();
+function warnLayoutNotImplemented(layoutTipo: string) {
+  if (typeof process === 'undefined' || process.env.NODE_ENV !== 'development') return;
+  if (warnedLayouts.has(layoutTipo)) return;
+  warnedLayouts.add(layoutTipo);
+
+  console.warn(
+    `[FigmaTemplateRenderer] LAYOUT_NOT_IMPLEMENTED: "${layoutTipo}" — ` +
+    `renderer fiel ao Figma não encontrado. Caindo em TemplateInertFallback. ` +
+    `Adicione um case em renderFigmaTemplate ou documente em figma-source-of-truth.json.`
+  );
+}
+
 /**
- * Mapa de layout_tipo → componente renderizador do Figma.
- * Retorna null se o layout não tem renderizador específico (cai no PageConteudo existente).
+ * Mapa de layout_tipo → componente renderizador fiel ao Figma.
+ *
+ * Política de fidelidade (ver PR "Figma fiel no app"):
+ * - Cada case usa tokens de FIGMA_CSS/FIGMA_COLORS (de figma-design-tokens.ts)
+ *   e segue o spec em docs/figma-source-of-truth.json.
+ * - Layouts sem case explícito caem em TemplateInertFallback com
+ *   LayoutNotImplementedBadge em dev (warn-once no console). Nunca é feita
+ *   aproximação silenciosa para outro layout.
+ *
+ * Cobertura atual (14 layouts): 8 originais + 5 novos do VTSD_ALTERNATION_POOL
+ * + 1 infra (A4_2_continuacao). Layouts fora deste conjunto exibem B1.
  */
 export function renderFigmaTemplate(
   layoutTipo: string,
   props: TemplateProps
-): React.ReactNode | null {
+): React.ReactNode {
   switch (layoutTipo) {
+    // --- Originais (já cobertos antes deste PR) ---
     case 'A4_2_texto_corrido':
       return <TemplateTextoCorrido {...props} />;
     case 'A4_2_texto_citacao':
@@ -299,7 +598,24 @@ export function renderFigmaTemplate(
       return <TemplateCitacaoDestaque {...props} />;
     case 'A4_8_frase_impacto':
       return <TemplateFraseImpacto {...props} />;
+
+    // --- Novos (VTSD_ALTERNATION_POOL + infra) ---
+    case 'A4_1_abertura':
+      return <TemplateAberturaCapitulo {...props} />;
+    case 'A4_2_conteudo_misto':
+      return <TemplateDicaExercicio {...props} />;
+    case 'A4_3_sidebar_steps':
+      return <TemplateSidebarSteps {...props} />;
+    case 'A4_4_magazine':
+      return <TemplateMagazine {...props} />;
+    case 'A4_7_sidebar_conteudo':
+      return <TemplateSidebarConteudo {...props} />;
+    case 'A4_2_continuacao':
+      return <TemplateContinuacao {...props} />;
+
+    // --- Sem renderer: B1 (warn em dev + badge visual, inerte em prod) ---
     default:
-      return null; // Cai no PageConteudo existente
+      warnLayoutNotImplemented(layoutTipo);
+      return <TemplateInertFallback {...props} layoutTipo={layoutTipo} />;
   }
 }
