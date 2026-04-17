@@ -550,12 +550,20 @@ export function TemplateInertFallback(
   );
 }
 
-// Warn-once para evitar ruído em dev (um por layoutTipo).
-const warnedLayouts = new Set<string>();
+// Warn-once por layoutTipo em dev. Persistido em globalThis para sobreviver a
+// HMR/Next.js StrictMode (que remontam módulos em dev e resetariam um Set
+// module-level). Em produção o warn nem dispara.
+const WARNED_KEY = '__figmaTemplateRendererWarnedLayouts__';
 function warnLayoutNotImplemented(layoutTipo: string) {
   if (typeof process === 'undefined' || process.env.NODE_ENV !== 'development') return;
-  if (warnedLayouts.has(layoutTipo)) return;
-  warnedLayouts.add(layoutTipo);
+  const g = globalThis as unknown as Record<string, Set<string> | undefined>;
+  let warned = g[WARNED_KEY];
+  if (!warned) {
+    warned = new Set<string>();
+    g[WARNED_KEY] = warned;
+  }
+  if (warned.has(layoutTipo)) return;
+  warned.add(layoutTipo);
 
   console.warn(
     `[FigmaTemplateRenderer] LAYOUT_NOT_IMPLEMENTED: "${layoutTipo}" — ` +
