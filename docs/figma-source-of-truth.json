@@ -782,7 +782,7 @@
     { "layoutIdCanonical": "A4_2_duas_colunas_num",    "figmaFrameNameOriginal": "Miolo - Duas Colunas Numeradas",      "figmaNodeId": "127:883", "figmaSection": "📄 Miolo",      "mappingConfidence": 1.00 },
     { "layoutIdCanonical": "A4_2_imagem_texto",        "figmaFrameNameOriginal": "Miolo - Imagem com Texto",            "figmaNodeId": "363:11",  "figmaSection": "📄 Miolo",      "mappingConfidence": 1.00 },
     { "layoutIdCanonical": "A4_3_processo_etapas",     "figmaFrameNameOriginal": "Miolo - Processo em Etapas",          "figmaNodeId": "337:11",  "figmaSection": "📄 Miolo",      "mappingConfidence": 1.00 },
-    { "layoutIdCanonical": "A4_4_magazine",            "figmaFrameNameOriginal": "Miolo - Texto com Gráfico",           "figmaNodeId": "127:731", "figmaSection": "📄 Miolo",      "mappingConfidence": 0.85, "reviewNeeded": true, "note": "ID canônico 'magazine' não reflete o nome humano 'Texto com Gráfico' — ver INC-002 (renomear exige mudança de contrato, bloqueado pela regra de nomenclatura imutável)" },
+    { "layoutIdCanonical": "A4_4_magazine",            "figmaFrameNameOriginal": "Miolo - Texto com Gráfico",           "figmaNodeId": "127:731", "figmaSection": "📄 Miolo",      "mappingConfidence": 0.85, "reviewedAt": "2026-04-17", "reviewDecision": "accept-as-is", "note": "Revisado: aceito. ID canônico 'magazine' é imutável por regra de nomenclatura; nome do frame 'Miolo - Texto com Gráfico' reflete uso real. Divergência ID↔nome é estrutural e permanente. Ver INC-002." },
     { "layoutIdCanonical": "A4_4_cards_grid",          "figmaFrameNameOriginal": "Miolo - Cards Grid",                  "figmaNodeId": "406:11",  "figmaSection": "📄 Miolo",      "mappingConfidence": 1.00 },
     { "layoutIdCanonical": "A4_4_destaque_numerico",   "figmaFrameNameOriginal": "Miolo - Destaque Numérico",           "figmaNodeId": "403:11",  "figmaSection": "📄 Miolo",      "mappingConfidence": 1.00 },
     { "layoutIdCanonical": "A4_4_comparativo",         "figmaFrameNameOriginal": "Miolo - Comparativo",                 "figmaNodeId": "403:33",  "figmaSection": "📄 Miolo",      "mappingConfidence": 1.00 },
@@ -805,10 +805,10 @@
     { "layoutIdCanonical": "A4_9_checklist",           "figmaFrameNameOriginal": "Checklist",                           "figmaNodeId": "331:11",  "figmaSection": "📝 Atividades", "mappingConfidence": 1.00 },
     { "layoutIdCanonical": "A4_9_exercicio",           "figmaFrameNameOriginal": "Exercício Prático",                   "figmaNodeId": "335:11",  "figmaSection": "📝 Atividades", "mappingConfidence": 1.00 },
     { "layoutIdCanonical": "A4_9_resumo_capitulo",     "figmaFrameNameOriginal": "Resumo do Capítulo",                  "figmaNodeId": "336:11",  "figmaSection": "📝 Atividades", "mappingConfidence": 1.00 },
-    { "layoutIdCanonical": "A4_9_conceitos_chave",     "figmaFrameNameOriginal": "Miolo - Conceitos-Chave",             "figmaNodeId": "334:11",  "figmaSection": "📄 Miolo",      "mappingConfidence": 0.85, "reviewNeeded": true, "note": "Frame está em seção '📄 Miolo' no Figma, mas page-templates.ts categoriza como 'destaques'. Nome do frame traz prefixo 'Miolo - '. Decidir: mover frame para '✨ Destaques' OU atualizar section do template em code." },
+    { "layoutIdCanonical": "A4_9_conceitos_chave",     "figmaFrameNameOriginal": "Miolo - Conceitos-Chave",             "figmaNodeId": "334:11",  "figmaSection": "📄 Miolo",      "mappingConfidence": 0.85, "reviewedAt": "2026-04-17", "reviewDecision": "accept-code-is-authoritative", "note": "Revisado: aceito. page-templates.ts (section='destaques') é a fonte canônica para taxonomia de seções. Agrupamento '📄 Miolo' no Figma é organizacional e não-autoritativo. Prefixo 'Miolo - ' do nome mantido para estabilidade de referências. Ver INC-010." },
 
-    { "layoutIdCanonical": "A4_2_conteudo_misto",      "figmaFrameNameOriginal": null,                                  "figmaNodeId": "no_figma_frame", "figmaSection": null,            "mappingConfidence": 0.00, "reviewNeeded": true, "note": "Fallback do pipeline (INC-009). Código espera 'Miolo - Texto com Dica e Exercício'; nenhum frame com esse nome existe no Figma. Em produção cai em render programático (FigmaTemplateRenderer/MaterialPreviewBlocks)." },
-    { "layoutIdCanonical": "A4_7_sidebar_conteudo",    "figmaFrameNameOriginal": null,                                  "figmaNodeId": "no_figma_frame", "figmaSection": null,            "mappingConfidence": 0.00, "reviewNeeded": true, "note": "Código espera 'Miolo - Sidebar com Conteúdo'; nenhum frame com esse nome existe no Figma (INC-009)." },
+    { "layoutIdCanonical": "A4_2_conteudo_misto",      "figmaFrameNameOriginal": null,                                  "figmaNodeId": "no_figma_frame", "figmaSection": null,            "mappingConfidence": 0.00, "reviewedAt": "2026-04-17", "reviewDecision": "accept-react-render-canonical", "note": "Revisado: aceito sem frame. Fallback do pipeline (allowed-layouts.ts:58) renderiza via FigmaTemplateRenderer/MaterialPreviewBlocks (React). Path canônico é o render programático; criar frame no Figma seria redundante. Ver INC-009." },
+    { "layoutIdCanonical": "A4_7_sidebar_conteudo",    "figmaFrameNameOriginal": null,                                  "figmaNodeId": "no_figma_frame", "figmaSection": null,            "mappingConfidence": 0.00, "reviewedAt": "2026-04-17", "reviewDecision": "accept-react-render-canonical", "note": "Revisado: aceito sem frame. Usado via VTSD_ALTERNATION_POOL (allowed-layouts.ts:152). Renderiza em React, mesma política de A4_2_conteudo_misto. Ver INC-009." },
     { "layoutIdCanonical": "A4_2_continuacao",         "figmaFrameNameOriginal": null,                                  "figmaNodeId": "pipeline_only",  "figmaSection": null,            "mappingConfidence": 1.00, "note": "Pipeline-only (paginador). Nunca foi esperado ter frame no Figma." },
     { "layoutIdCanonical": "A4_3_sidebar_steps",       "figmaFrameNameOriginal": null,                                  "figmaNodeId": "pipeline_only",  "figmaSection": null,            "mappingConfidence": 1.00, "note": "Legado VTSD pipeline-only. Nunca foi esperado ter frame no Figma." }
   ],
@@ -906,21 +906,21 @@
     },
     {
       "id": "INC-009",
-      "severity": "warning",
+      "severity": "info",
       "title": "Dois IDs canônicos sem frame correspondente no Figma",
       "found": "A4_2_conteudo_misto (esperado: 'Miolo - Texto com Dica e Exercício') e A4_7_sidebar_conteudo (esperado: 'Miolo - Sidebar com Conteúdo') não têm frames no arquivo Figma.",
-      "impact": "A4_2_conteudo_misto é fallback do pipeline (src/lib/allowed-layouts.ts:58), usado quando nenhum outro template encaixa — em produção renderiza via FigmaTemplateRenderer/MaterialPreviewBlocks (código React), não via export de frame. A4_7_sidebar_conteudo só existe em code. Sem frame, export direto do Figma é impossível para esses 2 layouts.",
-      "resolutionApplied": "Marcados em frameMapping[] com figmaNodeId='no_figma_frame' e reviewNeeded=true.",
-      "recommendation": "Duas opções: (a) criar frames no Figma seguindo o catálogo em src/lib/page-templates.ts (miolo:texto-dica-exercicio e miolo:sidebar-conteudo); (b) remover A4_7_sidebar_conteudo de allowedLayouts se não estiver em uso."
+      "impact": "A4_2_conteudo_misto é fallback do pipeline (src/lib/allowed-layouts.ts:58), usado quando nenhum outro template encaixa — em produção renderiza via FigmaTemplateRenderer/MaterialPreviewBlocks (código React), não via export de frame. A4_7_sidebar_conteudo só existe em code.",
+      "resolutionApplied": "Revisado em 2026-04-17. Decisão: aceitar sem frame. Render em React é o path canônico para estes 2 layouts; criar frame no Figma seria redundante. Ambos marcados com figmaNodeId='no_figma_frame' e reviewDecision='accept-react-render-canonical'.",
+      "recommendation": "Reabrir apenas se no futuro precisar de preview/export visual destes 2 layouts diretamente do Figma (ex.: para design review ou mock de conteúdo)."
     },
     {
       "id": "INC-010",
-      "severity": "warning",
+      "severity": "info",
       "title": "Conflito de seção: Conceitos-Chave",
       "found": "Frame 'Miolo - Conceitos-Chave' (id 334:11) está dentro do grupo '📄 Miolo' no Figma, mas page-templates.ts categoriza este template como section='destaques'.",
-      "impact": "Se a UI/browser do design system agrupa por section de code, usuários verão 'Conceitos-Chave' em Destaques; no Figma aparece em Miolo. Inconsistência visual/documental.",
-      "resolutionApplied": "Mapeamento feito com confiança 0.85 + reviewNeeded=true.",
-      "recommendation": "Decidir canônica: (a) mover frame 334:11 para '✨ Destaques' no Figma e remover prefixo 'Miolo - ' do nome, OU (b) alterar section='miolo' em page-templates.ts. Layout canônico A4_9_conceitos_chave está correto e não é afetado."
+      "impact": "Se a UI/browser do design system agrupa por section de code, usuários verão 'Conceitos-Chave' em Destaques; no Figma aparece em Miolo.",
+      "resolutionApplied": "Revisado em 2026-04-17. Decisão: page-templates.ts (section='destaques') é a fonte canônica; agrupamento no Figma é organizacional e não-autoritativo. Marcado com reviewDecision='accept-code-is-authoritative'. Frame e prefixo de nome mantidos para estabilidade.",
+      "recommendation": "Reabrir apenas se o design system browser começar a agrupar por estrutura do Figma em vez de section do catálogo em code."
     }
   ],
 

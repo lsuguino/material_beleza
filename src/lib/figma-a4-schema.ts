@@ -188,7 +188,12 @@ export interface FrameMapping {
   figmaNodeId: FigmaNodeId;
   figmaSection: string | null;
   mappingConfidence: number; // [0..1]
+  /** Sinaliza que o item ainda precisa de decisão humana. */
   reviewNeeded?: boolean;
+  /** ISO date de quando foi revisado. Presente => revisão já ocorreu. */
+  reviewedAt?: string;
+  /** Decisão registrada na revisão. Valores livres, ex.: 'accept-as-is'. */
+  reviewDecision?: string;
   variant?: string;
   note?: string;
 }
@@ -387,13 +392,14 @@ export function validateFigmaSourceOfTruth(input: unknown): ValidationResult {
       }
       if (m.reviewNeeded === true) framesReviewNeeded++;
       // confidence<0.9 em frame real sem reviewNeeded é suspicious
+      const reviewed = m.reviewNeeded === true || typeof m.reviewDecision === 'string';
       if (
         typeof conf === 'number' && conf < 0.9 && conf > 0 &&
-        m.reviewNeeded !== true &&
+        !reviewed &&
         m.figmaNodeId !== 'pipeline_only' &&
         m.figmaNodeId !== 'no_figma_frame'
       ) {
-        push(`${p}`, `confidence ${conf} < 0.9 mas reviewNeeded não marcado`, 'warn');
+        push(`${p}`, `confidence ${conf} < 0.9 sem reviewNeeded nem reviewDecision`, 'warn');
       }
     }
 

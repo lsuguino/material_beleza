@@ -117,9 +117,10 @@ export function validate(input) {
       const c = m.mappingConfidence;
       if (typeof c !== 'number' || c < 0 || c > 1) push(`${p}.mappingConfidence`, `not a number in [0,1]: "${c}"`);
       if (m.reviewNeeded === true) framesReviewNeeded++;
-      if (typeof c === 'number' && c > 0 && c < 0.9 && m.reviewNeeded !== true &&
+      const reviewed = m.reviewNeeded === true || typeof m.reviewDecision === 'string';
+      if (typeof c === 'number' && c > 0 && c < 0.9 && !reviewed &&
           m.figmaNodeId !== 'pipeline_only' && m.figmaNodeId !== 'no_figma_frame') {
-        push(p, `confidence ${c} < 0.9 mas reviewNeeded não marcado`, 'warn');
+        push(p, `confidence ${c} < 0.9 sem reviewNeeded nem reviewDecision`, 'warn');
       }
     });
     const covered = new Set();
