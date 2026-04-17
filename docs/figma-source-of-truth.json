@@ -1,0 +1,917 @@
+{
+  "$schema": "https://material-beleza.dev/schemas/figma-source-of-truth@1.0.0",
+  "version": "1.0.0",
+  "generatedAt": "2026-04-17",
+  "sourceFile": {
+    "name": "Material Beleza",
+    "figmaFileKey": "zUCLefkhX0Fm2xjiXDUmHo",
+    "figmaUrl": "https://www.figma.com/design/zUCLefkhX0Fm2xjiXDUmHo/Material-beleza?node-id=0-1",
+    "rootPageNodeId": "0:1",
+    "sourceOfTruth": "Este JSON é a fonte oficial canônica do gerador de páginas A4. IDs em allowedLayouts são imutáveis.",
+    "extractionMethod": "figma-api + auditoria estática do catálogo src/lib/page-templates.ts e src/lib/figma-design-tokens.ts",
+    "extractionNotes": [
+      "get_metadata da raiz (0:1) apresentou timeouts repetidos (arquivo grande).",
+      "Screenshot da raiz confirma ~40 frames A4 organizados em 5 seções (capas/estrutura/miolo/destaques/atividades) + mascote + painel de estilos.",
+      "figmaNodeId de cada frame foi marcado como 'unresolved' quando não foi possível obter via API durante esta auditoria — a Nomenclatura CANÔNICA (A4_x_nome) é a âncora imutável; figmaNodeId é auxiliar e pode ser preenchido posteriormente selecionando cada frame no Figma Desktop.",
+      "Nenhuma library custom publicada (subscribed libraries são apenas Material 3, iOS/macOS/watchOS/visionOS, Simple DS — nenhuma contém tokens Material Beleza).",
+      "Variáveis e estilos publicados via API: 0. Tokens atuais são inline nos frames; recomenda-se migrar para Variables (ver inconsistencies.recommendations)."
+    ]
+  },
+
+  "designTokens": {
+    "color": {
+      "brand.tealDark":    { "value": "#025468", "rgb": [2, 84, 104],   "usage": "Headers, sidebars, callouts, fundo de capas/abertura full, barra de Dica/Exercício" },
+      "brand.tealAccent":  { "value": "#0599a8", "rgb": [5, 153, 168],  "usage": "Badge de página, barras finas de destaque, números de estatística, H1 teal, bordas de citação" },
+      "brand.cyanLight":   { "value": "#5decf2", "rgb": [93, 236, 242], "usage": "Subtítulos sobre teal, dividers, labels cyan, display number (capítulos)" },
+      "neutral.white":     { "value": "#ffffff", "rgb": [255, 255, 255], "usage": "Fundo de página branca, texto sobre teal" },
+      "neutral.darkText":  { "value": "#1a1a1a", "rgb": [26, 26, 26],   "usage": "Títulos H3/H2 sobre fundo branco, impact phrase" },
+      "neutral.grayText":  { "value": "#666666", "rgb": [102, 102, 102], "usage": "Corpo de texto em parágrafos" },
+      "neutral.lightBg":   { "value": "#f5f5f5", "rgb": [245, 245, 245], "usage": "Cards, áreas de destaque sutis" },
+      "neutral.subtleBg":  { "value": "#f6f6f6", "rgb": [246, 246, 246], "usage": "Fundo de bloco de citação (quote-block)" }
+    },
+
+    "typography": {
+      "fontFamilies": {
+        "display":    "Sora",
+        "body":       "Inter"
+      },
+      "scales": {
+        "display":    { "family": "Sora",  "weight": 700, "size": 96, "lineHeight": "100%", "letterSpacing": "0",   "usage": "Número de capítulo (A4_1_abertura_full, A4_1_abertura_split)" },
+        "impact":     { "family": "Sora",  "weight": 700, "size": 48, "lineHeight": "110%", "letterSpacing": "0",   "usage": "Frase de impacto (A4_8_frase_impacto)" },
+        "cite":       { "family": "Sora",  "weight": 700, "size": 36, "lineHeight": "110%", "letterSpacing": "0",   "usage": "Citação destaque (A4_8_citacao_destaque)" },
+        "stat":       { "family": "Sora",  "weight": 700, "size": 36, "lineHeight": "110%", "letterSpacing": "0",   "usage": "Números de card (A4_4_destaque_numerico, A4_4_cards_grid)" },
+        "h1":         { "family": "Sora",  "weight": 700, "size": 32, "lineHeight": "110%", "letterSpacing": "0",   "usage": "Título de página" },
+        "h2":         { "family": "Sora",  "weight": 700, "size": 22, "lineHeight": "120%", "letterSpacing": "0",   "usage": "Subtítulo, sidebar, título em cartão de atenção" },
+        "h3":         { "family": "Sora",  "weight": 700, "size": 16, "lineHeight": "130%", "letterSpacing": "0",   "usage": "Card title, etapa, pergunta de FAQ, termo de conceito" },
+        "body":       { "family": "Inter", "weight": 400, "size": 13, "lineHeight": "170%", "letterSpacing": "0",   "usage": "Texto corpo (parágrafo, resposta, descrição)" },
+        "quote":      { "family": "Inter", "weight": 400, "size": 13, "lineHeight": "170%", "letterSpacing": "0",   "italic": true, "usage": "Citação em bloco" },
+        "label":      { "family": "Inter", "weight": 600, "size": 11, "lineHeight": "140%", "letterSpacing": "1px", "usage": "Overline, tags, label de seção (DICA, EXERCÍCIO, ATENÇÃO)" },
+        "badge":      { "family": "Inter", "weight": 600, "size": 11, "lineHeight": "auto", "letterSpacing": "0",   "usage": "Número de página dentro do badge teal" }
+      }
+    },
+
+    "spacing": {
+      "scale": {
+        "0":   0,
+        "2":   2,
+        "4":   4,
+        "6":   6,
+        "8":   8,
+        "10":  10,
+        "12":  12,
+        "16":  16,
+        "20":  20,
+        "24":  24,
+        "30":  30,
+        "40":  40,
+        "50":  50
+      },
+      "semantic": {
+        "block.gap":         20,
+        "block.titleToBody": 12,
+        "list.itemGap":      16,
+        "section.gap":       30
+      }
+    },
+
+    "page": {
+      "format": "A4",
+      "widthPx": 595,
+      "heightPx": 842,
+      "dpi": 72,
+      "margin": { "top": 50, "right": 50, "bottom": 50, "left": 50 },
+      "usableArea": { "xStart": 50, "yStart": 50, "xEnd": 545, "yEnd": 792, "width": 495, "height": 742 },
+      "bleed": 0,
+      "overflow": "hidden"
+    },
+
+    "grid": {
+      "singleColumn":   { "columns": 1, "width": 495, "gutter": 0  },
+      "twoColumns":     { "columns": 2, "width": 495, "gutter": 20, "columnWidth": 237.5 },
+      "sidebarSplit60":  { "layout": "split", "sidebarWidth": 60,  "contentWidth": 535 },
+      "sidebarSplit225": { "layout": "split", "sidebarWidth": 225, "contentWidth": 370 },
+      "sidebarSplit370": { "layout": "split", "sidebarWidth": 370, "contentWidth": 225 },
+      "cardGrid2x2":    { "columns": 2, "rows": 2, "cardGap": 16 }
+    },
+
+    "border": {
+      "radius": {
+        "none":      0,
+        "sm":        4,
+        "md":        8,
+        "pill":      999,
+        "badgeTop":  "8px 8px 0 0"
+      },
+      "width": {
+        "thin":   1,
+        "accent": 3,
+        "bar":    6
+      }
+    },
+
+    "shadow": {
+      "none": "none"
+    },
+
+    "components": {
+      "pageBadge": {
+        "width": 40,
+        "height": 36,
+        "borderRadius": "8px 8px 0 0",
+        "position": { "bottom": 0, "left": "50%", "transform": "translateX(-50%)" },
+        "background": "brand.tealAccent",
+        "foreground": "neutral.white",
+        "typography": "badge"
+      },
+      "quoteBlock": {
+        "background": "neutral.subtleBg",
+        "borderLeft": { "width": 3, "color": "brand.tealAccent" },
+        "padding": "12px 20px",
+        "borderRadius": 4,
+        "typography": "quote"
+      },
+      "tealBarThin": {
+        "height": 6,
+        "background": "brand.tealAccent",
+        "widthMode": "fill"
+      },
+      "accentLine": {
+        "height": 3,
+        "width": 40,
+        "background": "brand.tealAccent"
+      }
+    }
+  },
+
+  "allowedLayouts": [
+    "A4_0_sumario",
+    "A4_1_abertura",
+    "A4_1_abertura_split",
+    "A4_1_abertura_imagem",
+    "A4_1_abertura_invertida",
+    "A4_1_abertura_full",
+    "A4_2_conteudo_misto",
+    "A4_2_texto_corrido",
+    "A4_2_texto_citacao",
+    "A4_2_texto_imagem",
+    "A4_2_texto_sidebar",
+    "A4_2_duas_colunas",
+    "A4_2_duas_colunas_num",
+    "A4_2_imagem_texto",
+    "A4_2_continuacao",
+    "A4_3_sidebar_steps",
+    "A4_3_processo_etapas",
+    "A4_4_magazine",
+    "A4_4_cards_grid",
+    "A4_4_destaque_numerico",
+    "A4_4_comparativo",
+    "A4_4_pros_contras",
+    "A4_5_tabela",
+    "A4_5_organograma",
+    "A4_5_mapa_mental",
+    "A4_5_timeline",
+    "A4_5_infografico",
+    "A4_5_grafico_analise",
+    "A4_6_faq",
+    "A4_6_lista_icones",
+    "A4_6_texto_completo",
+    "A4_7_sidebar_conteudo",
+    "A4_8_citacao_destaque",
+    "A4_8_nota_importante",
+    "A4_8_testemunho",
+    "A4_8_frase_impacto",
+    "A4_8_imagem_overlay",
+    "A4_8_imagem_sidebar",
+    "A4_9_checklist",
+    "A4_9_exercicio",
+    "A4_9_resumo_capitulo",
+    "A4_9_conceitos_chave"
+  ],
+
+  "templates": [
+    {
+      "id": "A4_0_sumario",
+      "section": "estrutura",
+      "name": "Sumário",
+      "hasSidebar": false,
+      "hasImage": false,
+      "hasPageBadge": true,
+      "isFixed": false,
+      "structure": {
+        "header": { "type": "teal-bar", "bg": "brand.tealDark", "pad": [40, 50, 30, 50], "spacing": 8, "children": ["titulo_sumario"] },
+        "body":   { "type": "white",    "pad": [30, 50, 20, 50], "spacing": 16, "children": ["toc-items"] }
+      },
+      "typographyByBlock": { "header.titulo": "h1 (white)", "body.tocItem": "h3 + body" },
+      "contentRules": { "tocItems": { "min": 3, "max": 16 } },
+      "bestFor": ["índice", "sumário", "table of contents"]
+    },
+    {
+      "id": "A4_1_abertura",
+      "section": "capas|estrutura",
+      "name": "Abertura (reutilizada em Capa / Boas-Vindas / Contra-Capa / Início de Capítulo)",
+      "hasSidebar": false,
+      "hasImage": true,
+      "hasPageBadge": true,
+      "isFixed": false,
+      "variants": [
+        { "usage": "capa",               "isFixed": true,  "children": ["titulo", "subtitulo", "logo"] },
+        { "usage": "boas-vindas",        "isFixed": true,  "children": ["titulo", "corpo", "assinatura", "logo"] },
+        { "usage": "contra-capa",        "isFixed": true,  "children": ["corpo", "logo"] },
+        { "usage": "abertura-capitulo",  "isFixed": false, "children": ["titulo", "subtitulo", "image-placeholder", "texto-intro"] }
+      ],
+      "structure": {
+        "header": { "type": "teal-bar", "bg": "brand.tealDark", "pad": [40, 50, 30, 50], "spacing": 8 },
+        "body":   { "type": "white",    "pad": [30, 50, 20, 50], "spacing": 20 }
+      },
+      "typographyByBlock": { "header.titulo": "h1 (white)", "header.subtitulo": "label (cyanLight)", "body.paragrafo": "body (gray)" },
+      "contentRules": { "tituloMaxChars": 80, "subtituloMaxChars": 140, "textoIntroMinLines": 2, "textoIntroMaxLines": 8 },
+      "bestFor": ["abertura", "início de capítulo", "capa"]
+    },
+    {
+      "id": "A4_1_abertura_split",
+      "section": "estrutura",
+      "name": "Abertura de Capítulo - Split (sidebar 370 teal + conteúdo 225)",
+      "hasSidebar": true,
+      "hasImage": false,
+      "hasPageBadge": false,
+      "isFixed": false,
+      "structure": {
+        "body": { "type": "sidebar-split", "columns": 2, "children": [
+          { "role": "sidebar", "width": 370, "bg": "brand.tealDark", "pad": [50, 50, 20, 50], "spacing": 10, "children": ["sidebar-titulo", "sidebar-numero"] },
+          { "role": "content", "width": 225, "pad": [50, 0, 50, 0], "spacing": 0, "children": ["content-texto", "content-passos"] }
+        ]}
+      },
+      "typographyByBlock": { "sidebar.titulo": "h2 (white)", "sidebar.numero": "display (cyanLight)", "content.passos": "h3 (dark)" },
+      "contentRules": { "passosMin": 2, "passosMax": 6 },
+      "bestFor": ["abertura com passos", "capítulo com tópicos"]
+    },
+    {
+      "id": "A4_1_abertura_imagem",
+      "section": "estrutura",
+      "name": "Abertura de Capítulo - Imagem (sidebar 225 teal + imagem/conteúdo 370)",
+      "hasSidebar": true,
+      "hasImage": true,
+      "hasPageBadge": false,
+      "isFixed": false,
+      "structure": {
+        "body": { "type": "sidebar-split", "columns": 2, "children": [
+          { "role": "sidebar", "width": 225, "bg": "brand.tealDark", "pad": [50, 20, 30, 50], "spacing": 10, "children": ["sidebar-titulo", "sidebar-numero"] },
+          { "role": "content", "width": 370, "pad": [0, 0, 0, 0], "spacing": 0, "children": ["image-area", "texto-intro"] }
+        ]}
+      },
+      "typographyByBlock": { "sidebar.titulo": "h2 (white)", "sidebar.numero": "display (cyanLight)", "content.texto": "body (gray)" },
+      "contentRules": { "textoIntroMinLines": 3, "textoIntroMaxLines": 10 },
+      "bestFor": ["abertura com imagem", "capítulo visual"]
+    },
+    {
+      "id": "A4_1_abertura_invertida",
+      "section": "estrutura",
+      "name": "Abertura de Capítulo - Invertida (conteúdo esquerda + sidebar teal direita)",
+      "hasSidebar": true,
+      "hasImage": false,
+      "hasPageBadge": false,
+      "isFixed": false,
+      "structure": {
+        "body": { "type": "sidebar-split", "columns": 2, "children": [
+          { "role": "content", "width": 370, "pad": [50, 20, 50, 50], "spacing": 20, "children": ["content-titulo", "content-texto", "content-numero"] },
+          { "role": "sidebar", "width": 225, "bg": "brand.tealDark", "pad": [50, 30, 30, 20], "spacing": 10, "children": ["sidebar-topicos"] }
+        ]}
+      },
+      "typographyByBlock": { "content.titulo": "h1 (teal)", "content.numero": "display (tealAccent)", "sidebar.topicos": "h3 (white) + body (cyanLight)" },
+      "contentRules": { "topicosMin": 3, "topicosMax": 7 },
+      "bestFor": ["abertura invertida", "capítulo com lista de tópicos"]
+    },
+    {
+      "id": "A4_1_abertura_full",
+      "section": "estrutura",
+      "name": "Abertura de Capítulo - Full (página inteira teal)",
+      "hasSidebar": false,
+      "hasImage": false,
+      "hasPageBadge": false,
+      "isFixed": false,
+      "structure": {
+        "body": { "type": "teal-full", "bg": "brand.tealDark", "pad": [50, 50, 30, 50], "spacing": 0, "children": ["label", "titulo", "subtitulo", "numero-capitulo", "brand"] }
+      },
+      "typographyByBlock": { "label": "label (cyanLight)", "titulo": "impact (white)", "subtitulo": "h2 (cyanLight)", "numero": "display (cyanLight)" },
+      "contentRules": { "tituloMaxChars": 60, "subtituloMaxChars": 140 },
+      "bestFor": ["abertura impactante", "capítulo principal"]
+    },
+    {
+      "id": "A4_2_conteudo_misto",
+      "section": "miolo",
+      "name": "Miolo - Texto com Dica e Exercício (dica teal + corpo + exercício teal)",
+      "hasSidebar": false,
+      "hasImage": true,
+      "hasPageBadge": true,
+      "isFixed": false,
+      "structure": {
+        "header": { "type": "teal-bar", "bg": "brand.tealDark", "pad": [20, 50, 20, 50], "spacing": 8, "children": ["label-dica", "texto-dica"] },
+        "body":   { "type": "white",    "pad": [30, 50, 20, 50], "spacing": 20, "children": ["paragrafos", "quote-block", "imagem-texto-row"] },
+        "footer": { "type": "teal-bar", "bg": "brand.tealDark", "pad": [20, 50, 20, 50], "spacing": 8, "children": ["label-exercicio", "texto-exercicio"] }
+      },
+      "typographyByBlock": { "dica.label": "label (cyanLight)", "dica.texto": "body (white)", "body.paragrafo": "body (gray)", "body.quote": "quote (gray)", "exercicio.label": "label (cyanLight)", "exercicio.texto": "body (white)" },
+      "contentRules": { "paragrafosMinLines": 4, "paragrafosMaxLines": 18, "useQuote": "recommended", "imagemOpcional": true },
+      "bestFor": ["dica prática", "exercício", "conteúdo misto", "teoria + prática", "fallback quando nenhum template específico encaixa"],
+      "fallback": true
+    },
+    {
+      "id": "A4_2_texto_corrido",
+      "section": "miolo",
+      "name": "Miolo - Texto Corrido",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": { "body": { "type": "white", "pad": [50, 50, 20, 50], "spacing": 20, "children": ["titulo-h1", "accent-line", "paragrafos", "subtitulo-h3", "paragrafos"] } },
+      "typographyByBlock": { "titulo": "h1 (teal)", "subtitulo": "h3 (dark)", "paragrafos": "body (gray justify)" },
+      "contentRules": { "paragrafosMinLines": 12, "paragrafosMaxLines": 32, "subtituloIntermediarioOpcional": true },
+      "bestFor": ["texto longo", "explicação detalhada", "conteúdo denso"]
+    },
+    {
+      "id": "A4_2_texto_citacao",
+      "section": "miolo",
+      "name": "Miolo - Texto com Citação",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "header": { "type": "teal-bar", "bg": "brand.tealDark", "pad": [40, 50, 30, 50], "spacing": 8, "children": ["titulo"] },
+        "body":   { "type": "white",    "pad": [30, 50, 20, 50], "spacing": 20, "children": ["paragrafos", "quote-block", "paragrafos"] }
+      },
+      "typographyByBlock": { "header.titulo": "h1 (white)", "body.paragrafo": "body (gray)", "body.quote": "quote (gray italic)" },
+      "contentRules": { "quoteRequired": true, "quoteMaxChars": 320, "paragrafosMinLines": 6, "paragrafosMaxLines": 18 },
+      "bestFor": ["texto com citação", "conteúdo reflexivo"]
+    },
+    {
+      "id": "A4_2_texto_imagem",
+      "section": "miolo",
+      "name": "Miolo - Texto com Imagem Inline",
+      "hasSidebar": false, "hasImage": true, "hasPageBadge": true, "isFixed": false,
+      "structure": { "body": { "type": "white", "pad": [50, 50, 20, 50], "spacing": 20, "children": ["titulo-h1", "paragrafo", "image-placeholder", "legenda", "paragrafos"] } },
+      "typographyByBlock": { "titulo": "h1 (teal)", "paragrafos": "body (gray)", "legenda": "label (teal)" },
+      "contentRules": { "imagemRequired": true, "imagemDimensions": { "width": 495, "height": 220 }, "legendaMaxChars": 140 },
+      "bestFor": ["conteúdo com imagem", "explicação visual"]
+    },
+    {
+      "id": "A4_2_texto_sidebar",
+      "section": "miolo",
+      "name": "Miolo - Texto Corrido com Sidebar",
+      "hasSidebar": true, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "sidebar-split", "columns": 2, "children": [
+          { "role": "sidebar", "width": 60,  "bg": "brand.tealDark", "pad": [50, 0, 30, 0], "spacing": 0, "children": ["side-accent"] },
+          { "role": "content", "width": 535, "bg": "neutral.white", "pad": [50, 50, 50, 30], "spacing": 20, "children": ["label-capitulo", "titulo-h1", "paragrafos"] }
+        ]}
+      },
+      "typographyByBlock": { "sidebar": "empty (decorativa)", "content.label": "label (teal)", "content.titulo": "h1 (teal)", "content.paragrafos": "body (gray)" },
+      "contentRules": { "paragrafosMinLines": 12, "paragrafosMaxLines": 28 },
+      "bestFor": ["texto com identidade de capítulo", "leitura contínua com marcador"]
+    },
+    {
+      "id": "A4_2_duas_colunas",
+      "section": "miolo",
+      "name": "Miolo - Duas Colunas",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "two-columns", "columns": 2, "pad": [50, 50, 20, 50], "spacing": 20, "gutter": 20, "children": ["titulo", "col-1", "col-2"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "col.subtitulo": "h3 (dark)", "col.paragrafos": "body (gray)" },
+      "contentRules": { "colsEqual": true, "paragrafosMinLinesPorColuna": 8, "paragrafosMaxLinesPorColuna": 18 },
+      "bestFor": ["conteúdo em duas colunas", "temas paralelos"]
+    },
+    {
+      "id": "A4_2_duas_colunas_num",
+      "section": "miolo",
+      "name": "Miolo - Duas Colunas Numeradas",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "two-columns", "columns": 2, "pad": [50, 50, 20, 50], "spacing": 20, "gutter": 20, "children": ["titulo", "col-numerada-1", "col-numerada-2", "callout-conceito"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "col.item.numero": "stat (tealAccent)", "col.item.body": "body (gray)", "callout": "body (white sobre teal)" },
+      "contentRules": { "itemsPorColunaMin": 2, "itemsPorColunaMax": 5 },
+      "bestFor": ["tópicos numerados", "comparação com ordem"]
+    },
+    {
+      "id": "A4_2_imagem_texto",
+      "section": "miolo",
+      "name": "Miolo - Imagem com Texto",
+      "hasSidebar": false, "hasImage": true, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "header": { "type": "image-area", "pad": [0, 0, 0, 0], "spacing": 0, "height": 300, "children": ["imagem-full"] },
+        "body":   { "type": "white", "pad": [30, 50, 20, 50], "spacing": 20, "children": ["legenda-bar", "titulo-h2", "paragrafos"] }
+      },
+      "typographyByBlock": { "legenda": "label (teal)", "titulo": "h2 (dark)", "paragrafos": "body (gray)" },
+      "contentRules": { "imagemRequired": true, "imagemDimensions": { "width": 595, "height": 300 } },
+      "bestFor": ["imagem destaque", "foto com explicação", "visual primeiro"]
+    },
+    {
+      "id": "A4_2_continuacao",
+      "section": "miolo",
+      "name": "Miolo - Continuação (barra teal topo + corpo + barra teal rodapé)",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "pipelineOnly": true,
+      "structure": {
+        "header": { "type": "teal-bar-thin", "bg": "brand.tealAccent", "height": 6 },
+        "body":   { "type": "white", "pad": [30, 50, 50, 50], "spacing": 20, "children": ["paragrafos"] },
+        "footer": { "type": "teal-bar-thin", "bg": "brand.tealAccent", "height": 6 }
+      },
+      "typographyByBlock": { "body.paragrafos": "body (gray)" },
+      "contentRules": { "usoExclusivo": "páginas de continuação de texto criadas pelo paginador; jamais selecionar manualmente" },
+      "bestFor": []
+    },
+    {
+      "id": "A4_3_sidebar_steps",
+      "section": "miolo",
+      "name": "Miolo - Sidebar larga + Passos (legada VTSD)",
+      "hasSidebar": true, "hasImage": false, "hasPageBadge": false, "isFixed": false,
+      "pipelineOnly": true,
+      "structure": {
+        "body": { "type": "sidebar-split", "columns": 2, "children": [
+          { "role": "sidebar", "width": 225, "bg": "brand.tealDark", "pad": [50, 20, 30, 50], "spacing": 10, "children": ["titulo", "numero-capitulo"] },
+          { "role": "content", "width": 370, "pad": [50, 50, 30, 20], "spacing": 20, "children": ["passos"] }
+        ]}
+      },
+      "typographyByBlock": { "sidebar.titulo": "h2 (white)", "sidebar.numero": "display (cyanLight)", "content.steps": "h3 (dark) + body (gray)" },
+      "contentRules": { "passosMin": 3, "passosMax": 7 },
+      "bestFor": ["miolo VTSD com passos", "sidebar + etapas"]
+    },
+    {
+      "id": "A4_3_processo_etapas",
+      "section": "miolo",
+      "name": "Miolo - Processo em Etapas",
+      "hasSidebar": true, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "sidebar-split", "columns": 2, "children": [
+          { "role": "sidebar", "width": 225, "bg": "brand.tealDark", "pad": [50, 20, 30, 50], "spacing": 10, "children": ["titulo"] },
+          { "role": "content", "width": 370, "pad": [50, 50, 30, 20], "spacing": 16, "children": ["steps-numerados"] }
+        ]}
+      },
+      "typographyByBlock": { "sidebar.titulo": "h2 (white)", "content.step.num": "stat (teal)", "content.step.body": "h3 + body" },
+      "contentRules": { "etapasMin": 3, "etapasMax": 6, "divisoresEntreEtapas": true },
+      "bestFor": ["processo", "passo a passo", "tutorial"]
+    },
+    {
+      "id": "A4_4_magazine",
+      "section": "miolo",
+      "name": "Miolo - Texto com Gráfico (magazine)",
+      "hasSidebar": false, "hasImage": true, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "header": { "type": "white", "pad": [50, 50, 20, 50], "spacing": 12, "children": ["titulo-h1"] },
+        "body":   { "type": "white", "pad": [0, 50, 20, 50], "spacing": 20, "children": ["image-grafico", "texto", "callout-conceito"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "texto": "body (gray)", "callout": "body (white sobre teal)" },
+      "contentRules": { "imagemOuGraficoRequired": true },
+      "bestFor": ["gráfico", "dados visuais", "conceito-chave"]
+    },
+    {
+      "id": "A4_4_cards_grid",
+      "section": "miolo",
+      "name": "Miolo - Cards Grid 2×2",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "cards-grid", "columns": 2, "rows": 2, "pad": [50, 50, 20, 50], "spacing": 16, "children": ["titulo", "card[0..3]"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "card.num": "stat (white)", "card.titulo": "h3 (white)", "card.body": "body (cyanLight)" },
+      "contentRules": { "cardsExatos": 4, "cardBg": "brand.tealDark" },
+      "bestFor": ["pilares", "princípios", "4 conceitos"]
+    },
+    {
+      "id": "A4_4_destaque_numerico",
+      "section": "miolo",
+      "name": "Miolo - Destaque Numérico",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "header": { "type": "white", "pad": [40, 50, 30, 50], "spacing": 8, "children": ["titulo", "subtitulo"] },
+        "body":   { "type": "cards-grid", "columns": 2, "rows": 2, "pad": [20, 50, 20, 50], "spacing": 0, "children": ["stat-cards"] },
+        "footer": { "type": "white", "pad": [20, 50, 20, 50], "spacing": 0, "children": ["fonte"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "card.stat": "stat (teal)", "card.body": "body (gray)", "fonte": "label (gray)" },
+      "contentRules": { "cardsExatos": 4 },
+      "bestFor": ["estatísticas", "dados", "números", "métricas", "KPIs"]
+    },
+    {
+      "id": "A4_4_comparativo",
+      "section": "miolo",
+      "name": "Miolo - Comparativo (Evite vs Faça Assim)",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "two-columns", "columns": 2, "pad": [50, 50, 20, 50], "spacing": 20, "gutter": 20, "children": ["titulo", "col-errado", "col-certo"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "col.errado.bg": "neutral.lightBg", "col.certo.bg": "brand.tealDark", "col.items": "body" },
+      "contentRules": { "itensPorColunaMin": 3, "itensPorColunaMax": 6 },
+      "bestFor": ["comparação", "antes e depois", "certo vs errado"]
+    },
+    {
+      "id": "A4_4_pros_contras",
+      "section": "miolo",
+      "name": "Miolo - Prós e Contras",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "two-columns", "columns": 2, "pad": [50, 50, 20, 50], "spacing": 20, "gutter": 20, "children": ["titulo", "subtitulo", "col-pros", "col-contras"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "col.pros.bg": "#2a7d3a", "col.contras.bg": "#a33333", "col.items": "body (white)" },
+      "contentRules": { "itensPorColunaMin": 3, "itensPorColunaMax": 6 },
+      "bestFor": ["prós e contras", "vantagens e desvantagens", "SWOT", "trade-offs"]
+    },
+    {
+      "id": "A4_5_tabela",
+      "section": "miolo",
+      "name": "Miolo - Tabela",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "table", "pad": [50, 50, 20, 50], "spacing": 20, "children": ["titulo", "table-header", "table-rows"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "headerBg": "brand.tealDark", "headerText": "label (white)", "cellPad": 16, "rowStripe": "neutral.lightBg" },
+      "contentRules": { "colunasMin": 2, "colunasMax": 5, "linhasMin": 2, "linhasMax": 14 },
+      "bestFor": ["tabela", "dados tabulares", "matriz"]
+    },
+    {
+      "id": "A4_5_organograma",
+      "section": "miolo",
+      "name": "Miolo - Organograma",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "white", "pad": [50, 50, 20, 50], "spacing": 20, "children": ["titulo", "subtitulo", "org-levels"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "node.root": "h3 (white sobre teal)", "node.level2": "h3 (dark)", "node.level3": "body" },
+      "contentRules": { "niveis": 3, "ramosRaizMin": 2, "ramosRaizMax": 4 },
+      "bestFor": ["organograma", "hierarquia", "estrutura"]
+    },
+    {
+      "id": "A4_5_mapa_mental",
+      "section": "miolo",
+      "name": "Miolo - Mapa Mental",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "white", "pad": [50, 50, 20, 50], "spacing": 20, "children": ["titulo", "top-branches", "center-node", "bottom-branches"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "center": "h2 (white sobre pill teal)", "branch.titulo": "h3", "branch.body": "body" },
+      "contentRules": { "ramosExatos": 4 },
+      "bestFor": ["mapa mental", "brainstorm", "ramificação"]
+    },
+    {
+      "id": "A4_5_timeline",
+      "section": "miolo",
+      "name": "Miolo - Timeline",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "timeline", "pad": [50, 50, 20, 50], "spacing": 16, "children": ["titulo", "subtitulo", "timeline-items"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "item.label": "h3 (dark)", "item.body": "body (gray)", "item.marker": "circle teal 12px" },
+      "contentRules": { "itensMin": 3, "itensMax": 8 },
+      "bestFor": ["linha do tempo", "cronograma", "evolução", "semana a semana"]
+    },
+    {
+      "id": "A4_5_infografico",
+      "section": "miolo",
+      "name": "Miolo - Infográfico Vertical (funil)",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "header": { "type": "teal-bar", "bg": "brand.tealDark", "pad": [40, 50, 30, 50], "spacing": 8, "children": ["titulo", "subtitulo"] },
+        "body":   { "type": "funnel",    "pad": [30, 50, 20, 50], "spacing": 8, "children": ["funnel-bars"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (white)", "nivel.label": "h3 (white)", "nivel.body": "body (cyanLight)" },
+      "contentRules": { "niveisMin": 3, "niveisMax": 6 },
+      "bestFor": ["funil", "infográfico", "pipeline", "jornada"]
+    },
+    {
+      "id": "A4_5_grafico_analise",
+      "section": "miolo",
+      "name": "Miolo - Gráfico com Análise",
+      "hasSidebar": false, "hasImage": true, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "white", "pad": [50, 50, 20, 50], "spacing": 20, "children": ["titulo", "chart-placeholder", "insights-label", "insights-list"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "chartCaption": "label (teal)", "insights": "body (gray)" },
+      "contentRules": { "chartRequired": true, "insightsMin": 3, "insightsMax": 6 },
+      "bestFor": ["análise", "gráfico com explicação", "dados com insights"]
+    },
+    {
+      "id": "A4_6_faq",
+      "section": "miolo",
+      "name": "Miolo - FAQ",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "header": { "type": "teal-bar", "bg": "brand.tealDark", "pad": [40, 50, 30, 50], "spacing": 8, "children": ["titulo"] },
+        "body":   { "type": "list", "pad": [30, 50, 20, 50], "spacing": 16, "children": ["faq-items"] }
+      },
+      "typographyByBlock": { "header.titulo": "h1 (white)", "item.pergunta": "h3 (teal)", "item.resposta": "body (gray)" },
+      "contentRules": { "itensMin": 3, "itensMax": 8, "divisoresEntreItens": true },
+      "bestFor": ["FAQ", "perguntas e respostas"]
+    },
+    {
+      "id": "A4_6_lista_icones",
+      "section": "miolo",
+      "name": "Miolo - Lista com Ícones",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "list", "pad": [50, 50, 20, 50], "spacing": 16, "children": ["titulo", "icon-list-items"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "item.titulo": "h3 (dark)", "item.body": "body (gray)" },
+      "contentRules": { "itensMin": 3, "itensMax": 8, "iconesCircular": true },
+      "bestFor": ["ferramentas", "recursos", "lista descritiva"]
+    },
+    {
+      "id": "A4_6_texto_completo",
+      "section": "miolo",
+      "name": "Miolo - Texto Completo (sem visuais)",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "white", "pad": [50, 50, 20, 50], "spacing": 20, "children": ["h2", "paragrafos", "h3", "paragrafos"] }
+      },
+      "typographyByBlock": { "h2": "h2 (dark)", "h3": "h3 (dark)", "paragrafos": "body (gray justify)" },
+      "contentRules": { "paragrafosMinLines": 16, "paragrafosMaxLines": 34 },
+      "bestFor": ["texto puro", "leitura contínua"]
+    },
+    {
+      "id": "A4_7_sidebar_conteudo",
+      "section": "miolo",
+      "name": "Miolo - Sidebar com Conteúdo (rich)",
+      "hasSidebar": true, "hasImage": false, "hasPageBadge": false, "isFixed": false,
+      "structure": {
+        "body": { "type": "sidebar-split", "columns": 2, "children": [
+          { "role": "sidebar", "width": 225, "bg": "brand.tealDark", "pad": [50, 20, 30, 50], "spacing": 12, "children": ["titulo", "numero-capitulo"] },
+          { "role": "content", "width": 370, "pad": [50, 50, 30, 20], "spacing": 20, "children": ["texto", "pullquote", "steps", "callout"] }
+        ]}
+      },
+      "typographyByBlock": { "sidebar.titulo": "h2 (white)", "sidebar.numero": "display (cyanLight)", "content.pullquote": "quote (teal)", "content.callout": "body (white sobre teal)" },
+      "contentRules": { "blocosContentMax": 4, "pullquoteOpcional": true },
+      "bestFor": ["conteúdo rico", "múltiplos blocos"]
+    },
+    {
+      "id": "A4_8_citacao_destaque",
+      "section": "destaques",
+      "name": "Citação Destaque (página inteira teal)",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "teal-full", "bg": "brand.tealDark", "pad": [50, 50, 50, 50], "spacing": 30, "children": ["aspas", "citacao", "divider", "autor"] }
+      },
+      "typographyByBlock": { "aspas": "display (cyanLight)", "citacao": "cite (white center)", "autor": "label (cyanLight)" },
+      "contentRules": { "citacaoMinChars": 60, "citacaoMaxChars": 240 },
+      "bestFor": ["citação grande", "frase marcante", "destaque de autor"]
+    },
+    {
+      "id": "A4_8_nota_importante",
+      "section": "destaques",
+      "name": "Destaque - Nota Importante",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "white", "pad": [50, 50, 20, 50], "spacing": 30, "children": ["spacer", "callout-card", "spacer"] }
+      },
+      "typographyByBlock": { "icon": "⚠", "label": "label (cyanLight)", "titulo": "h2 (white)", "body": "body (cyanLight)" },
+      "contentRules": { "cardBg": "brand.tealDark", "bodyMaxLines": 8 },
+      "bestFor": ["aviso", "atenção", "nota importante", "alerta"]
+    },
+    {
+      "id": "A4_8_testemunho",
+      "section": "destaques",
+      "name": "Destaque - Testemunho",
+      "hasSidebar": false, "hasImage": true, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "white", "pad": [50, 50, 20, 50], "spacing": 20, "children": ["avatar", "depoimento", "nome", "profissao"] }
+      },
+      "typographyByBlock": { "avatar": "circle 96px", "depoimento": "quote 22px italic (gray)", "nome": "h3 (dark)", "profissao": "label (teal)" },
+      "contentRules": { "depoimentoMinChars": 80, "depoimentoMaxChars": 280 },
+      "bestFor": ["depoimento", "testemunho", "social proof"]
+    },
+    {
+      "id": "A4_8_frase_impacto",
+      "section": "destaques",
+      "name": "Destaque - Frase de Impacto",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "white", "pad": [0, 50, 50, 50], "spacing": 20, "children": ["teal-bar-thin", "frase", "accent-line", "atribuicao"] }
+      },
+      "typographyByBlock": { "frase": "impact (tealDark)", "atribuicao": "label (teal)" },
+      "contentRules": { "fraseMaxChars": 140 },
+      "bestFor": ["frase de impacto", "statement", "máxima", "lema"]
+    },
+    {
+      "id": "A4_8_imagem_overlay",
+      "section": "destaques",
+      "name": "Destaque - Imagem Full com Overlay",
+      "hasSidebar": false, "hasImage": true, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "image-area", "children": [
+          { "role": "image-full", "width": 595, "height": 842 },
+          { "role": "overlay-bar", "position": "bottom", "bg": "brand.tealDark", "pad": [20, 50, 20, 50], "children": ["label", "titulo", "descricao"] }
+        ]}
+      },
+      "typographyByBlock": { "label": "label (cyanLight)", "titulo": "h2 (white)", "descricao": "body (cyanLight)" },
+      "contentRules": { "imagemRequired": true, "imagemDimensions": { "width": 595, "height": 842 } },
+      "bestFor": ["destaque visual", "imagem full page", "impacto visual"]
+    },
+    {
+      "id": "A4_8_imagem_sidebar",
+      "section": "destaques",
+      "name": "Destaque - Imagem Full com Sidebar",
+      "hasSidebar": true, "hasImage": true, "hasPageBadge": false, "isFixed": false,
+      "structure": {
+        "body": { "type": "sidebar-split", "columns": 2, "children": [
+          { "role": "image", "width": 370, "height": 842 },
+          { "role": "sidebar", "width": 225, "bg": "brand.tealDark", "pad": [50, 20, 30, 50], "spacing": 12, "children": ["label", "titulo", "descricao", "brand"] }
+        ]}
+      },
+      "typographyByBlock": { "label": "label (cyanLight)", "titulo": "h2 (white)", "descricao": "body (cyanLight)" },
+      "contentRules": { "imagemRequired": true, "descricaoMaxLines": 12 },
+      "bestFor": ["imagem com sidebar", "destaque com descrição lateral"]
+    },
+    {
+      "id": "A4_9_checklist",
+      "section": "atividades",
+      "name": "Checklist",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "header": { "type": "teal-bar", "bg": "brand.tealDark", "pad": [40, 50, 30, 50], "spacing": 8, "children": ["titulo", "subtitulo"] },
+        "body":   { "type": "list", "pad": [30, 50, 20, 50], "spacing": 16, "children": ["check-items"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (white)", "subtitulo": "label (cyanLight)", "item.body": "body (gray)", "item.check": "square 16px teal border" },
+      "contentRules": { "itensMin": 4, "itensMax": 12 },
+      "bestFor": ["checklist", "lista de verificação", "to-do"]
+    },
+    {
+      "id": "A4_9_exercicio",
+      "section": "atividades",
+      "name": "Exercício Prático",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "header": { "type": "white", "pad": [40, 50, 20, 50], "spacing": 8, "children": ["icon", "label", "titulo"] },
+        "body":   { "type": "white", "pad": [0, 50, 20, 50], "spacing": 20, "children": ["instrucoes", "question-cards"] }
+      },
+      "typographyByBlock": { "icon": "circle 48px teal", "label": "label (teal)", "titulo": "h2 (dark)", "instrucoes": "body (gray)", "question": "h3 (dark)", "areaEscrita": "ruled lines" },
+      "contentRules": { "perguntasMin": 2, "perguntasMax": 5 },
+      "bestFor": ["exercício", "atividade prática", "perguntas", "reflexão guiada"]
+    },
+    {
+      "id": "A4_9_resumo_capitulo",
+      "section": "atividades",
+      "name": "Resumo do Capítulo",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "header": { "type": "teal-bar", "bg": "brand.tealDark", "pad": [40, 50, 30, 50], "spacing": 8, "children": ["label", "titulo"] },
+        "body":   { "type": "list", "pad": [30, 50, 20, 50], "spacing": 16, "children": ["takeaway-items"] }
+      },
+      "typographyByBlock": { "label": "label (cyanLight)", "titulo": "h1 (white)", "item.num": "circle 28px teal com número", "item.body": "body (gray)" },
+      "contentRules": { "takeawaysMin": 3, "takeawaysMax": 7 },
+      "bestFor": ["resumo", "recap", "takeaways", "pontos principais"]
+    },
+    {
+      "id": "A4_9_conceitos_chave",
+      "section": "destaques",
+      "name": "Conceitos-Chave",
+      "hasSidebar": false, "hasImage": false, "hasPageBadge": true, "isFixed": false,
+      "structure": {
+        "body": { "type": "list", "pad": [50, 50, 20, 50], "spacing": 20, "children": ["titulo", "definition-cards"] }
+      },
+      "typographyByBlock": { "titulo": "h1 (teal)", "card.termo": "h3 (teal)", "card.def": "body (gray)" },
+      "contentRules": { "conceitosMin": 3, "conceitosMax": 8, "cardBorderLeft": { "width": 3, "color": "brand.tealAccent" } },
+      "bestFor": ["glossário", "conceitos", "definições", "termos-chave"]
+    }
+  ],
+
+  "frameMapping": [
+    { "layoutIdCanonical": "A4_0_sumario",             "figmaFrameNameOriginal": "Sumário",                   "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_1_abertura",            "figmaFrameNameOriginal": "Capa",                      "figmaNodeId": "unresolved", "mappingConfidence": 0.92, "note": "Reutilizado para Boas-Vindas e Contra-Capa (conteúdo fixo); Início de Capítulo (conteúdo variável)" },
+    { "layoutIdCanonical": "A4_1_abertura_split",      "figmaFrameNameOriginal": "Abertura de Capítulo - Split",       "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_1_abertura_imagem",     "figmaFrameNameOriginal": "Abertura de Capítulo - Imagem",      "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_1_abertura_invertida",  "figmaFrameNameOriginal": "Abertura de Capítulo - Invertida",   "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_1_abertura_full",       "figmaFrameNameOriginal": "Abertura de Capítulo - Full",        "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_2_texto_corrido",       "figmaFrameNameOriginal": "Miolo - Texto Corrido",              "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_2_texto_citacao",       "figmaFrameNameOriginal": "Miolo - Texto com Citação",          "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_2_texto_imagem",        "figmaFrameNameOriginal": "Miolo - Texto com Imagem Inline",    "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_2_texto_sidebar",       "figmaFrameNameOriginal": "Miolo - Texto Corrido com Sidebar",  "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_2_conteudo_misto",      "figmaFrameNameOriginal": "Miolo - Texto com Dica e Exercício", "figmaNodeId": "unresolved", "mappingConfidence": 0.90 },
+    { "layoutIdCanonical": "A4_2_duas_colunas",        "figmaFrameNameOriginal": "Miolo - Duas Colunas",               "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_2_duas_colunas_num",    "figmaFrameNameOriginal": "Miolo - Duas Colunas Numeradas",     "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_2_imagem_texto",        "figmaFrameNameOriginal": "Miolo - Imagem com Texto",           "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_3_processo_etapas",     "figmaFrameNameOriginal": "Miolo - Processo em Etapas",         "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_4_magazine",            "figmaFrameNameOriginal": "Miolo - Texto com Gráfico",          "figmaNodeId": "unresolved", "mappingConfidence": 0.75, "note": "Nome de arquivo 'magazine' diverge de uso real (texto+gráfico). Ver inconsistencies[typography_misleading_id]" },
+    { "layoutIdCanonical": "A4_4_cards_grid",          "figmaFrameNameOriginal": "Miolo - Cards Grid",                 "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_4_destaque_numerico",   "figmaFrameNameOriginal": "Miolo - Destaque Numérico",          "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_4_comparativo",         "figmaFrameNameOriginal": "Miolo - Comparativo",                "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_4_pros_contras",        "figmaFrameNameOriginal": "Miolo - Prós e Contras",             "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_5_tabela",              "figmaFrameNameOriginal": "Miolo - Tabela",                     "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_5_organograma",         "figmaFrameNameOriginal": "Miolo - Organograma",                "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_5_mapa_mental",         "figmaFrameNameOriginal": "Miolo - Mapa Mental",                "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_5_timeline",            "figmaFrameNameOriginal": "Miolo - Timeline",                   "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_5_infografico",         "figmaFrameNameOriginal": "Miolo - Infográfico Vertical",       "figmaNodeId": "unresolved", "mappingConfidence": 0.90 },
+    { "layoutIdCanonical": "A4_5_grafico_analise",     "figmaFrameNameOriginal": "Miolo - Gráfico com Análise",        "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_6_faq",                 "figmaFrameNameOriginal": "Miolo - FAQ",                        "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_6_lista_icones",        "figmaFrameNameOriginal": "Miolo - Lista com Ícones",           "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_6_texto_completo",      "figmaFrameNameOriginal": "Miolo - Texto Completo",             "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_7_sidebar_conteudo",    "figmaFrameNameOriginal": "Miolo - Sidebar com Conteúdo",       "figmaNodeId": "unresolved", "mappingConfidence": 0.90 },
+    { "layoutIdCanonical": "A4_8_citacao_destaque",    "figmaFrameNameOriginal": "Citação Destaque",                   "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_8_nota_importante",     "figmaFrameNameOriginal": "Destaque - Nota Importante",         "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_8_testemunho",          "figmaFrameNameOriginal": "Destaque - Testemunho",              "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_8_frase_impacto",       "figmaFrameNameOriginal": "Destaque - Frase de Impacto",        "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_8_imagem_overlay",      "figmaFrameNameOriginal": "Destaque - Imagem Full com Overlay", "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_8_imagem_sidebar",      "figmaFrameNameOriginal": "Destaque - Imagem Full com Sidebar", "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+    { "layoutIdCanonical": "A4_9_checklist",           "figmaFrameNameOriginal": "Checklist",                          "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_9_exercicio",           "figmaFrameNameOriginal": "Exercício Prático",                  "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_9_resumo_capitulo",     "figmaFrameNameOriginal": "Resumo do Capítulo",                 "figmaNodeId": "unresolved", "mappingConfidence": 0.98 },
+    { "layoutIdCanonical": "A4_9_conceitos_chave",     "figmaFrameNameOriginal": "Conceitos-Chave",                    "figmaNodeId": "unresolved", "mappingConfidence": 0.95 },
+
+    { "layoutIdCanonical": "A4_2_continuacao",   "figmaFrameNameOriginal": null, "figmaNodeId": "pipeline_only", "mappingConfidence": 1.00, "note": "Pipeline-only (paginador). Nunca foi esperado ter frame no Figma." },
+    { "layoutIdCanonical": "A4_3_sidebar_steps", "figmaFrameNameOriginal": null, "figmaNodeId": "pipeline_only", "mappingConfidence": 1.00, "note": "Legado VTSD pipeline-only. Nunca foi esperado ter frame no Figma." },
+
+    { "layoutIdCanonical": "unmapped", "figmaFrameNameOriginal": "Scribo (título da página raiz)",       "figmaNodeId": "unresolved", "mappingConfidence": 0.0, "note": "Não é template A4 — banner / título do documento" },
+    { "layoutIdCanonical": "unmapped", "figmaFrameNameOriginal": "Mascote Book (ilustrações)",            "figmaNodeId": "unresolved", "mappingConfidence": 0.0, "note": "Assets/ilustrações do sistema, não templates" },
+    { "layoutIdCanonical": "unmapped", "figmaFrameNameOriginal": "Painel de estilos (cores/tipografia)",  "figmaNodeId": "unresolved", "mappingConfidence": 0.0, "note": "Painel-referência do design system, não template A4" },
+    { "layoutIdCanonical": "unmapped", "figmaFrameNameOriginal": "Paletas de cores inferiores",            "figmaNodeId": "unresolved", "mappingConfidence": 0.0, "note": "Painel-referência, não template A4" }
+  ],
+
+  "constraints": {
+    "global": {
+      "dimensions":     "Todo frame de template DEVE ter 595×842 px (A4 @ 72dpi). Violações impedem export de PDF com fidelidade.",
+      "usableArea":     "Conteúdo confinado a 495×742 px interno (margens 50 all sides). Exceções: sidebars, barras teal e imagens full-bleed.",
+      "fontsOnly":      ["Sora", "Inter"],
+      "colorPaletteOnly": ["brand.tealDark", "brand.tealAccent", "brand.cyanLight", "neutral.white", "neutral.darkText", "neutral.grayText", "neutral.lightBg", "neutral.subtleBg"],
+      "pageBadge":      "Quando presente, posição absoluta bottom-center com raio '8px 8px 0 0', fundo brand.tealAccent.",
+      "textAlignment":  "Parágrafos em body usam text-align: justify com hyphens: auto para evitar orfas/viúvas em A4."
+    },
+    "pipelineOnly": {
+      "A4_2_continuacao": "Somente o paginador pode atribuir este layout a páginas com flag continuacao=true. O design-agent NÃO pode escolher.",
+      "A4_3_sidebar_steps": "Herança do miolo VTSD; mantido por compatibilidade. Novo conteúdo deve usar A4_3_processo_etapas."
+    },
+    "fallback": "A4_2_conteudo_misto — usado quando nenhum template encaixa perfeitamente.",
+    "naming": {
+      "pattern": "^A4_\\d+_[a-z_]+$",
+      "case": "snake_case minúsculo após o prefixo A4_",
+      "immutable": true,
+      "renameForbidden": "Proibido traduzir, abreviar, criar sinônimos ou variações (ex.: A4_2_custom, 'texto longo', 'textoCorrido')."
+    }
+  },
+
+  "inconsistencies": [
+    {
+      "id": "INC-001",
+      "severity": "info",
+      "title": "Layout A4_1_abertura é reutilizado por 4 usos distintos",
+      "found": "capa, boas-vindas, contra-capa e abertura-capitulo em src/lib/page-templates.ts usam todos layout='A4_1_abertura'.",
+      "impact": "Um mesmo layoutIdCanonical cobre 4 conteúdos/estruturas diferentes; o 1:1 figmaNodeId↔layoutId não se aplica.",
+      "resolutionApplied": "Mantido A4_1_abertura como guarda-chuva em templates[].variants[]; diferença fica em isFixed + children (capa/boas-vindas/contra-capa têm isFixed=true).",
+      "recommendation": "Se você quiser separação total, criar novos IDs canônicos (ex.: A4_1_capa, A4_1_boas_vindas, A4_1_contra_capa) — mas isso exige versioning + migração de conteúdo existente. Mantido como está (não alterado) para preservar retrocompatibilidade."
+    },
+    {
+      "id": "INC-002",
+      "severity": "warning",
+      "title": "ID A4_4_magazine é ambíguo",
+      "found": "Template 'texto-grafico' (gráfico+texto+callout) usa layout='A4_4_magazine', mas o nome sugere layout editorial genérico.",
+      "impact": "AI/design-agent pode selecionar magazine esperando comportamento diferente do que o template entrega.",
+      "resolutionApplied": "Documentado o uso real em templates[A4_4_magazine].bestFor; nome CANÔNICO mantido (não renomear por regra de nomenclatura imutável).",
+      "recommendation": "Em próxima major, considerar A4_4_grafico_magazine. Hoje: prompt do design-agent já descreve uso correto."
+    },
+    {
+      "id": "INC-003",
+      "severity": "info",
+      "title": "Três larguras de sidebar coexistem",
+      "found": "Sidebars em 60px (A4_2_texto_sidebar), 225px (A4_1_abertura_imagem, A4_3_*, A4_7_*, A4_8_imagem_sidebar, A4_9_*) e 370px (A4_1_abertura_split).",
+      "impact": "Nenhum — é intencional conforme catálogo, mas pode confundir consumidores do JSON.",
+      "resolutionApplied": "Exposto em designTokens.grid.sidebarSplit{60,225,370}."
+    },
+    {
+      "id": "INC-004",
+      "severity": "warning",
+      "title": "Nenhuma Figma Variable / Style publicado",
+      "found": "search_design_system sobre cores/tipografia do arquivo retorna 0 variáveis/estilos (apenas components de libraries externas de UI móvel).",
+      "impact": "Tokens são inline nos frames — qualquer renomeação/refactor no Figma exige tocar N frames manualmente; não há ligação programática com Variables/Modes.",
+      "resolutionApplied": "Nenhum (requer ação no Figma).",
+      "recommendation": "Migrar cores (brand.tealDark/tealAccent/cyanLight + neutrals) e tipografia (Sora/Inter scales) para Figma Variables. Posso disparar via use_figma (skillset figma-use) se confirmar."
+    },
+    {
+      "id": "INC-005",
+      "severity": "info",
+      "title": "Duplicidade entre catálogo e pipeline",
+      "found": "A4_3_sidebar_steps e A4_2_continuacao estão em allowedLayouts mas não em page-templates.ts (são pipeline-only — src/lib/allowed-layouts.ts:9).",
+      "impact": "Ferramentas que consomem somente PAGE_TEMPLATES não veem esses dois IDs.",
+      "resolutionApplied": "Documentado em templates[].pipelineOnly=true para ambos; constraints.pipelineOnly explicita regra."
+    },
+    {
+      "id": "INC-006",
+      "severity": "info",
+      "title": "hasBadge vs hasPageBadge — nomes diferentes entre lib/page-templates.ts e lib/figma-design-tokens.ts",
+      "found": "page-templates.ts usa hasPageBadge; figma-design-tokens.ts.FIGMA_TEMPLATES usa hasBadge.",
+      "impact": "Nenhum em runtime (cada arquivo é consumido por rotas distintas), mas confunde leitura.",
+      "resolutionApplied": "JSON final padroniza como hasPageBadge.",
+      "recommendation": "Unificar em código para hasPageBadge em ambos os arquivos (requer PR)."
+    },
+    {
+      "id": "INC-007",
+      "severity": "warning",
+      "title": "figmaNodeId não resolvido via API",
+      "found": "get_metadata(0:1) apresentou timeouts consecutivos; ferramentas que leem nó específico exigem seleção no Figma Desktop.",
+      "impact": "frameMapping[].figmaNodeId ficou 'unresolved' para 40 templates + 4 assets não-template.",
+      "resolutionApplied": "Marcados como 'unresolved' + figmaFrameNameOriginal mantido a partir de page-templates.ts (PageTemplate.name).",
+      "recommendation": "Para preencher os IDs: no Figma Desktop, selecionar cada frame-raiz de template e chamar get_metadata/get_design_context. Posso automatizar em batch se você rodar o Plugin API via use_figma. Alternativa: invocar a REST /v1/files API diretamente (fora do escopo deste MCP)."
+    },
+    {
+      "id": "INC-008",
+      "severity": "info",
+      "title": "A4_0_sumario não está em VTSD_ALTERNATION_POOL",
+      "found": "src/lib/allowed-layouts.ts:143 — VTSD_ALTERNATION_POOL tem 8 IDs; A4_0_sumario, aberturas e destaques ficam de fora propositalmente.",
+      "impact": "Nenhum — alternation pool é subconjunto seguro para miolo VTSD.",
+      "resolutionApplied": "Documentado."
+    }
+  ],
+
+  "schema": {
+    "allowedLayoutItem":   "string (must match ^A4_\\d+_[a-z_]+$)",
+    "template":            { "id": "string", "section": "string", "structure": "object", "typographyByBlock": "object", "contentRules": "object", "bestFor": "string[]" },
+    "frameMappingItem":    { "layoutIdCanonical": "string | 'unmapped'", "figmaFrameNameOriginal": "string", "figmaNodeId": "string | 'unresolved'", "mappingConfidence": "number [0..1]", "note": "string?" }
+  }
+}
