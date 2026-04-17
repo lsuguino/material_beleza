@@ -5,19 +5,43 @@
  * REGRAS FUNDAMENTAIS:
  * 1. NUNCA quebrar no meio de uma frase — sempre cortar entre sentenças completas
  * 2. Manter parágrafos inteiros sempre que possível (keep lines together)
- * 3. Cada página deve usar no máximo ~80% da área útil (respiro visual)
+ * 3. Meta de preenchimento: 70–85% da altura útil do corpo (respiro visual)
+ *
+ * PAGINAÇÃO POR ALTURA (default a partir deste PR):
+ * Usa `bodyBudgetPxForLayout` de `src/lib/page-layout-metrics.ts` para calcular
+ * a altura disponível para o corpo de cada layout, descontando header/sidebar/
+ * footer/citação/itens/imagem. Quebra parágrafos até atingir o budget em px.
+ *
+ * FEATURE FLAG: `PAGINATION_BY_HEIGHT=0` volta ao modelo antigo (chars).
+ * O modelo antigo fica como wrapper retroativo para `regenerate-pages/route.ts`
+ * (que consome `budgetCharsForLayout` + `splitBlocoPrincipalIntoChunks`).
  */
 
-/** Fator de preenchimento máximo da área útil — menos conservador para reduzir folhas com muito branco. */
+import {
+  bodyBudgetPxForLayout,
+  bodyWidthForLayout,
+  estimateTextHeightPx,
+  estimateParagraphsHeightPx,
+  FILL_RATIO_MIN,
+  type PageLike,
+} from './page-layout-metrics';
+
+function isPaginationByHeightEnabled(): boolean {
+  // Opt-out explícito via env var. Default: habilitado.
+  const v = typeof process !== 'undefined' ? process.env.PAGINATION_BY_HEIGHT : undefined;
+  return v !== '0';
+}
+
+/** Fator de preenchimento máximo da área útil (MODELO ANTIGO chars). */
 const MAX_FILL_RATIO = 0.94;
 /**
- * Tolerância menor de overflow:
+ * Tolerância menor de overflow (MODELO ANTIGO chars):
  * quando passar do limite, tende a quebrar antes para evitar páginas visualmente apertadas.
  */
 const SOFT_SPLIT_OVERFLOW_CHARS = 100;
 /**
  * Permite continuação mesmo quando o bloco restante é menor,
- * evitando espremer texto no fim da página atual.
+ * evitando espremer texto no fim da página atual (ambos os modelos).
  */
 const MIN_SECOND_CHUNK_CHARS = 90;
 
@@ -275,6 +299,131 @@ function splitVtsdFirstAndRest(text: string, firstMax: number, restMax: number):
   return [head, ...restParts];
 }
 
+// ———————————————————————————————————————————————
+//  Height-based splitter (novo — default)
+// ———————————————————————————————————————————————
+
+/**
+ * Quebra uma ÚNICA sequência de sentenças (de um parágrafo) em sub-chunks que
+ * caibam em `budgetPx`, medindo altura via estimador determinístico.
+ */
+function groupSentencesByHeight(
+  sentences: string[],
+  widthPx: number,
+  budgetPx: number,
+): string[] {
+  if (sentences.length === 0) return [''];
+  const chunks: string[] = [];
+  let current = '';
+  for (const rawSent of sentences) {
+    const sent = rawSent.trim();
+    if (!sent) continue;
+    const candidate = current ? current + ' ' + sent : sent;
+    const candH = estimateTextHeightPx(candidate, widthPx, 'body');
+    if (candH <= budgetPx || !current) {
+      // Sempre aceita a primeira sentença mesmo se estourar (garante progresso).
+      current = candidate;
+    } else {
+      chunks.push(current);
+      current = sent;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+/**
+ * Splitter por altura: divide `text` em chunks que caibam em `budgetPx` de
+ * altura quando renderizados em coluna de largura `widthPx`, estilo 'body'.
+ *
+ * Preferência de quebra: parágrafo inteiro > sentença > palavra (último caso).
+ */
+export function splitBlocoPrincipalByHeightPx(
+  text: string,
+  widthPx: number,
+  budgetPx: number,
+  gapBetweenParagraphs = 12,
+): string[] {
+  const raw = text.trim();
+  if (!raw) return [''];
+  if (budgetPx <= 0) return [raw];
+
+  const paras = raw.split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean);
+  if (paras.length === 0) return [raw];
+
+  // Cabe tudo em um só chunk? Retorna direto.
+  const totalH = estimateParagraphsHeightPx(paras, widthPx, 'body', gapBetweenParagraphs);
+  if (totalH <= budgetPx) return [raw];
+
+  const chunks: string[] = [];
+  let currentParas: string[] = [];
+  let currentH = 0;
+
+  const flushCurrent = () => {
+    if (currentParas.length > 0) {
+      chunks.push(currentParas.join('\n\n'));
+      currentParas = [];
+      currentH = 0;
+    }
+  };
+
+  for (const para of paras) {
+    const pH = estimateTextHeightPx(para, widthPx, 'body');
+    const gapH = currentParas.length > 0 ? gapBetweenParagraphs : 0;
+
+    if (pH > budgetPx) {
+      // Parágrafo gigantesco que sozinho não cabe numa página: quebra por sentenças.
+      flushCurrent();
+      const sentences = splitIntoSentences(para);
+      const subChunks = groupSentencesByHeight(sentences, widthPx, budgetPx);
+      // Empilha todos exceto o último; último vira "current" para mergear com próximo parágrafo.
+      for (let i = 0; i < subChunks.length - 1; i++) chunks.push(subChunks[i]);
+      const tail = subChunks[subChunks.length - 1];
+      if (tail) {
+        currentParas = [tail];
+        currentH = estimateTextHeightPx(tail, widthPx, 'body');
+      }
+      continue;
+    }
+
+    // Tenta encaixar parágrafo inteiro na página atual.
+    if (currentH + gapH + pH <= budgetPx) {
+      currentParas.push(para);
+      currentH += gapH + pH;
+    } else {
+      flushCurrent();
+      currentParas = [para];
+      currentH = pH;
+    }
+  }
+
+  flushCurrent();
+
+  return chunks.length > 0 ? chunks : [raw];
+}
+
+/**
+ * Versão VTSD por altura: primeira página usa o budget do layout original;
+ * continuações usam o budget de `A4_2_continuacao` (bem maior, quase full).
+ */
+function splitVtsdFirstAndRestByHeight(
+  text: string,
+  layout: string,
+  page: PageLike,
+): string[] {
+  const firstBudget = bodyBudgetPxForLayout(layout, page);
+  const continuationBudget = bodyBudgetPxForLayout('A4_2_continuacao', { continuacao: true });
+  const widthPx = bodyWidthForLayout(layout);
+  const contWidthPx = bodyWidthForLayout('A4_2_continuacao');
+
+  const firstParts = splitBlocoPrincipalByHeightPx(text, widthPx, firstBudget);
+  if (firstParts.length <= 1) return firstParts;
+  const head = firstParts[0];
+  const remainder = firstParts.slice(1).join('\n\n');
+  const restParts = splitBlocoPrincipalByHeightPx(remainder, contWidthPx, continuationBudget);
+  return [head, ...restParts];
+}
+
 function isVtsdLayout(layout: string): boolean {
   return layout.startsWith('A4_');
 }
@@ -386,12 +535,135 @@ export function paginateLongContentPages(conteudo: Record<string, unknown>): Rec
     }
 
     const layout = String(row.layout_tipo || 'A4_7_sidebar_conteudo');
-    const firstMax = effectiveBodyCharBudget(layout, row);
     const text = String(row.bloco_principal ?? '').trim();
     const capitulo_seq = Number(row.capitulo_seq) || 0;
     const vtsd = isVtsdLayout(layout);
-    const restMax = vtsd ? budgetCharsForLayout('A4_2_continuacao') : budgetCharsForLayout('A4_7_sidebar_conteudo');
+    const useHeight = isPaginationByHeightEnabled() && vtsd;
     const moveStepsToContinuation = shouldMoveStepsToContinuation(layout, row);
+
+    // ———— Modelo por altura (default, VTSD) ————
+    if (useHeight) {
+      const pageLike: PageLike = {
+        titulo: row.titulo as string | undefined,
+        subtitulo: row.subtitulo as string | undefined,
+        citacao: row.citacao as string | undefined,
+        itens: Array.isArray(row.itens) ? (row.itens as string[]) : undefined,
+        destaques: Array.isArray(row.destaques) ? (row.destaques as string[]) : undefined,
+        imagem_url: row.imagem_url as string | undefined,
+        sugestao_imagem: row.sugestao_imagem,
+        capitulo_seq,
+      };
+      const firstBudgetPx = bodyBudgetPxForLayout(layout, pageLike);
+      const widthPx = bodyWidthForLayout(layout);
+      const textHeightPx = estimateParagraphsHeightPx(
+        text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean),
+        widthPx,
+        'body',
+        12,
+      );
+
+      // Cabe numa página só? (inclui tolerância para fill ratio mínimo)
+      if (textHeightPx <= firstBudgetPx) {
+        const firstPage = {
+          ...row,
+          capitulo_seq,
+          continuacao: false,
+          ...(moveStepsToContinuation ? { itens: [], destaques: [] } : {}),
+        };
+        out.push(firstPage);
+        if (moveStepsToContinuation) {
+          out.push({
+            ...row,
+            layout_tipo: 'A4_2_continuacao',
+            bloco_principal: '',
+            capitulo_seq,
+            continuacao: true,
+            titulo: undefined,
+            titulo_bloco: undefined,
+            subtitulo: undefined,
+            destaques: Array.isArray(row.destaques) ? row.destaques : [],
+            citacao: undefined,
+            content_blocks: undefined,
+            sugestao_imagem: undefined,
+            prompt_imagem: undefined,
+            sugestao_grafico: undefined,
+            sugestao_fluxograma: undefined,
+            sugestao_tabela: undefined,
+            imagem_url: undefined,
+            itens: Array.isArray(row.itens) ? row.itens : [],
+          });
+        }
+        continue;
+      }
+
+      const chunks = splitVtsdFirstAndRestByHeight(text, layout, pageLike);
+
+      // Evita "órfão" muito curto na última continuação apenas se a fusão com a
+      // penúltima NÃO estoura o budget dela. Threshold conservador (8% do budget
+      // da continuação ≈ 2 linhas) — previne continuação com ~50 chars.
+      if (chunks.length >= 2) {
+        const lastChunk = chunks[chunks.length - 1];
+        const prevChunk = chunks[chunks.length - 2];
+        const contWidthPx = bodyWidthForLayout('A4_2_continuacao');
+        const contBudgetPx = bodyBudgetPxForLayout('A4_2_continuacao', { continuacao: true });
+        const lastH = estimateTextHeightPx(lastChunk, contWidthPx, 'body');
+        const mergedText = prevChunk + '\n\n' + lastChunk;
+        // Budget do "prev" depende da posição: se chunks.length==2, prev é a primeira página
+        // (layout original). Se >2, prev é uma continuação.
+        const prevIsFirst = chunks.length === 2;
+        const prevLayout = prevIsFirst ? layout : 'A4_2_continuacao';
+        const prevPage = prevIsFirst ? pageLike : { continuacao: true };
+        const prevWidthPx = bodyWidthForLayout(prevLayout);
+        const prevBudgetPx = bodyBudgetPxForLayout(prevLayout, prevPage);
+        const mergedH = estimateTextHeightPx(mergedText, prevWidthPx, 'body');
+        if (lastH < contBudgetPx * 0.08 && mergedH <= prevBudgetPx) {
+          chunks.splice(chunks.length - 2, 2, mergedText);
+        }
+      }
+
+      chunks.forEach((chunk, i) => {
+        if (i === 0) {
+          out.push({
+            ...row,
+            bloco_principal: chunk,
+            capitulo_seq,
+            continuacao: false,
+            ...(moveStepsToContinuation ? { itens: [], destaques: [] } : {}),
+          });
+          return;
+        }
+        const cont: Record<string, unknown> = { ...row };
+        cont.layout_tipo = 'A4_2_continuacao';
+        cont.bloco_principal = chunk;
+        cont.capitulo_seq = capitulo_seq;
+        cont.continuacao = true;
+        cont.titulo = undefined;
+        cont.titulo_bloco = undefined;
+        cont.subtitulo = undefined;
+        cont.destaques = [];
+        cont.citacao = undefined;
+        cont.content_blocks = undefined;
+        cont.sugestao_imagem = undefined;
+        cont.prompt_imagem = undefined;
+        cont.sugestao_grafico = undefined;
+        cont.sugestao_fluxograma = undefined;
+        cont.sugestao_tabela = undefined;
+        cont.imagem_url = undefined;
+        if (moveStepsToContinuation && i === 1) {
+          cont.itens = Array.isArray(row.itens) ? row.itens : [];
+          cont.destaques = Array.isArray(row.destaques) ? row.destaques : [];
+        } else {
+          cont.itens = [];
+          cont.destaques = [];
+        }
+        out.push(cont);
+      });
+      continue;
+    }
+
+    // ———— Modelo antigo por chars (fallback: PAGINATION_BY_HEIGHT=0 ou não-VTSD) ————
+    const firstMax = effectiveBodyCharBudget(layout, row);
+    const restMax = vtsd ? budgetCharsForLayout('A4_2_continuacao') : budgetCharsForLayout('A4_7_sidebar_conteudo');
 
     if (text.length <= firstMax || text.length <= firstMax + SOFT_SPLIT_OVERFLOW_CHARS) {
       const firstPage = {
