@@ -1,0 +1,215 @@
+{
+  "$schema": "https://material-beleza.dev/schemas/figma-variables-import-report@1.0.0",
+  "version": "1.0.0",
+  "generatedAt": "2026-04-17",
+  "source": "docs/figma-source-of-truth.json#designTokens",
+  "target": {
+    "fileKey": "zUCLefkhX0Fm2xjiXDUmHo",
+    "collectionId": "VariableCollectionId:150:2",
+    "collectionName": "Book DS — Tokens",
+    "modeId": "150:0",
+    "modeName": "Default",
+    "modeCount": 1,
+    "reused": true,
+    "rationale": "Coleção com o exato nome sugerido pela regra 2 já existia (61 variáveis preexistentes sob prefixos 'Fonte/', 'Entrelinha/', 'Espaço/', 'Gap/', 'Página/', 'Logo/', 'Layout/'). Nenhuma colisão de nome com os prefixos novos 'color/' e 'typo/'."
+  },
+
+  "preexistingCollectionsInventory": [
+    { "id": "VariableCollectionId:5:51",    "name": "Book DS / Colors",        "variableCount": 32, "notes": "Sistema de cores paralelo. Prefixo 'Color/' TitleCase. Valores divergem de designTokens.color (ex.: Color/Brand/Primary=#03DFE6 vs brand.tealDark=#025468). NÃO tocado por esta operação." },
+    { "id": "VariableCollectionId:12:9484", "name": "claude.ai",               "variableCount": 18, "notes": "Não relacionado ao Material Beleza. NÃO tocado." },
+    { "id": "VariableCollectionId:78:50",   "name": "Book DS — Espaçamento",   "variableCount": 19, "notes": "Paralelo ao alvo (Escala/, Página A4/, Componente/). NÃO tocado." },
+    { "id": "VariableCollectionId:81:*",    "name": "Book DS — Tokens / legacy (81:*)", "variableCount": 32, "notes": "Coleção legada com Espaçamento/, Margem A4/, Radius/, Grid/. NÃO tocada." },
+    { "id": "VariableCollectionId:150:2",   "name": "Book DS — Tokens",        "variableCount": 61, "notes": "**ALVO** desta importação. 64 novas variáveis adicionadas sob prefixo 'color/' e 'typo/'. Total pós-importação: 125." }
+  ],
+
+  "policy": {
+    "neverOverwrite": true,
+    "onSameNameSameValue": "skip (mapear ID)",
+    "onSameNameDiffValue": "conflict (mapear ID existente, não alterar valor)",
+    "onTypeMismatch": "conflict",
+    "onNoCollision": "create"
+  },
+
+  "counts": {
+    "created": 64,
+    "updated": 0,
+    "skipped": 0,
+    "conflicts": 0,
+    "total": 64
+  },
+
+  "created": [
+    { "tokenKey": "color.brand.tealDark",    "name": "color/brand/teal-dark",    "type": "COLOR",   "value": { "hex": "#025468", "rgb": { "r": 0.00784, "g": 0.32941, "b": 0.40784, "a": 1 } }, "id": "VariableID:581:2" },
+    { "tokenKey": "color.brand.tealAccent",  "name": "color/brand/teal-accent",  "type": "COLOR",   "value": { "hex": "#0599a8", "rgb": { "r": 0.01960, "g": 0.60000, "b": 0.65882, "a": 1 } }, "id": "VariableID:581:3" },
+    { "tokenKey": "color.brand.cyanLight",   "name": "color/brand/cyan-light",   "type": "COLOR",   "value": { "hex": "#5decf2", "rgb": { "r": 0.36470, "g": 0.92549, "b": 0.94901, "a": 1 } }, "id": "VariableID:581:4" },
+    { "tokenKey": "color.neutral.white",     "name": "color/neutral/white",      "type": "COLOR",   "value": { "hex": "#ffffff", "rgb": { "r": 1,       "g": 1,       "b": 1,       "a": 1 } }, "id": "VariableID:581:5" },
+    { "tokenKey": "color.neutral.darkText",  "name": "color/text/dark",          "type": "COLOR",   "value": { "hex": "#1a1a1a", "rgb": { "r": 0.10196, "g": 0.10196, "b": 0.10196, "a": 1 } }, "id": "VariableID:581:6" },
+    { "tokenKey": "color.neutral.grayText",  "name": "color/text/body",          "type": "COLOR",   "value": { "hex": "#666666", "rgb": { "r": 0.40000, "g": 0.40000, "b": 0.40000, "a": 1 } }, "id": "VariableID:581:7" },
+    { "tokenKey": "color.neutral.lightBg",   "name": "color/bg/light",           "type": "COLOR",   "value": { "hex": "#f5f5f5", "rgb": { "r": 0.96078, "g": 0.96078, "b": 0.96078, "a": 1 } }, "id": "VariableID:581:8" },
+    { "tokenKey": "color.neutral.subtleBg",  "name": "color/bg/subtle",          "type": "COLOR",   "value": { "hex": "#f6f6f6", "rgb": { "r": 0.96470, "g": 0.96470, "b": 0.96470, "a": 1 } }, "id": "VariableID:581:9" },
+
+    { "tokenKey": "typo.display.family",        "name": "typo/display/family",        "type": "STRING",  "value": "Sora",  "id": "VariableID:581:10" },
+    { "tokenKey": "typo.display.weight",        "name": "typo/display/weight",        "type": "FLOAT",   "value": 700,     "id": "VariableID:581:11" },
+    { "tokenKey": "typo.display.size",          "name": "typo/display/size",          "type": "FLOAT",   "value": 96,      "id": "VariableID:581:12" },
+    { "tokenKey": "typo.display.lineHeight",    "name": "typo/display/lineHeight",    "type": "STRING",  "value": "100%",  "id": "VariableID:581:13" },
+    { "tokenKey": "typo.display.letterSpacing", "name": "typo/display/letterSpacing", "type": "STRING",  "value": "0",     "id": "VariableID:581:14" },
+
+    { "tokenKey": "typo.impact.family",        "name": "typo/impact/family",        "type": "STRING",  "value": "Sora",  "id": "VariableID:581:15" },
+    { "tokenKey": "typo.impact.weight",        "name": "typo/impact/weight",        "type": "FLOAT",   "value": 700,     "id": "VariableID:581:16" },
+    { "tokenKey": "typo.impact.size",          "name": "typo/impact/size",          "type": "FLOAT",   "value": 48,      "id": "VariableID:581:17" },
+    { "tokenKey": "typo.impact.lineHeight",    "name": "typo/impact/lineHeight",    "type": "STRING",  "value": "110%",  "id": "VariableID:581:18" },
+    { "tokenKey": "typo.impact.letterSpacing", "name": "typo/impact/letterSpacing", "type": "STRING",  "value": "0",     "id": "VariableID:581:19" },
+
+    { "tokenKey": "typo.cite.family",        "name": "typo/cite/family",        "type": "STRING",  "value": "Sora",  "id": "VariableID:581:20" },
+    { "tokenKey": "typo.cite.weight",        "name": "typo/cite/weight",        "type": "FLOAT",   "value": 700,     "id": "VariableID:581:21" },
+    { "tokenKey": "typo.cite.size",          "name": "typo/cite/size",          "type": "FLOAT",   "value": 36,      "id": "VariableID:581:22" },
+    { "tokenKey": "typo.cite.lineHeight",    "name": "typo/cite/lineHeight",    "type": "STRING",  "value": "110%",  "id": "VariableID:581:23" },
+    { "tokenKey": "typo.cite.letterSpacing", "name": "typo/cite/letterSpacing", "type": "STRING",  "value": "0",     "id": "VariableID:581:24" },
+
+    { "tokenKey": "typo.stat.family",        "name": "typo/stat/family",        "type": "STRING",  "value": "Sora",  "id": "VariableID:581:25" },
+    { "tokenKey": "typo.stat.weight",        "name": "typo/stat/weight",        "type": "FLOAT",   "value": 700,     "id": "VariableID:581:26" },
+    { "tokenKey": "typo.stat.size",          "name": "typo/stat/size",          "type": "FLOAT",   "value": 36,      "id": "VariableID:581:27" },
+    { "tokenKey": "typo.stat.lineHeight",    "name": "typo/stat/lineHeight",    "type": "STRING",  "value": "110%",  "id": "VariableID:581:28" },
+    { "tokenKey": "typo.stat.letterSpacing", "name": "typo/stat/letterSpacing", "type": "STRING",  "value": "0",     "id": "VariableID:581:29" },
+
+    { "tokenKey": "typo.h1.family",        "name": "typo/h1/family",        "type": "STRING",  "value": "Sora",  "id": "VariableID:581:30" },
+    { "tokenKey": "typo.h1.weight",        "name": "typo/h1/weight",        "type": "FLOAT",   "value": 700,     "id": "VariableID:581:31" },
+    { "tokenKey": "typo.h1.size",          "name": "typo/h1/size",          "type": "FLOAT",   "value": 32,      "id": "VariableID:581:32" },
+    { "tokenKey": "typo.h1.lineHeight",    "name": "typo/h1/lineHeight",    "type": "STRING",  "value": "110%",  "id": "VariableID:581:33" },
+    { "tokenKey": "typo.h1.letterSpacing", "name": "typo/h1/letterSpacing", "type": "STRING",  "value": "0",     "id": "VariableID:581:34" },
+
+    { "tokenKey": "typo.h2.family",        "name": "typo/h2/family",        "type": "STRING",  "value": "Sora",  "id": "VariableID:581:35" },
+    { "tokenKey": "typo.h2.weight",        "name": "typo/h2/weight",        "type": "FLOAT",   "value": 700,     "id": "VariableID:581:36" },
+    { "tokenKey": "typo.h2.size",          "name": "typo/h2/size",          "type": "FLOAT",   "value": 22,      "id": "VariableID:581:37" },
+    { "tokenKey": "typo.h2.lineHeight",    "name": "typo/h2/lineHeight",    "type": "STRING",  "value": "120%",  "id": "VariableID:581:38" },
+    { "tokenKey": "typo.h2.letterSpacing", "name": "typo/h2/letterSpacing", "type": "STRING",  "value": "0",     "id": "VariableID:581:39" },
+
+    { "tokenKey": "typo.h3.family",        "name": "typo/h3/family",        "type": "STRING",  "value": "Sora",  "id": "VariableID:581:40" },
+    { "tokenKey": "typo.h3.weight",        "name": "typo/h3/weight",        "type": "FLOAT",   "value": 700,     "id": "VariableID:581:41" },
+    { "tokenKey": "typo.h3.size",          "name": "typo/h3/size",          "type": "FLOAT",   "value": 16,      "id": "VariableID:581:42" },
+    { "tokenKey": "typo.h3.lineHeight",    "name": "typo/h3/lineHeight",    "type": "STRING",  "value": "130%",  "id": "VariableID:581:43" },
+    { "tokenKey": "typo.h3.letterSpacing", "name": "typo/h3/letterSpacing", "type": "STRING",  "value": "0",     "id": "VariableID:581:44" },
+
+    { "tokenKey": "typo.body.family",        "name": "typo/body/family",        "type": "STRING",  "value": "Inter", "id": "VariableID:581:45" },
+    { "tokenKey": "typo.body.weight",        "name": "typo/body/weight",        "type": "FLOAT",   "value": 400,     "id": "VariableID:581:46" },
+    { "tokenKey": "typo.body.size",          "name": "typo/body/size",          "type": "FLOAT",   "value": 13,      "id": "VariableID:581:47" },
+    { "tokenKey": "typo.body.lineHeight",    "name": "typo/body/lineHeight",    "type": "STRING",  "value": "170%",  "id": "VariableID:581:48" },
+    { "tokenKey": "typo.body.letterSpacing", "name": "typo/body/letterSpacing", "type": "STRING",  "value": "0",     "id": "VariableID:581:49" },
+
+    { "tokenKey": "typo.quote.family",        "name": "typo/quote/family",        "type": "STRING",  "value": "Inter", "id": "VariableID:581:50" },
+    { "tokenKey": "typo.quote.weight",        "name": "typo/quote/weight",        "type": "FLOAT",   "value": 400,     "id": "VariableID:581:51" },
+    { "tokenKey": "typo.quote.size",          "name": "typo/quote/size",          "type": "FLOAT",   "value": 13,      "id": "VariableID:581:52" },
+    { "tokenKey": "typo.quote.lineHeight",    "name": "typo/quote/lineHeight",    "type": "STRING",  "value": "170%",  "id": "VariableID:581:53" },
+    { "tokenKey": "typo.quote.letterSpacing", "name": "typo/quote/letterSpacing", "type": "STRING",  "value": "0",     "id": "VariableID:581:54" },
+    { "tokenKey": "typo.quote.italic",        "name": "typo/quote/italic",        "type": "BOOLEAN", "value": true,    "id": "VariableID:581:55" },
+
+    { "tokenKey": "typo.label.family",        "name": "typo/label/family",        "type": "STRING",  "value": "Inter", "id": "VariableID:581:56" },
+    { "tokenKey": "typo.label.weight",        "name": "typo/label/weight",        "type": "FLOAT",   "value": 600,     "id": "VariableID:581:57" },
+    { "tokenKey": "typo.label.size",          "name": "typo/label/size",          "type": "FLOAT",   "value": 11,      "id": "VariableID:581:58" },
+    { "tokenKey": "typo.label.lineHeight",    "name": "typo/label/lineHeight",    "type": "STRING",  "value": "140%",  "id": "VariableID:581:59" },
+    { "tokenKey": "typo.label.letterSpacing", "name": "typo/label/letterSpacing", "type": "STRING",  "value": "1px",   "id": "VariableID:581:60" },
+
+    { "tokenKey": "typo.badge.family",        "name": "typo/badge/family",        "type": "STRING",  "value": "Inter", "id": "VariableID:581:61" },
+    { "tokenKey": "typo.badge.weight",        "name": "typo/badge/weight",        "type": "FLOAT",   "value": 600,     "id": "VariableID:581:62" },
+    { "tokenKey": "typo.badge.size",          "name": "typo/badge/size",          "type": "FLOAT",   "value": 11,      "id": "VariableID:581:63" },
+    { "tokenKey": "typo.badge.lineHeight",    "name": "typo/badge/lineHeight",    "type": "STRING",  "value": "auto",  "id": "VariableID:581:64" },
+    { "tokenKey": "typo.badge.letterSpacing", "name": "typo/badge/letterSpacing", "type": "STRING",  "value": "0",     "id": "VariableID:581:65" }
+  ],
+
+  "updated": [],
+  "skipped": [],
+  "conflicts": [],
+
+  "semanticOverlaps": [
+    {
+      "level": "info",
+      "note": "As 8 cores novas (color/brand/*, color/text/*, color/bg/*, color/neutral/*) não colidem em nome com a coleção 'Book DS / Colors' (VariableCollectionId:5:51), mas cobrem conceitos semelhantes sob outro sistema. Ex.: Color/Brand/Primary (=#03DFE6) em 'Book DS / Colors' vs color/brand/teal-accent (=#0599a8) em 'Book DS — Tokens'. São dois sistemas de marca paralelos."
+    },
+    {
+      "level": "info",
+      "note": "Variáveis 'Fonte/H1' e 'Entrelinha/H1' da coleção-alvo (preexistentes) e as novas 'typo/h1/size' / 'typo/h1/lineHeight' são complementares, não duplicadas. Os nomes não colidem (TitleCase em português vs snake lowercase inglês)."
+    },
+    {
+      "level": "warning",
+      "note": "Risco de drift: mudanças futuras em designTokens.color do JSON não são propagadas automaticamente para as variáveis criadas. Recomenda-se rodar novamente esta tarefa ou criar um step de CI. Ver C (unificar hasBadge→hasPageBadge) e próximos passos."
+    }
+  ],
+
+  "figmaVariableIds": {
+    "color.brand.tealDark": "VariableID:581:2",
+    "color.brand.tealAccent": "VariableID:581:3",
+    "color.brand.cyanLight": "VariableID:581:4",
+    "color.neutral.white": "VariableID:581:5",
+    "color.neutral.darkText": "VariableID:581:6",
+    "color.neutral.grayText": "VariableID:581:7",
+    "color.neutral.lightBg": "VariableID:581:8",
+    "color.neutral.subtleBg": "VariableID:581:9",
+
+    "typo.display.family": "VariableID:581:10",
+    "typo.display.weight": "VariableID:581:11",
+    "typo.display.size": "VariableID:581:12",
+    "typo.display.lineHeight": "VariableID:581:13",
+    "typo.display.letterSpacing": "VariableID:581:14",
+
+    "typo.impact.family": "VariableID:581:15",
+    "typo.impact.weight": "VariableID:581:16",
+    "typo.impact.size": "VariableID:581:17",
+    "typo.impact.lineHeight": "VariableID:581:18",
+    "typo.impact.letterSpacing": "VariableID:581:19",
+
+    "typo.cite.family": "VariableID:581:20",
+    "typo.cite.weight": "VariableID:581:21",
+    "typo.cite.size": "VariableID:581:22",
+    "typo.cite.lineHeight": "VariableID:581:23",
+    "typo.cite.letterSpacing": "VariableID:581:24",
+
+    "typo.stat.family": "VariableID:581:25",
+    "typo.stat.weight": "VariableID:581:26",
+    "typo.stat.size": "VariableID:581:27",
+    "typo.stat.lineHeight": "VariableID:581:28",
+    "typo.stat.letterSpacing": "VariableID:581:29",
+
+    "typo.h1.family": "VariableID:581:30",
+    "typo.h1.weight": "VariableID:581:31",
+    "typo.h1.size": "VariableID:581:32",
+    "typo.h1.lineHeight": "VariableID:581:33",
+    "typo.h1.letterSpacing": "VariableID:581:34",
+
+    "typo.h2.family": "VariableID:581:35",
+    "typo.h2.weight": "VariableID:581:36",
+    "typo.h2.size": "VariableID:581:37",
+    "typo.h2.lineHeight": "VariableID:581:38",
+    "typo.h2.letterSpacing": "VariableID:581:39",
+
+    "typo.h3.family": "VariableID:581:40",
+    "typo.h3.weight": "VariableID:581:41",
+    "typo.h3.size": "VariableID:581:42",
+    "typo.h3.lineHeight": "VariableID:581:43",
+    "typo.h3.letterSpacing": "VariableID:581:44",
+
+    "typo.body.family": "VariableID:581:45",
+    "typo.body.weight": "VariableID:581:46",
+    "typo.body.size": "VariableID:581:47",
+    "typo.body.lineHeight": "VariableID:581:48",
+    "typo.body.letterSpacing": "VariableID:581:49",
+
+    "typo.quote.family": "VariableID:581:50",
+    "typo.quote.weight": "VariableID:581:51",
+    "typo.quote.size": "VariableID:581:52",
+    "typo.quote.lineHeight": "VariableID:581:53",
+    "typo.quote.letterSpacing": "VariableID:581:54",
+    "typo.quote.italic": "VariableID:581:55",
+
+    "typo.label.family": "VariableID:581:56",
+    "typo.label.weight": "VariableID:581:57",
+    "typo.label.size": "VariableID:581:58",
+    "typo.label.lineHeight": "VariableID:581:59",
+    "typo.label.letterSpacing": "VariableID:581:60",
+
+    "typo.badge.family": "VariableID:581:61",
+    "typo.badge.weight": "VariableID:581:62",
+    "typo.badge.size": "VariableID:581:63",
+    "typo.badge.lineHeight": "VariableID:581:64",
+    "typo.badge.letterSpacing": "VariableID:581:65"
+  }
+}
