@@ -18,7 +18,8 @@ import {
   enrichPaginaImageHints,
   mergeDesignPageWithConteudo,
 } from '@/lib/preview-page-merge';
-import { PageConteudo, type PaginaComDesign } from '@/components/pages/PageConteudo';
+// Nota: PageConteudo não é mais consumido por MaterialPreviewBlocks após migração para
+// FigmaTemplateRenderer (política de fidelidade Figma — ver PR "Figma fiel no app").
 import { PageConclusaoVtsd } from '@/components/pages/PageConclusaoVtsd';
 import { PageAtividadesFinais } from '@/components/pages/PageAtividadesFinais';
 import { renderFigmaTemplate } from '@/components/pages/FigmaTemplateRenderer';
@@ -340,20 +341,20 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
         }
 
         if (isVtsd && tipo === 'conteudo') {
-          // VTSD: SEMPRE usar PageConteudo. Se layout não começa com A4_, forçar A4_2_conteudo_misto.
+          // VTSD: usar APENAS FigmaTemplateRenderer. Layouts sem renderer caem em
+          // TemplateInertFallback (B1) dentro do renderer — nunca aproxima silenciosamente.
+          // Ver docs/figma-source-of-truth.json + src/components/pages/FigmaTemplateRenderer.tsx.
           const rawLt = ((pagina.layout_tipo as string) || '').trim();
-          // Se a página tem imagem gerada, usar layout que exibe imagem (A4_1_abertura ou A4_4_magazine)
           const hasGeneratedImage = isRenderableImageUrl(pagina.imagem_url as string | undefined);
+          // Coerção mínima: layout não-A4 (legado/legacy non-VTSD) → conteudo_misto ou magazine se há imagem.
+          // Esta é a ÚNICA coerção permitida; qualquer A4_* entra direto no renderer.
           let lt: LayoutTipo;
           if (!rawLt.startsWith('A4_')) {
             lt = hasGeneratedImage ? 'A4_4_magazine' : 'A4_2_conteudo_misto';
-          } else if (hasGeneratedImage && rawLt === 'A4_2_continuacao') {
-            lt = 'A4_4_magazine' as LayoutTipo;
           } else {
             lt = rawLt as LayoutTipo;
           }
-          // Tentar renderizar com template do Figma primeiro (templates novos)
-          const figmaRendered = renderFigmaTemplate(lt, {
+          return wrap(renderFigmaTemplate(lt, {
             titulo,
             subtitulo: pagina.subtitulo as string | undefined,
             paragrafos: paragrafos.length > 0 ? paragrafos : introParagraphs,
@@ -364,59 +365,7 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
             imagemUrl: heroImageUrl,
             capituloNumero,
             iconId: (pagina.icone_sugerido as string) || undefined,
-          });
-          if (figmaRendered) {
-            return wrap(figmaRendered);
-          }
-
-          // Fallback: renderizar com PageConteudo (layouts base A4)
-          if (true) {
-            const visualBlocks = contentBlocks.filter(
-              (b) =>
-                b.type === 'chart' ||
-                b.type === 'mermaid' ||
-                (b.type === 'image' && isRenderableImageUrl(b.imageUrl || b.imagem_url))
-            );
-            const paginaComDesign: PaginaComDesign = {
-              layout_tipo: lt,
-              cor_fundo_principal: (pagina.cor_fundo_principal as string) || '#FFFFFF',
-              cor_fundo_destaque: (pagina.cor_fundo_destaque as string) || primary,
-              cor_texto_principal: (pagina.cor_texto_principal as string) || '#383838',
-              cor_texto_destaque: (pagina.cor_texto_destaque as string) || '#FFFFFF',
-              icone_sugerido: (pagina.icone_sugerido as string) || 'article',
-              titulo,
-              subtitulo: pagina.subtitulo,
-              paragrafos: paragrafos.length > 0 ? paragrafos : introParagraphs,
-              destaques: (pagina.destaques as string[]) || [],
-              citacao: pagina.citacao as string | undefined,
-              itens: (pagina.itens as string[]) || [],
-              sugestao_imagem: pagina.sugestao_imagem,
-              prompt_imagem: pagina.prompt_imagem,
-              sugestao_grafico: pagina.sugestao_grafico as PaginaComDesign['sugestao_grafico'],
-              sugestao_fluxograma: pagina.sugestao_fluxograma as PaginaComDesign['sugestao_fluxograma'],
-              sugestao_tabela: pagina.sugestao_tabela as PaginaComDesign['sugestao_tabela'],
-              sugestao_icone: pagina.sugestao_icone,
-              proporcao_colunas: pagina.proporcao_colunas as PaginaComDesign['proporcao_colunas'],
-              usar_barra_lateral: pagina.usar_barra_lateral as boolean | undefined,
-              usar_faixa_decorativa: pagina.usar_faixa_decorativa as boolean | undefined,
-              imagem_url: pagina.imagem_url as string | undefined,
-              extraContentBlocks: visualBlocks.length > 0 ? visualBlocks : undefined,
-            };
-            return wrap(
-              <PageConteudo
-                pagina={paginaComDesign}
-                tema={{
-                  primary,
-                  primaryLight: tema.primaryLight,
-                  primaryDark: tema.primaryDark,
-                  accent,
-                }}
-                numeroPagina={pageNumber ?? index + 1}
-                nomeCurso={nomeCurso}
-                capituloNumero={capituloNumero}
-              />
-            );
-          }
+          }));
         }
 
         const template = chooseEditorialTemplate(pagina, isFirstContent);

@@ -61,7 +61,7 @@ export interface FigmaTemplateSpec {
   outerPad: [number, number, number, number]; // [top, right, bottom, left]
   outerSpacing: number;
   blocks: FigmaBlockSpec[];
-  hasBadge: boolean;
+  hasPageBadge: boolean;
 }
 
 export interface FigmaBlockSpec {
@@ -83,7 +83,7 @@ export const FIGMA_TEMPLATES: Record<string, FigmaTemplateSpec> = {
     layout: 'VERTICAL',
     outerPad: [0, 0, 0, 0],
     outerSpacing: 0,
-    hasBadge: true,
+    hasPageBadge: true,
     blocks: [
       { name: 'Body', type: 'body', layout: 'VERTICAL', width: 'fill', height: 'fill',
         pad: [50, 50, 20, 50], spacing: 20 },
@@ -96,7 +96,7 @@ export const FIGMA_TEMPLATES: Record<string, FigmaTemplateSpec> = {
     layout: 'VERTICAL',
     outerPad: [0, 0, 0, 0],
     outerSpacing: 0,
-    hasBadge: true,
+    hasPageBadge: true,
     blocks: [
       { name: 'Header', type: 'header', layout: 'VERTICAL', width: 'fill', height: 'hug',
         pad: [40, 50, 30, 50], spacing: 8, bg: '#025468' },
@@ -111,7 +111,7 @@ export const FIGMA_TEMPLATES: Record<string, FigmaTemplateSpec> = {
     layout: 'VERTICAL',
     outerPad: [0, 0, 0, 0],
     outerSpacing: 20,
-    hasBadge: true,
+    hasPageBadge: true,
     blocks: [
       { name: 'Dica-Bar', type: 'header', layout: 'VERTICAL', width: 'fill', height: 'hug',
         pad: [20, 50, 20, 50], spacing: 8, bg: '#025468' },
@@ -128,7 +128,7 @@ export const FIGMA_TEMPLATES: Record<string, FigmaTemplateSpec> = {
     layout: 'HORIZONTAL',
     outerPad: [0, 0, 0, 0],
     outerSpacing: 0,
-    hasBadge: false,
+    hasPageBadge: false,
     blocks: [
       { name: 'Side-Accent', type: 'sidebar', layout: 'VERTICAL', width: 60, height: 'fill',
         pad: [50, 0, 30, 0], spacing: 0, bg: '#025468' },
@@ -143,7 +143,7 @@ export const FIGMA_TEMPLATES: Record<string, FigmaTemplateSpec> = {
     layout: 'VERTICAL',
     outerPad: [0, 0, 0, 0],
     outerSpacing: 0,
-    hasBadge: true,
+    hasPageBadge: true,
     blocks: [
       { name: 'Header', type: 'header', layout: 'VERTICAL', width: 'fill', height: 'hug',
         pad: [40, 50, 30, 50], spacing: 8 },
@@ -160,7 +160,7 @@ export const FIGMA_TEMPLATES: Record<string, FigmaTemplateSpec> = {
     layout: 'HORIZONTAL',
     outerPad: [0, 0, 0, 0],
     outerSpacing: 0,
-    hasBadge: false,
+    hasPageBadge: false,
     blocks: [
       { name: 'Sidebar', type: 'sidebar', layout: 'VERTICAL', width: 370, height: 'fill',
         pad: [50, 50, 20, 50], spacing: 10, bg: '#025468' },
@@ -175,7 +175,7 @@ export const FIGMA_TEMPLATES: Record<string, FigmaTemplateSpec> = {
     layout: 'HORIZONTAL',
     outerPad: [0, 0, 0, 0],
     outerSpacing: 0,
-    hasBadge: false,
+    hasPageBadge: false,
     blocks: [
       { name: 'Sidebar', type: 'sidebar', layout: 'VERTICAL', width: 225, height: 'fill',
         pad: [50, 20, 30, 50], spacing: 10, bg: '#025468' },
@@ -190,7 +190,7 @@ export const FIGMA_TEMPLATES: Record<string, FigmaTemplateSpec> = {
     layout: 'VERTICAL',
     outerPad: [50, 50, 30, 50],
     outerSpacing: 0,
-    hasBadge: false,
+    hasPageBadge: false,
     blocks: [
       { name: 'Top', type: 'header', layout: 'VERTICAL', width: 'fill', height: 'hug',
         pad: [0, 0, 0, 0], spacing: 8 },
@@ -207,7 +207,7 @@ export const FIGMA_TEMPLATES: Record<string, FigmaTemplateSpec> = {
     layout: 'VERTICAL',
     outerPad: [50, 50, 50, 50],
     outerSpacing: 30,
-    hasBadge: true,
+    hasPageBadge: true,
     blocks: [
       { name: 'Quote', type: 'body', layout: 'VERTICAL', width: 'fill', height: 'fill',
         pad: [0, 0, 0, 0], spacing: 30 },
@@ -220,7 +220,7 @@ export const FIGMA_TEMPLATES: Record<string, FigmaTemplateSpec> = {
     layout: 'VERTICAL',
     outerPad: [0, 50, 50, 50],
     outerSpacing: 20,
-    hasBadge: true,
+    hasPageBadge: true,
     blocks: [
       { name: 'Teal-Bar', type: 'bar', layout: 'NONE', width: 'fill', height: 6,
         pad: [0, 0, 0, 0], spacing: 0, bg: '#0599a8' },
@@ -239,7 +239,7 @@ export const FIGMA_TEMPLATES: Record<string, FigmaTemplateSpec> = {
     layout: 'VERTICAL',
     outerPad: [0, 0, 0, 0],
     outerSpacing: 0,
-    hasBadge: true,
+    hasPageBadge: true,
     blocks: [
       { name: 'Top-Bar', type: 'bar', layout: 'NONE', width: 'fill', height: 6,
         pad: [0, 0, 0, 0], spacing: 0, bg: '#0599a8' },
