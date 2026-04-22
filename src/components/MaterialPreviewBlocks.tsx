@@ -374,6 +374,11 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
           } else {
             lt = rawLt as LayoutTipo;
           }
+          // Se o layout depende de imagem, mas a página não tem mídia, cai para texto corrido
+          // para aproveitar melhor a área útil e evitar grandes blocos vazios.
+          if (!hasGeneratedImage && (lt === 'A4_2_imagem_texto' || lt === 'A4_2_texto_imagem')) {
+            lt = 'A4_2_texto_corrido';
+          }
           const figmaParagraphs = deriveVtsdParagraphFallback(
             pagina,
             paragrafos.length > 0 ? paragrafos : introParagraphs,

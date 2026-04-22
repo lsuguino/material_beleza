@@ -225,16 +225,22 @@ export function TemplateImagemTexto({
   const hasImage = isRenderableImageUrl(imagemUrl);
   return (
     <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
-      {/* Imagem */}
-      <div style={{ width: '100%', height: 420, backgroundColor: FIGMA_COLORS.lightBg, flexShrink: 0, overflow: 'hidden' }}>
-        {hasImage && <img src={imagemUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-      </div>
-      {/* Legenda */}
-      <div style={{ ...FIGMA_CSS.footerTeal, padding: '10px 50px' }} className="flex-shrink-0">
-        <p style={{ ...FIGMA_CSS.labelCyan, fontSize: 11 }}>Legenda da imagem ilustrativa</p>
-      </div>
+      {/* Imagem + legenda só quando houver mídia, evitando área vazia grande */}
+      {hasImage && (
+        <>
+          <div style={{ width: '100%', height: 420, backgroundColor: FIGMA_COLORS.lightBg, flexShrink: 0, overflow: 'hidden' }}>
+            <img src={imagemUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <div style={{ ...FIGMA_CSS.footerTeal, padding: '10px 50px' }} className="flex-shrink-0">
+            <p style={{ ...FIGMA_CSS.labelCyan, fontSize: 11 }}>Legenda da imagem ilustrativa</p>
+          </div>
+        </>
+      )}
       {/* Corpo */}
-      <div style={FIGMA_CSS.bodyBlock} className="flex flex-col overflow-hidden">
+      <div
+        style={hasImage ? FIGMA_CSS.bodyBlock : { ...FIGMA_CSS.bodyBlock, padding: '50px 50px 20px 50px' }}
+        className="flex flex-col overflow-hidden"
+      >
         <h2 style={{ ...FIGMA_CSS.h1Teal, color: FIGMA_COLORS.tealAccent, fontSize: 22, marginBottom: 16 }}>{titulo}</h2>
         {paragrafos.map((p, i) => (
           <p key={i} style={{ ...FIGMA_CSS.bodyGray, marginBottom: 12 }}>{p}</p>
