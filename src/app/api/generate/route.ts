@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import path from 'path';
+import mammoth from 'mammoth';
 import { parseVTT } from '@/lib/vtt-parser';
 import { detectTipoEntrada } from '@/lib/detect-tipo-entrada';
 import { generateContent, generateResumoFromOrganizedText } from '@/lib/content-agent';
+import { parseTextoOrganizado } from '@/lib/text-organizado-parser';
 import { sanitizeConteudoLayouts, VTSD_ALTERNATION_POOL } from '@/lib/allowed-layouts';
 import { generateDesign } from '@/lib/design-agent';
 import { COURSE_THEMES, type CourseId } from '@/lib/courseThemes';
@@ -18,10 +20,10 @@ import { applyNanoBananaImagesToPaginas } from '@/lib/gemini-nano-banana-images'
 
 export const maxDuration = 300;
 
-type ModoGeracao = 'completo' | 'resumido';
+type ModoGeracao = 'completo' | 'resumido' | 'design_only';
 
 function isModo(mode: string): mode is ModoGeracao {
-  return ['completo', 'resumido'].includes(mode);
+  return ['completo', 'resumido', 'design_only'].includes(mode);
 }
 
 type TemaPayload = { name: string; primary: string; primaryLight: string; primaryDark: string; accent: string; backgroundColor?: string; layoutClass?: string };
@@ -465,7 +467,7 @@ export async function POST(request: NextRequest) {
     const inputFile = formData.get('vtt') as File | Blob | null;
     if (!inputFile || (typeof (inputFile as Blob).text !== 'function' && typeof (inputFile as Blob).arrayBuffer !== 'function')) {
       return NextResponse.json(
-        { error: 'Arquivo não enviado. Selecione um arquivo de texto ou PDF e tente novamente.' },
+        { error: 'Arquivo não enviado. Selecione um arquivo de texto, PDF ou DOCX e tente novamente.' },
         { status: 400 }
       );
     }
@@ -481,7 +483,7 @@ export async function POST(request: NextRequest) {
     const modo = formData.get('modo') as string | null;
     if (!modo || typeof modo !== 'string' || !isModo(modo)) {
       return NextResponse.json(
-        { error: 'Modo inválido. Use: completo ou resumido.' },
+        { error: 'Modo inválido. Use: completo, resumido ou design_only.' },
         { status: 400 }
       );
     }
@@ -494,7 +496,12 @@ export async function POST(request: NextRequest) {
 
     const fileNameRaw = (inputFile as File).name || '';
     const fileName = fileNameRaw.toLowerCase();
-    const isPdf = fileName.endsWith('.pdf') || (inputFile as Blob).type === 'application/pdf';
+    const mimeType = (inputFile as Blob).type || '';
+    const isPdf = fileName.endsWith('.pdf') || mimeType === 'application/pdf';
+    const isSubtitle = fileName.endsWith('.vtt') || fileName.endsWith('.srt') || mimeType === 'application/x-subrip';
+    const isDocx =
+      fileName.endsWith('.docx') ||
+      mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
     let transcricao: string;
     let isTextoOrganizado: boolean;
@@ -516,6 +523,20 @@ export async function POST(request: NextRequest) {
         );
       }
       isTextoOrganizado = detectTipoEntrada(transcricao, fileNameRaw, true) === 'organizado';
+    } else if (isDocx) {
+      const buf = await (inputFile as Blob).arrayBuffer();
+      const buffer = Buffer.from(buf);
+      try {
+        const result = await mammoth.extractRawText({ buffer });
+        transcricao = (result.value ?? '').trim();
+      } catch (err) {
+        console.error('[api/generate] DOCX parse error:', err);
+        return NextResponse.json(
+          { error: 'Não foi possível extrair texto do DOCX. Verifique se o arquivo não está corrompido.' },
+          { status: 400 }
+        );
+      }
+      isTextoOrganizado = detectTipoEntrada(transcricao, fileNameRaw, false) === 'organizado';
     } else {
       let textContent: string;
       if (typeof (inputFile as File).text === 'function') {
@@ -525,11 +546,13 @@ export async function POST(request: NextRequest) {
         textContent = new TextDecoder('utf-8').decode(buf);
       }
       isTextoOrganizado = detectTipoEntrada(textContent, fileNameRaw, false) === 'organizado';
-      transcricao = parseVTT(textContent);
+      // design_only preserva estrutura do texto (títulos/listas) para o parser local.
+      // Em VTT/SRT mantemos a limpeza de timestamps.
+      transcricao = modo === 'design_only' && !isSubtitle ? textContent.trim() : parseVTT(textContent);
     }
     if (!transcricao.trim()) {
       return NextResponse.json(
-        { error: 'O arquivo não contém texto válido.' },
+        { error: 'O arquivo não contém texto válido ou não pôde ser lido.' },
         { status: 400 }
       );
     }
@@ -537,10 +560,12 @@ export async function POST(request: NextRequest) {
     const tema = await loadTema(cursoId);
     const nomeCurso = tema.name;
 
-    // 1. Conteúdo: IA (transcrição) ou parser/IA (texto já organizado)
+    // 1. Conteúdo: IA (transcrição) ou parser local (texto já organizado/design_only)
     let conteudo: Record<string, unknown>;
     try {
-      if (isTextoOrganizado) {
+      if (modo === 'design_only') {
+        conteudo = parseTextoOrganizado(transcricao, nomeCurso) as unknown as Record<string, unknown>;
+      } else if (isTextoOrganizado) {
         if (modo === 'resumido') {
           conteudo = (await generateResumoFromOrganizedText(transcricao, nomeCurso)) as unknown as Record<string, unknown>;
         } else {

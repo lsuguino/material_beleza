@@ -238,7 +238,7 @@ export function TemplateImagemTexto({
       )}
       {/* Corpo */}
       <div
-        style={hasImage ? FIGMA_CSS.bodyBlock : { ...FIGMA_CSS.bodyBlock, padding: '50px 50px 20px 50px' }}
+        style={hasImage ? FIGMA_CSS.bodyBlock : { ...FIGMA_CSS.bodyBlock, padding: '50px 50px 56px 50px' }}
         className="flex flex-col overflow-hidden"
       >
         <h2 style={{ ...FIGMA_CSS.h1Teal, color: FIGMA_COLORS.tealAccent, fontSize: 22, marginBottom: 16 }}>{titulo}</h2>
@@ -325,9 +325,19 @@ export function TemplateAberturaCapitulo({
 // Figma: "Miolo - Processo em Etapas" (A4_3_sidebar_steps legado VTSD)
 // ============================================================
 export function TemplateSidebarSteps({
-  titulo, subtitulo, itens, numeroPagina, capituloNumero
+  titulo, subtitulo, itens, paragrafos, destaques, citacao, numeroPagina, capituloNumero
 }: TemplateProps) {
   const steps = itens.slice(0, 6);
+  const fallbackParagraphs = paragrafos
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .slice(0, 4);
+  const fallbackHighlights = destaques
+    .map((d) => d.trim())
+    .filter(Boolean)
+    .slice(0, 2);
+  const fallbackQuote = citacao?.trim();
+  const hasFallbackContent = fallbackParagraphs.length > 0 || fallbackHighlights.length > 0 || Boolean(fallbackQuote);
   return (
     <div className="page-a4 relative overflow-hidden flex flex-row" style={FIGMA_CSS.page}>
       {/* Sidebar larga teal */}
@@ -356,22 +366,48 @@ export function TemplateSidebarSteps({
         display: 'flex', flexDirection: 'column', gap: 16,
         overflow: 'hidden', boxSizing: 'border-box',
       }}>
-        {steps.map((item, i) => {
-          const sep = item.search(/[:\-–]/);
-          const head = sep > 0 ? item.slice(0, sep).trim() : item;
-          const body = sep > 0 ? item.slice(sep + 1).trim() : '';
-          return (
-            <div key={i} style={{
-              borderBottom: `1px solid ${FIGMA_COLORS.lightBg}`, paddingBottom: 12,
-            }}>
-              <p style={{ ...FIGMA_CSS.statNumber, fontSize: 20 }}>
-                {String(i + 1).padStart(2, '0')}
-              </p>
-              <h3 style={{ ...FIGMA_CSS.h3Dark, marginTop: 4 }}>{head}</h3>
-              {body && <p style={{ ...FIGMA_CSS.bodyGray, marginTop: 4 }}>{body}</p>}
-            </div>
-          );
-        })}
+        {steps.length > 0
+          ? steps.map((item, i) => {
+              const sep = item.search(/[:\-–]/);
+              const head = sep > 0 ? item.slice(0, sep).trim() : item;
+              const body = sep > 0 ? item.slice(sep + 1).trim() : '';
+              return (
+                <div key={i} style={{
+                  borderBottom: `1px solid ${FIGMA_COLORS.lightBg}`, paddingBottom: 12,
+                }}>
+                  <p style={{ ...FIGMA_CSS.statNumber, fontSize: 20 }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </p>
+                  <h3 style={{ ...FIGMA_CSS.h3Dark, marginTop: 4 }}>{head}</h3>
+                  {body && <p style={{ ...FIGMA_CSS.bodyGray, marginTop: 4 }}>{body}</p>}
+                </div>
+              );
+            })
+          : (
+            <>
+              {hasFallbackContent ? (
+                <>
+                  {fallbackParagraphs.map((p, i) => (
+                    <p key={`fp-${i}`} style={{ ...FIGMA_CSS.bodyGray }}>
+                      {p}
+                    </p>
+                  ))}
+                  {fallbackHighlights.map((h, i) => (
+                    <p key={`fh-${i}`} style={{ ...FIGMA_CSS.bodyGray, fontWeight: 600, color: FIGMA_COLORS.tealDark }}>
+                      {h}
+                    </p>
+                  ))}
+                  {fallbackQuote ? (
+                    <blockquote style={FIGMA_CSS.quoteBlock}>{fallbackQuote}</blockquote>
+                  ) : null}
+                </>
+              ) : (
+                <p style={FIGMA_CSS.bodyGray}>
+                  Conteúdo em preparação para esta página.
+                </p>
+              )}
+            </>
+          )}
       </div>
       <Badge numero={numeroPagina} />
     </div>

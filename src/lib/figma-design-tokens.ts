@@ -270,7 +270,8 @@ export const FIGMA_CSS = {
     boxSizing: 'border-box' as const,
   },
   bodyBlock: {
-    padding: '30px 50px 20px 50px',
+    // Reserva espaço inferior para o badge de página (40x36) sem sobrepor texto.
+    padding: '30px 50px 56px 50px',
     boxSizing: 'border-box' as const,
     flex: '1 1 0',
     minHeight: 0,
@@ -299,7 +300,7 @@ export const FIGMA_CSS = {
     width: '370px',
     height: '842px',
     backgroundColor: FIGMA_COLORS.white,
-    padding: '50px 50px 30px 20px',
+    padding: '50px 50px 56px 20px',
     boxSizing: 'border-box' as const,
   },
   badge: {

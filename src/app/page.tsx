@@ -48,18 +48,22 @@ function SettingsSwitch({
   );
 }
 
-/** Extensões aceitas para arquivo de texto ou PDF. */
+/** Extensões aceitas para arquivo de texto, PDF ou DOCX. */
 const TEXT_EXTENSIONS = ['.txt', '.vtt', '.srt', '.md', '.csv', '.json', '.xml'];
 const PDF_EXTENSION = '.pdf';
+const DOCX_EXTENSION = '.docx';
 function isAcceptedFile(f: File): boolean {
   const name = (f.name || '').toLowerCase();
   const okText = TEXT_EXTENSIONS.some((ext) => name.endsWith(ext));
   const okPdf = name.endsWith(PDF_EXTENSION) || f.type === 'application/pdf';
+  const okDocx =
+    name.endsWith(DOCX_EXTENSION) ||
+    f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
   const okType = (f.type || '').startsWith('text/') || f.type === 'application/x-subrip' || f.type === '';
-  return okText || okPdf || okType;
+  return okText || okPdf || okDocx || okType;
 }
 
-type Modo = 'completo' | 'resumido';
+type Modo = 'completo' | 'resumido' | 'design_only';
 
 function playNotificationSound() {
   if (typeof window === 'undefined') return;
@@ -95,6 +99,7 @@ export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [designOnlyAcknowledged, setDesignOnlyAcknowledged] = useState(false);
   const [genPhraseIndex, setGenPhraseIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [generatedData, setGeneratedData] = useState<PreviewData | null>(null);
@@ -112,6 +117,7 @@ export default function Home() {
 
   const isBatchMode = batchQueue.length > 0;
   const currentBatchFile = batchCurrentFile || (batchQueue.length > 0 ? batchQueue[batchIndex] : null);
+  const needsDesignOnlyAck = modo === 'design_only' && !designOnlyAcknowledged;
 
   // Recupera preview persistido após refresh/reload para não "voltar ao início"
   // durante ações longas (ex.: geração/download de PDF).
@@ -199,8 +205,12 @@ export default function Home() {
   }, []);
 
   const handleSubmit = useCallback(async () => {
+    if (needsDesignOnlyAck) {
+      setError('Confirme o aviso do modo "Só design" para continuar.');
+      return;
+    }
     if (!file) {
-      setError('Selecione um arquivo de texto (clique em "Selecionar Arquivo" ou arraste o arquivo na área).');
+      setError('Selecione um arquivo de texto, PDF ou DOCX (clique em "Selecionar Arquivo" ou arraste o arquivo na área).');
       return;
     }
     const cId = cursoId || 'geral';
@@ -237,7 +247,7 @@ export default function Home() {
       setLoading(false);
       abortControllerRef.current = null;
     }
-  }, [file, cursoId, modo, comPerguntas, runGenerate]);
+  }, [needsDesignOnlyAck, file, cursoId, modo, comPerguntas, runGenerate]);
 
   const processNextBatch = useCallback(() => {
     if (batchQueue.length === 0) return;
@@ -271,7 +281,7 @@ export default function Home() {
       const textFiles = files.filter((f) => isAcceptedFile(f));
       e.target.value = '';
       if (textFiles.length === 0) {
-        setError('Nenhum arquivo de texto ou PDF na pasta (.txt, .vtt, .srt, .md, .pdf, etc.).');
+        setError('Nenhum arquivo compatível na pasta (.txt, .vtt, .srt, .md, .pdf, .docx, etc.).');
         return;
       }
       setBatchQueue(textFiles);
@@ -416,7 +426,7 @@ export default function Home() {
       setFile(f);
       setError(null);
     } else if (f) {
-      setError('Arraste apenas arquivos de texto ou PDF.');
+      setError('Arraste apenas arquivos de texto, PDF ou DOCX.');
     }
   }, []);
 
@@ -624,7 +634,45 @@ export default function Home() {
                   <IconResume size={16} />
                   <span className="text-xs">Resumo</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => !loading && setModo('design_only')}
+                  disabled={loading}
+                  aria-pressed={modo === 'design_only'}
+                  aria-label="Aplicar apenas design"
+                  className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full py-2 px-3 transition-all ${
+                    modo === 'design_only'
+                      ? 'bg-white font-bold text-primary shadow-sm dark:bg-zinc-600 dark:shadow-[0_0_0_1px_rgba(100,100,120,0.5)]'
+                      : 'font-medium text-on-surface-variant hover:text-on-surface dark:text-white/70'
+                  }`}
+                  title="Use quando o texto já está pronto e você quer só diagramar"
+                >
+                  <span className="material-symbols-outlined text-[16px]">palette</span>
+                  <span className="text-xs">Só design</span>
+                </button>
               </div>
+              {modo === 'design_only' && (
+                <div className="mx-6 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2.5 text-[11px] leading-relaxed text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200">
+                  <span className="font-semibold">Atenção:</span>{' '}
+                  no modo <span className="font-semibold">Só design</span>, o arquivo deve estar minimamente
+                  processado e estruturado (títulos, seções e parágrafos claros) para o material final
+                  ter boa qualidade.
+                  <label className="mt-2 flex items-start gap-2 text-[11px] leading-snug">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 h-3.5 w-3.5 rounded border-amber-500/60 text-primary focus:ring-primary"
+                      checked={designOnlyAcknowledged}
+                      onChange={(e) => {
+                        setDesignOnlyAcknowledged(e.target.checked);
+                        setError(null);
+                      }}
+                    />
+                    <span>
+                      Li o aviso e confirmo que o arquivo já está minimamente processado.
+                    </span>
+                  </label>
+                </div>
+              )}
             </div>
 
             <div className="px-6">
@@ -828,7 +876,7 @@ export default function Home() {
                       id="vtt-file-input"
                       ref={inputRef}
                       type="file"
-                      accept=".txt,.vtt,.srt,.md,.csv,.json,.xml,.pdf,text/*,application/x-subrip,application/pdf"
+                      accept=".txt,.vtt,.srt,.md,.csv,.json,.xml,.pdf,.docx,text/*,application/x-subrip,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                       className="sr-only"
                       tabIndex={-1}
                       onChange={(e) => {
@@ -838,7 +886,7 @@ export default function Home() {
                             setFile(f);
                             setError(null);
                           } else {
-                            setError('Selecione um arquivo de texto ou PDF (.txt, .vtt, .srt, .md, .pdf, etc.).');
+                            setError('Selecione um arquivo de texto, PDF ou DOCX (.txt, .vtt, .srt, .md, .pdf, .docx, etc.).');
                           }
                         }
                         e.target.value = '';
@@ -886,7 +934,7 @@ export default function Home() {
                           ) : (
                             <>
                               <p className="mb-8 text-center text-xs leading-relaxed text-on-surface-variant dark:text-white/70 sm:text-sm">
-                                Solte o arquivo aqui ou selecione-o. Formatos: PDF, TXT, VTT, SRT, MD, CSV, JSON, XML (até 50&nbsp;MB).
+                                Solte o arquivo aqui ou selecione-o. Formatos: DOCX, PDF, TXT, VTT, SRT, MD, CSV, JSON, XML (até 50&nbsp;MB).
                               </p>
                             </>
                           )}
@@ -915,7 +963,7 @@ export default function Home() {
                           if (el) el.setAttribute('webkitdirectory', '');
                         }}
                         type="file"
-                        accept=".txt,.vtt,.srt,.md,.csv,.json,.xml,.pdf"
+                        accept=".txt,.vtt,.srt,.md,.csv,.json,.xml,.pdf,.docx"
                         className="sr-only"
                         aria-hidden
                         multiple
@@ -924,7 +972,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={handleSubmit}
-                        disabled={loading}
+                        disabled={loading || needsDesignOnlyAck}
                         aria-busy={loading}
                         aria-label="Geração inteligente"
                         className="group flex w-full items-center justify-center rounded-full px-8 py-3 text-base text-white shadow-lg transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:text-lg xl:text-xl xl:py-4 bg-gradient-to-br from-primary/90 to-[#6366f1] hover:from-primary hover:to-[#4f46e5] hover:shadow-xl hover:shadow-primary/30 focus:ring-4 focus:ring-primary/30"
