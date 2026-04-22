@@ -126,7 +126,8 @@
 .page-a4 > div,
 .page-a4 > aside,
 .page-a4 > section {
-  overflow: hidden;
+  /* Mantém o corte na folha (.page-a4), mas evita sumir com texto interno. */
+  overflow: visible;
   box-sizing: border-box;
 }
 

@@ -116,6 +116,26 @@ function chooseEditorialTemplate(pagina: PaginaDesign, isFirstContent: boolean):
   return 'double_column';
 }
 
+function deriveVtsdParagraphFallback(pagina: PaginaDesign, baseParagraphs: string[]): string[] {
+  const cleanedBase = baseParagraphs.map((p) => String(p || '').trim()).filter(Boolean);
+  if (cleanedBase.length > 0) return cleanedBase;
+
+  const candidates: string[] = [];
+  const pushIfNew = (value: unknown) => {
+    const text = String(value || '').trim();
+    if (!text) return;
+    if (!candidates.includes(text)) candidates.push(text);
+  };
+
+  (pagina.destaques || []).forEach(pushIfNew);
+  pushIfNew(pagina.citacao);
+  (pagina.itens || []).forEach(pushIfNew);
+  pushIfNew(pagina.subtitulo);
+
+  if (candidates.length > 0) return candidates.slice(0, 6);
+  return ['Conteúdo em preparação para esta página.'];
+}
+
 export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, renderPageWrapper, singlePageIndex }: MaterialPreviewBlocksProps) {
   if (!data || typeof data !== 'object') {
     return (
@@ -354,10 +374,14 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
           } else {
             lt = rawLt as LayoutTipo;
           }
+          const figmaParagraphs = deriveVtsdParagraphFallback(
+            pagina,
+            paragrafos.length > 0 ? paragrafos : introParagraphs,
+          );
           return wrap(renderFigmaTemplate(lt, {
             titulo,
             subtitulo: pagina.subtitulo as string | undefined,
-            paragrafos: paragrafos.length > 0 ? paragrafos : introParagraphs,
+            paragrafos: figmaParagraphs,
             destaques: (pagina.destaques as string[]) || [],
             citacao: pagina.citacao as string | undefined,
             itens: (pagina.itens as string[]) || [],

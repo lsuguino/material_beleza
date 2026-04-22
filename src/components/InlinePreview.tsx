@@ -465,6 +465,11 @@ export function InlinePreview({
       el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
     }
   }, [selectionMode, selectedPageIndex]);
+
+  useEffect(() => {
+    if (!selectionMode || selectedPageIndex < 0) return;
+    scrollToPage(selectedPageIndex);
+  }, [selectionMode, selectedPageIndex, scrollToPage]);
   const selectedPageData = selectedPageIndex >= 0 ? paginas[selectedPageIndex] : null;
   const selectedPageHasImage = selectedPageData
     ? !!(selectedPageData.imagem_url)
@@ -683,7 +688,10 @@ export function InlinePreview({
                     data-thumb-index={i}
                     type="button"
                     onClick={() => {
-                      if (selectionMode && selectable) togglePageSelection(i);
+                      if (selectionMode && selectable) {
+                        togglePageSelection(i);
+                        scrollToPage(i);
+                      }
                       else scrollToPage(i);
                     }}
                     className={`relative w-full overflow-hidden rounded border-2 transition-all ${
