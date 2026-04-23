@@ -8,8 +8,8 @@
  * 3. Cada página deve usar no máximo ~80% da área útil (respiro visual)
  */
 
-/** Fator de preenchimento máximo da área útil — menos conservador para reduzir folhas com muito branco. */
-const MAX_FILL_RATIO = 0.94;
+/** Fator de preenchimento máximo da área útil — mais permissivo para reduzir folhas com branco excessivo. */
+const MAX_FILL_RATIO = 1.08;
 /**
  * Tolerância menor de overflow:
  * quando passar do limite, tende a quebrar antes para evitar páginas visualmente apertadas.
@@ -337,8 +337,14 @@ function verticalExtrasReserve(layout: string, page: Record<string, unknown>): n
 function effectiveBodyCharBudget(layout: string, page: Record<string, unknown>): number {
   const base = budgetCharsForLayout(layout);
   const raw = verticalExtrasReserve(layout, page);
-  const reserve = Math.min(2400, Math.ceil(raw * 1.02));
-  return Math.max(240, base - reserve);
+  /**
+   * Reserva menos agressiva para aproveitar melhor a área útil:
+   * - escala menor da reserva vertical
+   * - teto absoluto menor
+   * - piso de caracteres maior para evitar páginas "vazias"
+   */
+  const reserve = Math.min(1300, Math.ceil(raw * 0.68));
+  return Math.max(340, base - reserve);
 }
 
 function collectStepItems(page: Record<string, unknown>): string[] {
