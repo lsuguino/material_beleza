@@ -22,13 +22,17 @@ INSTRUÇÕES OBRIGATÓRIAS:
    - Os títulos de cada página formam o SUMÁRIO do material. Escolha-os como se fossem itens de um índice: claros, diretos e descritivos do conteúdo daquela seção.
    - Quando um assunto terminar, a próxima página inicia com o novo título/tópico.
 3. Formatação textual (obrigatório):
-   - Conceitos, definições, partes do método, raciocínio do professor e explicações didáticas: **sempre em texto corrido** (parágrafos desenvolvidos em bloco_principal e/ou blocos “text”). **PROIBIDO** transformar a teoria inteira em lista no lugar dos parágrafos.
-   - Campo **“itens”** (tópicos numerados no material impresso): em **cada página de conteúdo**, inclua **3 ou 4** frases **curtas** (no máximo ~22 palavras cada), com tom **acionável** — passos, lembretes ou conclusões práticas que o professor **deixou explícito** no VTT (priorize listas “primeiro… segundo…”, recomendações do tipo “faça…”, “evite…”, ou ideias que você já desenvolveu no bloco_principal). **Nada de inventar:** só o que está sustentado na transcrição. **Não copie** um parágrafo inteiro do bloco_principal dentro de “itens”; reformule de forma telegráfica.
+   - Conceitos e explicações devem priorizar clareza didática em **formato híbrido**: combine parágrafos curtos (bloco_principal/content_blocks text) com listas práticas, passo a passo, checklist e tabela quando o conteúdo pedir. Evite páginas de parágrafo único muito longo.
+   - Campo **“itens”** (tópicos numerados no material impresso): em **cada página de conteúdo**, inclua **4 a 6** frases **curtas** (no máximo ~20 palavras cada), com tom **acionável** — passos, lembretes ou conclusões práticas que o professor **deixou explícito** no VTT (priorize listas “primeiro… segundo…”, recomendações do tipo “faça…”, “evite…”, ou ideias que você já desenvolveu no bloco_principal). **Nada de inventar:** só o que está sustentado na transcrição. **Não copie** um parágrafo inteiro do bloco_principal dentro de “itens”; reformule de forma telegráfica.
    - Campo **”destaques”**: use SOMENTE quando o professor der uma dica explícita (“minha dica é...”, “uma coisa importante...”, “tente fazer...”) ou propor um exercício prático (“faça isso...”, “teste...”). Não invente dicas nem exercícios genéricos. Se a transcrição não tem dica ou exercício explícito, use array vazio []. O primeiro destaque vira “Dica do Autor”, o segundo vira “Exercício Prático” — ambos só aparecem se existirem.
    - Use h1 (titulo_bloco) para pontos lógicos principais; use subtitulo para divisões complementares do mesmo assunto.
    - Formate citações ou falas marcantes no campo “citacao” (caixa com aspas no layout).
 3.1 EXEMPLOS E PREENCHIMENTO POR PÁGINA (miolo):
    - Em **cada** página de conteúdo, privilegie ilustrar o tópico com **exemplos, casos, situações ou falas** que o professor citou no VTT (integrados em parágrafos no bloco_principal, ou em **citacao** se for trecho fiel curto, ou versão telegráfica em **itens**).
+   - REGRA EXTRA (OBRIGATÓRIA): quando identificar conteúdo de **“passo a passo”** (sequência de ações, procedimentos, checklists, "primeiro/depois/por fim", listas numeradas), force no mesmo tópico:
+     1) **estrutura numerada** em "itens" (mín. 4 itens, na ordem lógica),
+     2) **sugestao_tabela** de resumo com colunas curtas (ex.: "Etapa", "Ação", "Resultado esperado").
+     Não invente etapas: use apenas a transcrição.
    - **Não** deixe páginas “vazias” no sentido didático: evite folha só com título + uma ou duas frases — reúna mais material fiel do VTT na mesma página ou estenda o raciocínio com outro detalhe do mesmo assunto.
    - Se o professor não deu exemplo explícito para aquele ponto, desenvolva o conceito com o máximo de nuance **extraída da transcrição** (sem inventar fatos externos).
    - O sistema de layout **continua** páginas longas automaticamente (continuação): **não** comprima nem corte ideias para caber — prefira **nova página** com o restante do texto.
@@ -41,11 +45,11 @@ REGRAS TÉCNICAS:
 8. Retorne APENAS JSON válido, sem texto antes ou depois, sem cercas de código.
 9. PÁGINAS COM PROFUNDIDADE E RESPIRO VISUAL:
    - **REGRA FUNDAMENTAL DE PREENCHIMENTO**: Cada página deve ocupar NO MÁXIMO 80% da área útil. NUNCA encha texto até colidir com bordas ou rodapé no desenho mental — margens generosas, espaçamento entre blocos. Conteúdo que não couber vira **página seguinte** (continuação), nunca letras cortadas nas laterais.
-   - bloco_principal: mínimo 180 palavras e MÁXIMO 280 palavras (~1500 caracteres) por página. Se exceder, crie uma NOVA PÁGINA com o restante do conteúdo — NUNCA corte ou comprima texto para forçá-lo a caber.
-   - Explique contexto, lógica e aplicação prática; evite texto telegráfico.
-   - Prefira MAIS páginas bem espaçadas a poucas páginas lotadas. Cada página deve parecer uma lâmina editorial profissional, não um bloco de texto corrido.
-   - Pelo menos ~70% das **palavras** da página devem estar no bloco_principal (parágrafos). O restante pode concentrar-se em “itens” e “destaques” (frases curtas).
-   - “itens”: 3 ou 4 por página de conteúdo (vide item 3). Use [] só se a transcrição **realmente** não oferecer nenhum passo ou take-away aplicável naquela página (caso raro).
+   - bloco_principal: mínimo 90 palavras e MÁXIMO 170 palavras por página (ou equivalente em 2-4 parágrafos curtos). Se exceder, crie uma NOVA PÁGINA com o restante do conteúdo — NUNCA corte ou comprima texto para forçá-lo a caber.
+   - Explique contexto, lógica e aplicação prática sem "blocos gigantes": prefira blocos curtos + estrutura visual.
+   - Prefira MAIS páginas bem espaçadas e escaneáveis; cada página deve parecer uma apostila prática, não um bloco de texto corrido.
+   - Pelo menos ~45% das **palavras** da página devem estar em bloco_principal/parágrafos. O restante pode ficar em “itens”, “destaques” e tabela/diagrama.
+   - “itens”: 4 a 6 por página de conteúdo (vide item 3). Use [] só se a transcrição **realmente** não oferecer nenhum passo ou take-away aplicável naquela página (caso raro).
    - “destaques”: só quando fizer sentido para callouts (pode ser []). Não use “destaques” para substituir “itens”.
    - PENSE PÁGINA POR PÁGINA: gere cada página individualmente, como uma lâmina independente. Não pense no material como um bloco contínuo — cada página tem seu próprio equilíbrio visual.
 10. PÁGINAS DE INTRODUÇÃO DE MÓDULO/CAPÍTULO:
@@ -103,7 +107,8 @@ IMPORTANTE — EQUILÍBRIO VISUAL:
 - Cada página deve parecer uma lâmina de revista editorial: conteúdo bem distribuído, com espaço para respirar, nunca ultrapassando 80% da área.
 - Se o conteúdo ultrapassa o limite de uma página, CRIE UMA NOVA PÁGINA para o restante — jamais comprima.
 - Páginas de abertura/introdução de módulo: breves e visuais (título grande + 2-3 frases + sugestão de imagem).
-- Páginas de conteúdo: texto corrido equilibrado + itens + citação + elementos visuais (gráficos, fluxogramas, imagens).
+- Páginas de conteúdo: estrutura de apostila prática (parágrafos curtos + itens + passo a passo + citação + elementos visuais).
+- Se houver “passo a passo”, a página DEVE trazer simultaneamente itens numerados + sugestao_tabela de resumo do processo.
 - Pense em cada página INDIVIDUALMENTE como uma peça gráfica autônoma.
 
 CONFERÊNCIA OBRIGATÓRIA (antes de retornar o JSON): Ao final da geração do material escrito, faça uma CONFERÊNCIA: confira se TODO o assunto falado no VTT está presente no material. Percorra mentalmente os tópicos, exemplos e informações da transcrição e verifique se cada um foi coberto em alguma página. Se algo importante do VTT estiver faltando no material, INCLUA em uma página apropriada (nova ou existente). Só retorne o JSON quando tiver certeza de que o material cobre 100% do conteúdo da transcrição. O design do material só será gerado depois desta conferência; portanto o conteúdo deve estar completo.`;
@@ -173,9 +178,9 @@ export interface ContentAgentResult {
  */
 const MODE_INSTRUCTIONS: Record<ModoContent, string> = {
   completo:
-    'Material COMPLETO: bloco_principal com texto corrido (mín. 200, máx. 280 palavras por página). Se o conteúdo não cabe em uma página, CRIE OUTRA — nunca comprima. Em cada página de miolo, inclua exemplos/casos do VTT quando existirem na transcrição. Preencha "itens" com 3 ou 4 tópicos curtos e acionáveis, só com base no VTT. Use "destaques" para exemplos ou dicas de callout. Não troque parágrafos por listas. LEMBRE: cada página deve usar no máximo 80% da área — prefira mais páginas arejadas a poucas lotadas. Páginas de abertura de módulo devem ser BREVES (máx. 80 palavras no bloco_principal).',
+    'Material COMPLETO em formato apostila prática: 2-4 parágrafos curtos por página (mín. 90, máx. 170 palavras no bloco_principal), combinados com listas de ação. Em cada página de miolo, inclua exemplos/casos do VTT quando existirem. Preencha "itens" com 4 a 6 tópicos curtos e acionáveis, só com base no VTT. Use "destaques" para dica/exercício explícito. Quando houver comparações/eventos/etapas, prefira tabela, fluxograma ou lista numerada em vez de parágrafo longo. LEMBRE: cada página deve usar no máximo 80% da área. Páginas de abertura devem ser BREVES (máx. 80 palavras no bloco_principal).',
   resumido:
-    'Material RESUMIDO: mín. 150, máx. 220 palavras por página em parágrafos. Inclua exemplos citados pelo professor quando houver no VTT. Inclua "itens" com 2 ou 3 tópicos curtos quando o VTT tiver passos. "destaques" para exemplos pontuais. Cada página no máximo 80% preenchida; evite página só com título. Páginas de abertura: apenas título + frase curta.',
+    'Material RESUMIDO em formato prático: 1-3 parágrafos curtos por página (mín. 70, máx. 130 palavras no bloco_principal), com foco em escaneabilidade. Inclua exemplos citados pelo professor quando houver no VTT. Inclua "itens" com 3 a 5 tópicos curtos quando o VTT tiver passos. "destaques" para exemplos pontuais. Quando houver listas de eventos, passos ou categorias, prefira estrutura em itens/tabela. Cada página no máximo 80% preenchida; evite página só com título.',
 };
 
 /** Limite de caracteres da transcrição por modo (menor = resposta mais rápida) */
@@ -272,7 +277,7 @@ ATENÇÃO: a tentativa anterior ficou curta para estudo autossuficiente.
       const parsed = parseJsonFromAI<ContentAgentResult>(raw);
       const chars = contentResultChars(parsed);
       const avgWords = averageWordsPerContentPage(parsed);
-      const minAvgWords = modo === 'completo' ? 180 : 130;
+      const minAvgWords = modo === 'completo' ? 105 : 80;
       if ((chars >= minCharsTarget && avgWords >= minAvgWords) || attempt === 2) {
         return parsed;
       }
@@ -307,6 +312,7 @@ REGRAS IMPORTANTES:
 - Conceitos/teoria/explicações: SEMPRE em texto corrido no "bloco_principal" (parágrafos).
 - "destaques" é OPCIONAL e só deve ser usado para EXEMPLOS concretos citados pelo professor, variações listadas explicitamente, ou passos enumerados na fala. Se não houver, omita o campo ou use [].
 - PROIBIDO transformar o resumo em bullet points.
+- Quando o trecho for "passo a passo", inclua no JSON da página: "itens" numeráveis (4+) e "sugestao_tabela" com resumo das etapas.
 - Cada página deve parecer completa: integre exemplos do texto-fonte quando existirem; não deixe páginas só com título.
 Cada página de conteúdo deve ter "bloco_principal" com pelo menos 140 palavras (resumo objetivo, mas didático e explicativo).`;
 
@@ -398,6 +404,7 @@ export async function enrichPageFromTranscription(
   itens: string[];
   destaques: string[];
   citacao: string;
+  sugestao_tabela?: SugestaoTabela;
 }> {
   const transcricaoEnviada = transcricao.slice(0, 60000);
   const modeInstruction = MODE_INSTRUCTIONS[modo];
@@ -410,6 +417,7 @@ REGRAS FUNDAMENTAIS:
 3. ADICIONE informações que o professor falou sobre o tópico "${tituloBloco}" mas que não foram incluídas na versão atual.
 4. Procure na transcrição: exemplos adicionais, explicações complementares, dicas práticas, contexto extra — tudo que o professor disse sobre este assunto específico.
 5. O resultado deve ser um texto corrido (parágrafos), não listas.
+5.1 EXCEÇÃO OBRIGATÓRIA: se o tópico tiver formato de passo a passo, mantenha parágrafos curtos e adicione "itens" em sequência lógica + "sugestao_tabela" de resumo das etapas.
 6. ${modeInstruction}
 7. IDIOMA: ${IDIOMA_RULE}
 8. Se a transcrição não tiver mais conteúdo relevante sobre este tópico além do que já existe, retorne o texto existente sem alterações.
@@ -417,9 +425,10 @@ REGRAS FUNDAMENTAIS:
 ESTRUTURA DO JSON DE RETORNO:
 {
   "bloco_principal": "texto existente + novos parágrafos integrados de forma fluida",
-  "itens": ["3-4 tópicos curtos e acionáveis extraídos do VTT sobre este tema"],
+  "itens": ["4-6 tópicos curtos e acionáveis extraídos do VTT sobre este tema (quando houver passo a passo, em ordem de execução)"],
   "destaques": ["dica ou exercício explícito do professor, se houver"],
-  "citacao": "trecho fiel e curto do VTT sobre este tópico (diferente do bloco_principal)"
+  "citacao": "trecho fiel e curto do VTT sobre este tópico (diferente do bloco_principal)",
+  "sugestao_tabela": { "titulo": "...", "colunas": ["Etapa", "Ação", "Resultado esperado"], "linhas": [["1", "...", "..."]] }
 }
 
 Retorne APENAS JSON válido, sem texto antes ou depois, sem cercas de código.`;
@@ -448,6 +457,7 @@ Enriqueça o conteúdo desta página consultando a transcrição acima. Adicione
       itens: [],
       destaques: [],
       citacao: '',
+      sugestao_tabela: undefined,
     };
   }
 
@@ -457,6 +467,7 @@ Enriqueça o conteúdo desta página consultando a transcrição acima. Adicione
       itens: string[];
       destaques: string[];
       citacao: string;
+      sugestao_tabela?: SugestaoTabela;
     }>(raw);
   } catch {
     return {
@@ -464,6 +475,7 @@ Enriqueça o conteúdo desta página consultando a transcrição acima. Adicione
       itens: [],
       destaques: [],
       citacao: '',
+      sugestao_tabela: undefined,
     };
   }
 }
@@ -504,7 +516,8 @@ ESTRUTURA DO JSON DE RETORNO (página completa):
   "bloco_principal": "texto modificado conforme instrução...",
   "itens": ["..."],
   "destaques": ["..."],
-  "citacao": "..."
+  "citacao": "...",
+  "sugestao_tabela": { "titulo": "...", "colunas": [], "linhas": [] }
 }`;
 
   const userContent = `${transcricaoEnviada ? `Transcrição da aula (consulte se necessário):\n\n${transcricaoEnviada}\n\n---\n` : ''}Conteúdo ATUAL da página:

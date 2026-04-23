@@ -411,14 +411,18 @@ function alternateVtsdContentLayouts(conteudo: Record<string, unknown>): Record<
     const hasImagem = Boolean(p.sugestao_imagem || p.imagem_url);
     const hasDestaques = Array.isArray(p.destaques) && (p.destaques as string[]).length > 0;
     const hasCitacao = Boolean(p.citacao);
+    const itensCount = Array.isArray(p.itens) ? (p.itens as string[]).length : 0;
+    const hasPracticalDensity = itensCount >= 4 || hasTabela || hasFluxograma;
 
     // Escolher layout baseado no conteúdo
     let bestLayout: string;
 
-    if (hasGrafico || hasTabela || hasImagem) {
+    if (hasGrafico || hasImagem) {
       bestLayout = 'A4_4_magazine';
-    } else if (hasFluxograma || (hasItens && (p.itens as string[]).length >= 3)) {
+    } else if (hasPracticalDensity) {
       bestLayout = 'A4_3_sidebar_steps';
+    } else if (hasItens && itensCount >= 2 && hasDestaques) {
+      bestLayout = 'A4_2_conteudo_misto';
     } else if (contentIndex === 0) {
       bestLayout = 'A4_1_abertura';
     } else if (hasDestaques && hasCitacao) {
