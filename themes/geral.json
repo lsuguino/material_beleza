@@ -1,0 +1,9 @@
+{
+  "name": "Venda Todo Santo Dia",
+  "primary": "#2A2A2A",
+  "primaryLight": "#4a4a4a",
+  "primaryDark": "#1a1a1a",
+  "accent": "#55B8A1",
+  "backgroundColor": "#F1F1F1",
+  "layoutClass": "theme-geral"
+}

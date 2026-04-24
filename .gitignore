@@ -1,0 +1,14 @@
+node_modules
+.next
+.env
+.env.local
+.env*.local
+.ev.local
+out
+*.log
+.DS_Store
+.claude/
+*.tsbuildinfo
+
+# Treino local (snapshots de materiais — pode conter dados sensíveis)
+data/training-feedback.jsonl
