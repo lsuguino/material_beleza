@@ -20,14 +20,22 @@ function paragraphsFromBloco(blocoPrincipal?: string): string[] {
 }
 
 /**
- * Página final VTSD: arte da referência (`pagina-conclusao-fundo.svg`) + título e texto em HTML.
+ * Página final VTSD: arte da referência (`pagina-conclusao-fundo.svg`) + texto em HTML.
+ *
+ * Conforme spec do usuário (referência da arte oficial VTSD):
+ * - SEM título "CONCLUSÃO" visual (a arte do SVG já comunica o fechamento)
+ * - SEM número de página (página final, não navegável)
+ * - Body centralizado verticalmente, acima do logo "vendatodo Santodia"
+ *   embutido no SVG de fundo
  */
 export function PageConclusaoVtsd({
-  pageNumber,
-  showPageNumber = true,
+  pageNumber: _pageNumber,
+  showPageNumber: _showPageNumber = false,
   titulo = VTSD_CONCLUSAO_TITULO,
   blocoPrincipal,
 }: PageConclusaoVtsdProps) {
+  void _pageNumber;
+  void _showPageNumber;
   const parasH = paragraphsFromBloco(blocoPrincipal);
 
   return (
@@ -50,17 +58,11 @@ export function PageConclusaoVtsd({
         draggable={false}
       />
       <div className="page-body vtsd-conclusao-body relative z-[1] box-border">
-        <header className="vtsd-conclusao-header">
-          <h2 className="vtsd-conclusao-title">{titulo}</h2>
-          <div className="vtsd-conclusao-title-accent" aria-hidden />
-        </header>
+        {/* Título mantido pra acessibilidade, escondido visualmente */}
+        <h2 className="vtsd-conclusao-title sr-only">{titulo}</h2>
         {renderParagraphParts(parasH, 'vtsd-conclusao-para')}
       </div>
       <div className="page-sidebar" aria-hidden />
-      <footer className="page-footer vtsd-conclusao-footer vtsd-conclusao-footer--on-svg">
-        <span className="vtsd-footer-wordmark sr-only">venda todo santo dia</span>
-        {showPageNumber && typeof pageNumber === 'number' ? <span>Página {pageNumber}</span> : null}
-      </footer>
     </section>
   );
 }

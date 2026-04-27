@@ -56,8 +56,11 @@ export function GallerySidebar({ refreshKey = 0, collapsed = false }: Props) {
 
   const handleOpen = useCallback(
     async (item: GalleryItem) => {
+      // Persiste no storage local (preview e PDF leem de lá).
       await savePreviewDataToClient(item.previewData);
-      router.push(`/preview?galleryId=${encodeURIComponent(item.id)}`);
+      // Navega pra HOME com galleryId — home carrega como editor inline,
+      // reconstroi o File do VTT original e habilita Reorganizar/etc.
+      router.push(`/?galleryId=${encodeURIComponent(item.id)}`);
     },
     [router],
   );

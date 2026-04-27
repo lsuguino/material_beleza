@@ -12,11 +12,17 @@ import { COURSE_PICKER_OPTIONS } from '@/lib/coursePickerOptions';
 import { ScribolitoWalk } from '@/components/ScribolitoWalk';
 import { IconBell, IconSun, IconMoon, IconMinimize, IconMaximize, IconCourse, IconMaterialType, IconBookOpen, IconResume, IconActivity, IconSettings } from '@/components/RtgIcons';
 import { GENERATION_PHRASES, pickPhraseIndex } from '@/lib/generation-phrases';
-import { clearPreviewDataFromClient, loadPreviewDataFromClient, savePreviewDataToClient } from '@/lib/preview-storage';
+import {
+  clearPreviewDataFromClient,
+  loadPreviewDataFromClient,
+  savePreviewDataToClient,
+  PREVIEW_BROADCAST_CHANNEL,
+} from '@/lib/preview-storage';
 import { buildPlainTextFromPreview } from '@/lib/previewPlainText';
 import { InlinePreview } from '@/components/InlinePreview';
 import { GallerySidebar } from '@/components/GallerySidebar';
-import { saveMaterialToGallery } from '@/lib/gallery-storage';
+import { getFromGallery, saveMaterialToGallery } from '@/lib/gallery-storage';
+import { useSearchParams } from 'next/navigation';
 
 function SettingsSwitch({
   checked,
@@ -65,7 +71,7 @@ function isAcceptedFile(f: File): boolean {
   return okText || okPdf || okDocx || okType;
 }
 
-type Modo = 'completo' | 'resumido' | 'design_only';
+type Modo = 'completo' | 'resumido';
 
 function playNotificationSound() {
   if (typeof window === 'undefined') return;
@@ -88,6 +94,8 @@ function playNotificationSound() {
 
 export default function Home() {
   const { notifyWhenDone, dark, toggleDark, toggleNotifyWhenDone } = useScriboUi();
+  const searchParams = useSearchParams();
+  const galleryIdFromUrl = searchParams?.get('galleryId') || null;
   const loadingWasActive = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
@@ -103,13 +111,28 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   /** Bump sempre que salvamos um novo material; sinaliza GallerySidebar pra recarregar. */
   const [gallerySeq, setGallerySeq] = useState(0);
-  const [designOnlyAcknowledged, setDesignOnlyAcknowledged] = useState(false);
   const [genPhraseIndex, setGenPhraseIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [generatedData, setGeneratedData] = useState<PreviewData | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [pdfReady, setPdfReady] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  /** Tamanho dos thumbnails do preview adaptado ao viewport. */
+  const [thumbSize, setThumbSize] = useState<{ w: number; h: number }>({ w: 70, h: 99 });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const update = () => {
+      const w = window.innerWidth;
+      if (w >= 3200) setThumbSize({ w: 180, h: 254 });
+      else if (w >= 2560) setThumbSize({ w: 150, h: 212 });
+      else if (w >= 1920) setThumbSize({ w: 120, h: 170 });
+      else if (w >= 1280) setThumbSize({ w: 90, h: 127 });
+      else setThumbSize({ w: 70, h: 99 });
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   /** Referência ao AbortController ativo — permite cancelar a geração em curso */
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -121,7 +144,7 @@ export default function Home() {
 
   const isBatchMode = batchQueue.length > 0;
   const currentBatchFile = batchCurrentFile || (batchQueue.length > 0 ? batchQueue[batchIndex] : null);
-  const needsDesignOnlyAck = modo === 'design_only' && !designOnlyAcknowledged;
+  const needsDesignOnlyAck = false;
 
   // Recupera preview persistido após refresh/reload para não "voltar ao início"
   // durante ações longas (ex.: geração/download de PDF).
@@ -143,6 +166,82 @@ export default function Home() {
       cancelled = true;
     };
   }, [generatedData, loading, isBatchMode]);
+
+  /**
+   * Quando a URL tem ?galleryId=X (vem de click na galeria), carrega o material
+   * da galeria, reconstroi o File a partir do VTT salvo e abre o editor.
+   * Permite que TODAS as ações editoriais (Reorganizar, Editar imagem, etc.)
+   * funcionem em qualquer um dos materiais persistidos.
+   */
+  useEffect(() => {
+    if (!galleryIdFromUrl) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const item = await getFromGallery(galleryIdFromUrl);
+        if (!item || cancelled) return;
+        // Carrega dados na home
+        setGeneratedData(item.previewData as PreviewData);
+        setShowPreview(true);
+        if (item.cursoId) setCursoId(item.cursoId);
+        if (item.modo === 'resumido' || item.modo === 'completo') {
+          setModo(item.modo);
+        }
+        // Reconstroi o File do VTT pra Reorganizar/etc. usarem
+        if (item.originalVtt) {
+          const blob = new Blob([item.originalVtt], { type: 'text/vtt' });
+          const reconstructed = new File([blob], 'material.vtt', { type: 'text/vtt' });
+          setFile(reconstructed);
+        }
+      } catch (err) {
+        console.warn('[home] falha ao carregar material da galeria:', err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [galleryIdFromUrl]);
+
+  /**
+   * BroadcastChannel: captura eventos de "preview salvo" pra recuperar resultado
+   * quando o componente é remontado pelo Fast Refresh do Next.js dev DURANTE uma
+   * geração em curso. O fetch original termina e salva no storage, e este listener
+   * carrega no state da nova instância.
+   */
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') return;
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel(PREVIEW_BROADCAST_CHANNEL);
+    } catch {
+      return;
+    }
+    const handler = async (ev: MessageEvent) => {
+      const msg = ev.data as { type?: string } | null;
+      if (!msg) return;
+      if (msg.type === 'cleared') {
+        setGeneratedData(null);
+        setShowPreview(false);
+        return;
+      }
+      if (msg.type !== 'saved') return;
+      try {
+        const restored = await loadPreviewDataFromClient();
+        if (restored && typeof restored === 'object') {
+          setGeneratedData(restored as PreviewData);
+          setShowPreview(true);
+          setLoading(false);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    channel.addEventListener('message', handler);
+    return () => {
+      channel?.removeEventListener('message', handler);
+      channel?.close();
+    };
+  }, []);
 
   useEffect(() => {
     if (loadingWasActive.current && !loading && generatedData && notifyWhenDone) {
@@ -210,7 +309,7 @@ export default function Home() {
 
   const handleSubmit = useCallback(async () => {
     if (needsDesignOnlyAck) {
-      setError('Confirme o aviso do modo "Só design" para continuar.');
+      setError('Confirme o aviso para continuar.');
       return;
     }
     if (!file) {
@@ -527,7 +626,7 @@ export default function Home() {
           ${mobileMenuOpen ? 'max-lg:fixed max-lg:inset-0 max-lg:z-50' : 'max-lg:hidden'}
           flex shrink-0 flex-col overflow-y-auto bg-[#eef0f4] font-body text-sm font-medium dark:bg-[#1e2028]
           lg:order-1 lg:h-auto lg:max-h-none lg:rounded-r-2xl transition-all duration-300
-          ${sidebarCollapsed ? 'lg:w-24' : 'lg:w-80'}
+          ${sidebarCollapsed ? 'lg:w-24 3xl:w-28' : 'lg:w-80 3xl:w-[26rem] 4xl:w-[30rem]'}
         `}>
           {/* Controle de toggle */}
           <div className={`flex items-center transition-all duration-300 ${sidebarCollapsed ? 'justify-center px-2 py-3' : 'justify-between px-5 py-3'}`}>
@@ -604,7 +703,7 @@ export default function Home() {
                         if (loading || !opt.enabled) return;
                         setCursoId(opt.id);
                       }}
-                      className={`flex min-h-[3rem] items-center justify-center rounded-xl border-2 px-2 py-2 transition-all ${
+                      className={`flex min-h-[3rem] 3xl:min-h-[4.5rem] 4xl:min-h-[5.5rem] items-center justify-center rounded-xl border-2 px-2 py-2 3xl:py-3 transition-all ${
                         !opt.enabled
                           ? 'cursor-not-allowed border-slate-300/90 bg-slate-200/95 dark:border-zinc-500/55 dark:bg-zinc-600/45'
                           : selected
@@ -617,7 +716,7 @@ export default function Home() {
                           src={opt.logoSrc}
                           alt=""
                           draggable={false}
-                          className={`h-auto w-full min-h-0 max-h-9 max-w-full object-contain object-center sm:max-h-10 ${
+                          className={`h-auto w-full min-h-0 max-h-9 max-w-full object-contain object-center sm:max-h-10 3xl:max-h-14 4xl:max-h-16 ${
                             opt.enabled && selected
                               ? 'brightness-0 dark:brightness-100'
                               : 'brightness-0 opacity-55 dark:brightness-100 dark:opacity-50'
@@ -674,45 +773,7 @@ export default function Home() {
                   <IconResume size={16} />
                   <span className="text-xs">Resumo</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => !loading && setModo('design_only')}
-                  disabled={loading}
-                  aria-pressed={modo === 'design_only'}
-                  aria-label="Aplicar apenas design"
-                  className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full py-2 px-3 transition-all ${
-                    modo === 'design_only'
-                      ? 'bg-white font-bold text-primary shadow-sm dark:bg-zinc-600 dark:shadow-[0_0_0_1px_rgba(100,100,120,0.5)]'
-                      : 'font-medium text-on-surface-variant hover:text-on-surface dark:text-white/70'
-                  }`}
-                  title="Use quando o texto já está pronto e você quer só diagramar"
-                >
-                  <span className="material-symbols-outlined text-[16px]">palette</span>
-                  <span className="text-xs">Só design</span>
-                </button>
               </div>
-              {modo === 'design_only' && (
-                <div className="mx-6 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2.5 text-[11px] leading-relaxed text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200">
-                  <span className="font-semibold">Atenção:</span>{' '}
-                  no modo <span className="font-semibold">Só design</span>, o arquivo deve estar minimamente
-                  processado e estruturado (títulos, seções e parágrafos claros) para o material final
-                  ter boa qualidade.
-                  <label className="mt-2 flex items-start gap-2 text-[11px] leading-snug">
-                    <input
-                      type="checkbox"
-                      className="mt-0.5 h-3.5 w-3.5 rounded border-amber-500/60 text-primary focus:ring-primary"
-                      checked={designOnlyAcknowledged}
-                      onChange={(e) => {
-                        setDesignOnlyAcknowledged(e.target.checked);
-                        setError(null);
-                      }}
-                    />
-                    <span>
-                      Li o aviso e confirmo que o arquivo já está minimamente processado.
-                    </span>
-                  </label>
-                </div>
-              )}
             </div>
 
             <div className="px-6">
@@ -759,19 +820,19 @@ export default function Home() {
               />
             </div>
           ) : (
-          <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden px-4 py-2 sm:px-6 lg:px-10 lg:py-3">
+          <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl 3xl:max-w-[1800px] 4xl:max-w-[2400px] 5xl:max-w-[3000px] flex-col overflow-hidden px-4 py-2 sm:px-6 lg:px-10 lg:py-3 3xl:px-16 3xl:py-6">
 
-            <div className="mb-2 max-w-3xl shrink-0 lg:mb-3">
-              <h1 className="text-2xl font-bold leading-[1.1] tracking-tight text-on-surface dark:text-white sm:text-3xl lg:text-4xl xl:text-4xl 2xl:text-5xl" style={{ fontFamily: "'Transforma Sans', sans-serif" }}>
+            <div className="mb-2 max-w-3xl 3xl:max-w-5xl shrink-0 lg:mb-3">
+              <h1 className="text-2xl font-bold leading-[1.1] tracking-tight text-on-surface dark:text-white sm:text-3xl lg:text-4xl xl:text-4xl 2xl:text-5xl 3xl:text-6xl 4xl:text-7xl" style={{ fontFamily: "'Transforma Sans', sans-serif" }}>
                 Transforme conhecimento em
                 {' '}<span className="bg-gradient-to-r from-primary via-[#4f46e5] to-primary bg-clip-text text-transparent" style={{ fontFamily: "'Transforma Script', cursive", fontStyle: 'italic' }}>inteligência.</span>
               </h1>
-              <p className="mt-1 text-xs font-bold text-on-surface dark:text-white sm:text-sm lg:text-base" style={{ fontFamily: "'Transforma Sans', sans-serif" }}>
+              <p className="mt-1 text-xs font-bold text-on-surface dark:text-white sm:text-sm lg:text-base 3xl:text-xl 4xl:text-2xl" style={{ fontFamily: "'Transforma Sans', sans-serif" }}>
                 Crie materiais didáticos profissionais a partir de transcrições de vídeo, copys ou qualquer texto.
               </p>
             </div>
 
-            <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-4 overflow-hidden lg:grid-cols-12 lg:gap-6">
+            <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-4 overflow-hidden lg:grid-cols-12 lg:gap-6 3xl:gap-10">
               {/* Quadro principal: seleção, geração (orbes + frases) ou resultado */}
               <div className={loading ? 'lg:col-span-8' : 'lg:col-span-8'}>
                 {loading ? (
@@ -860,38 +921,13 @@ export default function Home() {
                             )}
                             <button
                               type="button"
-                              onClick={openPreviewFull}
-                              className="flex items-center gap-1 rounded-full border-2 border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 dark:bg-primary/10 dark:hover:bg-primary/20"
-                            >
-                              <span className="material-symbols-outlined text-[14px]">visibility</span>
-                              Ver preview
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleDownloadPdfMain}
-                              disabled={pdfLoading}
-                              className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                              onClick={handleReset}
+                              title="Limpar e começar um novo material"
+                              className="flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
                               style={{ backgroundColor: '#446EFF' }}
                             >
-                              <span className="material-symbols-outlined text-[14px]">picture_as_pdf</span>
-                              {pdfLoading ? 'Gerando PDF...' : 'PDF'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleDownloadTextMain}
-                              className="flex items-center gap-1 rounded-full border border-[#1f8f6f]/40 bg-[#1f8f6f]/15 px-3 py-1.5 text-xs font-semibold text-[#1a6b55] dark:text-emerald-300"
-                            >
-                              <span className="material-symbols-outlined text-[14px]">article</span>
-                              TXT
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleReset}
-                              title="Gerar novo material"
-                              aria-label="Fechar e gerar novo material"
-                              className="flex h-7 w-7 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high dark:hover:bg-surface-high/50"
-                            >
-                              <span className="material-symbols-outlined text-[16px]">close</span>
+                              <span className="material-symbols-outlined text-[16px]">add</span>
+                              Gerar novo material
                             </button>
                           </div>
                         </div>
@@ -904,9 +940,9 @@ export default function Home() {
                                 onClick={openPreviewFull}
                                 title={`Página ${i + 1}`}
                                 className="flex-shrink-0 cursor-pointer overflow-hidden rounded border border-black/10 transition-opacity hover:opacity-90 dark:border-white/15"
-                                style={{ width: 70, height: 99 }}
+                                style={{ width: thumbSize.w, height: thumbSize.h }}
                               >
-                                <PageThumbnail data={generatedData} pageIndex={i} width={70} height={99} />
+                                <PageThumbnail data={generatedData} pageIndex={i} width={thumbSize.w} height={thumbSize.h} />
                               </button>
                             ))}
                           </div>
@@ -966,7 +1002,7 @@ export default function Home() {
                           setIsDragging(false);
                         }}
                         onDrop={handleDrop}
-                        className="relative z-10 flex min-h-[160px] cursor-pointer flex-col items-center justify-center p-4 text-center sm:p-6 sm:min-h-[240px] lg:min-h-[280px] lg:p-8"
+                        className="relative z-10 flex min-h-[160px] cursor-pointer flex-col items-center justify-center p-4 text-center sm:p-6 sm:min-h-[240px] lg:min-h-[280px] lg:p-8 3xl:min-h-[400px] 3xl:p-12 4xl:min-h-[520px]"
                       >
                         <div className="flex w-full max-w-xl flex-col items-center justify-center px-3 sm:px-4">
                           {file ? (
@@ -1020,7 +1056,7 @@ export default function Home() {
                         disabled={loading || needsDesignOnlyAck}
                         aria-busy={loading}
                         aria-label="Geração inteligente"
-                        className="group flex w-full items-center justify-center rounded-full px-8 py-3 text-base text-white shadow-lg transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:text-lg xl:text-xl xl:py-4 bg-gradient-to-br from-primary/90 to-[#6366f1] hover:from-primary hover:to-[#4f46e5] hover:shadow-xl hover:shadow-primary/30 focus:ring-4 focus:ring-primary/30"
+                        className="group flex w-full items-center justify-center rounded-full px-8 py-3 text-base text-white shadow-lg transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:text-lg xl:text-xl xl:py-4 3xl:text-2xl 3xl:py-5 4xl:text-3xl 4xl:py-6 bg-gradient-to-br from-primary/90 to-[#6366f1] hover:from-primary hover:to-[#4f46e5] hover:shadow-xl hover:shadow-primary/30 focus:ring-4 focus:ring-primary/30"
                         style={{ fontFamily: "'Transforma Script', cursive", fontWeight: 500 }}
                       >
                         Geração inteligente
@@ -1029,7 +1065,7 @@ export default function Home() {
                         type="button"
                         onClick={() => batchInputRef.current?.click()}
                         disabled={loading}
-                        className="group flex w-full items-center justify-center rounded-full px-8 border-2 border-slate-200 bg-white py-3 text-sm text-slate-600 shadow-sm transition-all hover:border-primary/30 hover:text-primary hover:shadow-md active:scale-[0.98] disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800/50 dark:text-white/70 dark:hover:border-primary/40 dark:hover:text-primary focus:ring-4 focus:ring-primary/20 sm:text-base xl:text-lg xl:py-4"
+                        className="group flex w-full items-center justify-center rounded-full px-8 border-2 border-slate-200 bg-white py-3 text-sm text-slate-600 shadow-sm transition-all hover:border-primary/30 hover:text-primary hover:shadow-md active:scale-[0.98] disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800/50 dark:text-white/70 dark:hover:border-primary/40 dark:hover:text-primary focus:ring-4 focus:ring-primary/20 sm:text-base xl:text-lg xl:py-4 3xl:text-xl 3xl:py-5 4xl:text-2xl 4xl:py-5"
                         style={{ fontFamily: "'Transforma Sans', sans-serif", fontWeight: 500 }}
                       >
                         Gerar pasta completa
@@ -1037,7 +1073,9 @@ export default function Home() {
                     </div>
                     {/* Scribolito abaixo dos botões — responsivo */}
                     <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
-                      <div className="hidden 2xl:block"><ScribolitoWalk size={250} speed="slow" shadow /></div>
+                      <div className="hidden 4xl:block"><ScribolitoWalk size={420} speed="slow" shadow /></div>
+                      <div className="hidden 3xl:block 4xl:hidden"><ScribolitoWalk size={340} speed="slow" shadow /></div>
+                      <div className="hidden 2xl:block 3xl:hidden"><ScribolitoWalk size={250} speed="slow" shadow /></div>
                       <div className="hidden xl:block 2xl:hidden"><ScribolitoWalk size={220} speed="slow" shadow /></div>
                       <div className="hidden lg:block xl:hidden"><ScribolitoWalk size={180} speed="slow" shadow /></div>
                       <div className="hidden sm:block lg:hidden"><ScribolitoWalk size={200} speed="slow" shadow hideBalloon /></div>

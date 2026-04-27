@@ -12,6 +12,21 @@ import { FIGMA_CSS, FIGMA_COLORS } from '@/lib/figma-design-tokens';
 import { isRenderableImageUrl } from '@/lib/image-url';
 import { getIconById } from '@/lib/icons-map';
 
+/**
+ * Extrai um rótulo embutido no início de um destaque (ex.: "Dica do Autor: …" → label "DICA DO AUTOR" + body sem o prefixo).
+ * Aceita separadores `:`, `—`, `–`, `-`. Se não detectar prefixo plausível (≤5 palavras), retorna o fallback.
+ */
+function extractCalloutLabel(text: string | undefined, fallback: string): { label: string; body: string } {
+  const t = (text ?? '').trim();
+  if (!t) return { label: fallback, body: '' };
+  const match = t.match(/^([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s]{2,40})\s*[:—–]\s+(.+)$/s);
+  if (!match) return { label: fallback, body: t };
+  const rawLabel = match[1].trim();
+  const wordCount = rawLabel.split(/\s+/).length;
+  if (wordCount > 5) return { label: fallback, body: t };
+  return { label: rawLabel.toUpperCase(), body: match[2].trim() };
+}
+
 /** Renderiza ícone SVG pelo ID */
 function IconSvg({ iconId, size = 18 }: { iconId?: string; size?: number }) {
   if (!iconId) return null;
@@ -25,7 +40,7 @@ function IconSvg({ iconId, size = 18 }: { iconId?: string; size?: number }) {
   );
 }
 
-interface TemplateProps {
+export interface TemplateProps {
   titulo: string;
   subtitulo?: string;
   paragrafos: string[];
@@ -36,6 +51,16 @@ interface TemplateProps {
   imagemUrl?: string;
   capituloNumero?: number;
   iconId?: string;
+  /** Sugestões de visuais estruturados — usadas pelos templates de tabela/comparativo/etapas */
+  sugestaoTabela?: { titulo?: string; colunas?: string[]; linhas?: string[][] };
+  sugestaoGrafico?: { tipo?: string; titulo?: string; labels?: string[]; valores?: number[] };
+  sugestaoFluxograma?: { titulo?: string; etapas?: string[] };
+  /** Tamanho da imagem em % da largura da coluna de conteúdo (default 50). Usado pelo layout flutuante. */
+  imageWidthPct?: number;
+  /** Lado do float da imagem no layout flutuante (default 'right'). */
+  floatSide?: 'left' | 'right';
+  /** Retângulo livre (em % da página A4) onde a imagem deve ser renderizada. Usado pelo layout `A4_imagem_livre`. */
+  imagemBox?: { xPct: number; yPct: number; wPct: number; hPct: number };
 }
 
 /** Badge de página — arredondado no topo, colado no fundo */
@@ -88,27 +113,32 @@ export function TemplateTealHeaderBody({
 export function TemplateDicaExercicio({
   titulo, paragrafos, destaques, citacao, itens, numeroPagina
 }: TemplateProps) {
-  const dica = destaques[0] || '';
-  const exercicio = destaques[1] || itens[0] || '';
+  const dicaCallout = destaques[0] ? extractCalloutLabel(destaques[0], '✦ DICA DO AUTOR') : null;
+  const exercicioRaw = (destaques[1] || itens[0] || '').trim();
+  const exercicioCallout = exercicioRaw ? extractCalloutLabel(exercicioRaw, 'EXERCÍCIO PRÁTICO') : null;
   return (
     <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
-      {/* Dica do Autor */}
-      <div style={FIGMA_CSS.footerTeal} className="flex-shrink-0">
-        <p style={FIGMA_CSS.labelCyan}>✦ Dica do Autor</p>
-        <p style={{ ...FIGMA_CSS.bodyGray, color: '#ffffff', marginTop: 8 }}>{dica || titulo}</p>
-      </div>
-      {/* Body */}
+      {dicaCallout && dicaCallout.body && (
+        <div style={FIGMA_CSS.footerTeal} className="flex-shrink-0">
+          <p style={FIGMA_CSS.labelCyan}>{dicaCallout.label}</p>
+          <p style={{ ...FIGMA_CSS.bodyGray, color: '#ffffff', marginTop: 8 }}>{dicaCallout.body}</p>
+        </div>
+      )}
       <div style={{ ...FIGMA_CSS.bodyBlock, gap: '12px' }} className="flex flex-col overflow-hidden">
+        {titulo && !dicaCallout && (
+          <h1 style={{ ...FIGMA_CSS.h1Teal, color: FIGMA_COLORS.tealDark }}>{titulo}</h1>
+        )}
         {paragrafos.map((p, i) => (
           <p key={i} style={{ ...FIGMA_CSS.bodyGray, marginBottom: 12 }}>{p}</p>
         ))}
         {citacao && <blockquote style={FIGMA_CSS.quoteBlock}>{citacao}</blockquote>}
       </div>
-      {/* Exercício */}
-      <div style={FIGMA_CSS.footerTeal} className="flex-shrink-0">
-        <p style={FIGMA_CSS.labelCyan}>Exercício Prático</p>
-        <p style={{ ...FIGMA_CSS.bodyGray, color: '#ffffff', marginTop: 8 }}>{exercicio || 'Aplique o conceito acima na prática.'}</p>
-      </div>
+      {exercicioCallout && exercicioCallout.body && (
+        <div style={FIGMA_CSS.footerTeal} className="flex-shrink-0">
+          <p style={FIGMA_CSS.labelCyan}>{exercicioCallout.label}</p>
+          <p style={{ ...FIGMA_CSS.bodyGray, color: '#ffffff', marginTop: 8 }}>{exercicioCallout.body}</p>
+        </div>
+      )}
       <Badge numero={numeroPagina} />
     </div>
   );
@@ -771,16 +801,16 @@ export function TemplateMagazine({
   titulo, paragrafos, destaques, imagemUrl, numeroPagina
 }: TemplateProps) {
   const hasImage = isRenderableImageUrl(imagemUrl);
-  const conceitoChave = destaques[0];
+  const callout = destaques[0] ? extractCalloutLabel(destaques[0], 'CONCEITO-CHAVE') : null;
   return (
     <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
       {/* Header */}
       <div style={{ padding: '50px 50px 20px 50px' }} className="flex-shrink-0">
         <h1 style={FIGMA_CSS.h1Teal}>{titulo}</h1>
       </div>
-      {/* Body */}
+      {/* Body — padding inferior aumentado pra não invadir o badge (36px) */}
       <div style={{
-        padding: '0 50px 20px 50px', flex: '1 1 0',
+        padding: '0 50px 56px 50px', flex: '1 1 0',
         display: 'flex', flexDirection: 'column', gap: 20,
         overflow: 'hidden', boxSizing: 'border-box',
       }}>
@@ -795,13 +825,13 @@ export function TemplateMagazine({
         {paragrafos.map((p, i) => (
           <p key={i} style={FIGMA_CSS.bodyGray}>{p}</p>
         ))}
-        {conceitoChave && (
+        {callout && callout.body && (
           <div style={{
             backgroundColor: FIGMA_COLORS.tealDark,
             padding: '16px 20px', borderRadius: 4,
           }}>
-            <p style={{ ...FIGMA_CSS.labelCyan, marginBottom: 6 }}>CONCEITO-CHAVE</p>
-            <p style={{ ...FIGMA_CSS.bodyGray, color: FIGMA_COLORS.white }}>{conceitoChave}</p>
+            <p style={{ ...FIGMA_CSS.labelCyan, marginBottom: 6 }}>{callout.label}</p>
+            <p style={{ ...FIGMA_CSS.bodyGray, color: FIGMA_COLORS.white }}>{callout.body}</p>
           </div>
         )}
       </div>
@@ -813,10 +843,12 @@ export function TemplateMagazine({
 // ============================================================
 // TEMPLATE: Sidebar + conteúdo rico (pullquote + steps + callout)
 // Figma: "Miolo - Sidebar com Conteúdo" (A4_7_sidebar_conteudo)
+// Aceita imagem opcional no topo da coluna direita.
 // ============================================================
 export function TemplateSidebarConteudo({
-  titulo, paragrafos, destaques, citacao, itens, numeroPagina, capituloNumero
+  titulo, paragrafos, destaques, citacao, itens, numeroPagina, capituloNumero, imagemUrl,
 }: TemplateProps) {
+  const hasImage = isRenderableImageUrl(imagemUrl);
   return (
     <div className="page-a4 relative overflow-hidden flex flex-row" style={FIGMA_CSS.page}>
       {/* Sidebar larga teal */}
@@ -835,6 +867,14 @@ export function TemplateSidebarConteudo({
         display: 'flex', flexDirection: 'column', gap: 20,
         overflow: 'hidden', boxSizing: 'border-box',
       }}>
+        {hasImage && (
+          <div style={{
+            width: '100%', height: 180, backgroundColor: FIGMA_COLORS.lightBg,
+            borderRadius: 4, overflow: 'hidden', flexShrink: 0,
+          }}>
+            <img src={imagemUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+        )}
         {paragrafos.map((p, i) => (
           <p key={i} style={FIGMA_CSS.bodyGray}>{p}</p>
         ))}
@@ -860,6 +900,612 @@ export function TemplateSidebarConteudo({
               {destaques[0]}
             </p>
           </div>
+        )}
+      </div>
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// ============================================================
+// TEMPLATE: Processo em Etapas (cards horizontais numerados com setas)
+// layout_tipo: A4_3_processo_etapas
+// Lê: titulo, subtitulo, itens (steps), paragrafos (texto de apoio)
+// ============================================================
+export function TemplateProcessoEtapas({
+  titulo, subtitulo, itens, paragrafos, numeroPagina,
+}: TemplateProps) {
+  const steps = itens.slice(0, 6);
+  const hasSupport = paragrafos.length > 0;
+  return (
+    <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      <div style={{ padding: '50px 50px 16px 50px', flexShrink: 0 }}>
+        <h1 style={{ ...FIGMA_CSS.h1Teal, color: FIGMA_COLORS.tealDark }}>{titulo}</h1>
+        {subtitulo && (
+          <p style={{ ...FIGMA_CSS.bodyGray, marginTop: 8, opacity: 0.85 }}>{subtitulo}</p>
+        )}
+        <div style={{ width: 60, height: 4, backgroundColor: FIGMA_COLORS.tealAccent, marginTop: 14 }} />
+      </div>
+      <div style={{
+        flex: 1, padding: '24px 50px 56px 50px',
+        display: 'flex', flexDirection: 'column', gap: 28,
+        boxSizing: 'border-box' as const, overflow: 'hidden' as const,
+      }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${Math.min(steps.length, 4)}, 1fr)`,
+          gap: 12,
+          alignItems: 'stretch',
+        }}>
+          {steps.map((step, i) => (
+            <div key={i} style={{
+              backgroundColor: FIGMA_COLORS.tealDark,
+              borderRadius: 8,
+              padding: '16px 14px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+              position: 'relative' as const,
+            }}>
+              <span style={{
+                fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 28,
+                lineHeight: 1, color: FIGMA_COLORS.cyanLight, letterSpacing: '-0.02em',
+              }}>
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <p style={{
+                fontFamily: "'Inter', sans-serif", fontSize: 12, lineHeight: 1.4,
+                color: '#FFFFFF', margin: 0,
+              }}>
+                {step}
+              </p>
+              {i < steps.length - 1 && (i + 1) % 4 !== 0 && (
+                <span aria-hidden style={{
+                  position: 'absolute' as const,
+                  right: -12, top: '50%', transform: 'translateY(-50%)',
+                  fontSize: 18, color: FIGMA_COLORS.tealAccent, fontWeight: 700,
+                }}>
+                  →
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+        {hasSupport && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {paragrafos.slice(0, 3).map((p, i) => (
+              <p key={i} style={{ ...FIGMA_CSS.bodyGray }}>{p}</p>
+            ))}
+          </div>
+        )}
+      </div>
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// ============================================================
+// TEMPLATE: Prós / Contras (2 colunas: verde × vermelho)
+// layout_tipo: A4_4_pros_contras
+// Lê: titulo, sugestaoTabela (2 cols) OU itens (split na metade)
+// ============================================================
+export function TemplateProsContras({
+  titulo, subtitulo, sugestaoTabela, itens, numeroPagina,
+}: TemplateProps) {
+  // Se vier sugestaoTabela com 2 colunas, usa labels + linhas[][0] e [1]
+  let labelLeft = 'Prós';
+  let labelRight = 'Contras';
+  let leftItems: string[] = [];
+  let rightItems: string[] = [];
+
+  if (sugestaoTabela?.colunas && sugestaoTabela.colunas.length >= 2 && Array.isArray(sugestaoTabela.linhas)) {
+    labelLeft = String(sugestaoTabela.colunas[0] ?? labelLeft);
+    labelRight = String(sugestaoTabela.colunas[1] ?? labelRight);
+    leftItems = sugestaoTabela.linhas.map((row) => String(row?.[0] ?? '')).filter(Boolean);
+    rightItems = sugestaoTabela.linhas.map((row) => String(row?.[1] ?? '')).filter(Boolean);
+  } else {
+    const half = Math.ceil(itens.length / 2);
+    leftItems = itens.slice(0, half);
+    rightItems = itens.slice(half);
+  }
+
+  const renderColumn = (label: string, items: string[], color: string, icon: string) => (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column', gap: 12,
+      backgroundColor: '#FFFFFF',
+      border: `2px solid ${color}`,
+      borderRadius: 8, padding: '18px 16px',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        paddingBottom: 10, borderBottom: `1px solid ${color}33`,
+      }}>
+        <span style={{ fontSize: 18, color, fontWeight: 700 }}>{icon}</span>
+        <h3 style={{
+          fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 16,
+          color, margin: 0, textTransform: 'uppercase' as const, letterSpacing: '1px',
+        }}>
+          {label}
+        </h3>
+      </div>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {items.slice(0, 6).map((item, i) => (
+          <li key={i} style={{
+            display: 'flex', gap: 8, alignItems: 'flex-start',
+            fontFamily: "'Inter', sans-serif", fontSize: 12, lineHeight: 1.5,
+            color: FIGMA_COLORS.darkText,
+          }}>
+            <span style={{ color, marginTop: 2 }}>•</span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  return (
+    <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      <div style={{ padding: '50px 50px 16px 50px', flexShrink: 0 }}>
+        <h1 style={{ ...FIGMA_CSS.h1Teal, color: FIGMA_COLORS.tealDark }}>{titulo}</h1>
+        {subtitulo && (
+          <p style={{ ...FIGMA_CSS.bodyGray, marginTop: 8, opacity: 0.85 }}>{subtitulo}</p>
+        )}
+      </div>
+      <div style={{
+        flex: 1, padding: '20px 50px 56px 50px',
+        display: 'flex', gap: 16, alignItems: 'stretch',
+        boxSizing: 'border-box' as const, overflow: 'hidden' as const,
+      }}>
+        {renderColumn(labelLeft, leftItems, '#16a34a', '✓')}
+        {renderColumn(labelRight, rightItems, '#dc2626', '✗')}
+      </div>
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// ============================================================
+// TEMPLATE: Comparativo (Antes/Depois ou A vs B — split duas colunas)
+// layout_tipo: A4_4_comparativo
+// Lê: titulo, sugestaoTabela (2 cols) OU itens[0]/itens[1] OU paragrafos[0]/paragrafos[1]
+// ============================================================
+export function TemplateComparativo({
+  titulo, subtitulo, sugestaoTabela, itens, paragrafos, numeroPagina,
+}: TemplateProps) {
+  let labelLeft = 'Antes';
+  let labelRight = 'Depois';
+  let textLeft = '';
+  let textRight = '';
+
+  if (sugestaoTabela?.colunas && sugestaoTabela.colunas.length >= 2) {
+    labelLeft = String(sugestaoTabela.colunas[0] ?? labelLeft);
+    labelRight = String(sugestaoTabela.colunas[1] ?? labelRight);
+    if (Array.isArray(sugestaoTabela.linhas) && sugestaoTabela.linhas.length > 0) {
+      textLeft = sugestaoTabela.linhas.map((r) => String(r?.[0] ?? '')).filter(Boolean).join('\n\n');
+      textRight = sugestaoTabela.linhas.map((r) => String(r?.[1] ?? '')).filter(Boolean).join('\n\n');
+    }
+  }
+
+  if (!textLeft && itens[0]) textLeft = itens[0];
+  if (!textRight && itens[1]) textRight = itens[1];
+  if (!textLeft && paragrafos[0]) textLeft = paragrafos[0];
+  if (!textRight && paragrafos[1]) textRight = paragrafos[1];
+
+  return (
+    <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      <div style={{ padding: '50px 50px 16px 50px', flexShrink: 0 }}>
+        <h1 style={{ ...FIGMA_CSS.h1Teal, color: FIGMA_COLORS.tealDark }}>{titulo}</h1>
+        {subtitulo && (
+          <p style={{ ...FIGMA_CSS.bodyGray, marginTop: 8, opacity: 0.85 }}>{subtitulo}</p>
+        )}
+      </div>
+      <div style={{
+        flex: 1, padding: '24px 50px 56px 50px',
+        display: 'flex', gap: 0, alignItems: 'stretch',
+        boxSizing: 'border-box' as const, overflow: 'hidden' as const,
+      }}>
+        <div style={{
+          flex: 1, padding: '24px 20px',
+          backgroundColor: FIGMA_COLORS.lightBg,
+          borderRadius: '8px 0 0 8px',
+          display: 'flex', flexDirection: 'column', gap: 14,
+        }}>
+          <p style={{
+            fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 11,
+            letterSpacing: '2px', textTransform: 'uppercase' as const,
+            color: FIGMA_COLORS.grayText, margin: 0,
+          }}>
+            {labelLeft}
+          </p>
+          <p style={{ ...FIGMA_CSS.bodyGray, margin: 0 }}>{textLeft || 'Situação atual'}</p>
+        </div>
+        <div style={{
+          flex: 1, padding: '24px 20px',
+          backgroundColor: FIGMA_COLORS.tealDark,
+          borderRadius: '0 8px 8px 0',
+          display: 'flex', flexDirection: 'column', gap: 14,
+        }}>
+          <p style={{
+            fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 11,
+            letterSpacing: '2px', textTransform: 'uppercase' as const,
+            color: FIGMA_COLORS.cyanLight, margin: 0,
+          }}>
+            {labelRight}
+          </p>
+          <p style={{
+            fontFamily: "'Inter', sans-serif", fontSize: 13, lineHeight: 1.6,
+            color: '#FFFFFF', margin: 0,
+          }}>
+            {textRight || 'Resultado proposto'}
+          </p>
+        </div>
+      </div>
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// ============================================================
+// TEMPLATE: Tabela de Critérios / Matriz
+// layout_tipo: A4_5_tabela
+// Lê: titulo, sugestaoTabela (colunas + linhas)
+// ============================================================
+export function TemplateTabelaCriterios({
+  titulo, subtitulo, sugestaoTabela, numeroPagina,
+}: TemplateProps) {
+  const colunas = Array.isArray(sugestaoTabela?.colunas) ? sugestaoTabela!.colunas : [];
+  const linhas = Array.isArray(sugestaoTabela?.linhas) ? sugestaoTabela!.linhas : [];
+  const tableTitle = sugestaoTabela?.titulo;
+
+  return (
+    <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      <div style={{ padding: '50px 50px 16px 50px', flexShrink: 0 }}>
+        <h1 style={{ ...FIGMA_CSS.h1Teal, color: FIGMA_COLORS.tealDark }}>{titulo}</h1>
+        {subtitulo && (
+          <p style={{ ...FIGMA_CSS.bodyGray, marginTop: 8, opacity: 0.85 }}>{subtitulo}</p>
+        )}
+      </div>
+      <div style={{
+        flex: 1, padding: '20px 50px 56px 50px',
+        boxSizing: 'border-box' as const, overflow: 'hidden' as const,
+        display: 'flex', flexDirection: 'column', gap: 14,
+      }}>
+        {tableTitle && (
+          <p style={{ ...FIGMA_CSS.labelTeal, margin: 0 }}>{tableTitle}</p>
+        )}
+        <table style={{
+          width: '100%', borderCollapse: 'collapse' as const,
+          fontFamily: "'Inter', sans-serif", fontSize: 12,
+          borderRadius: 6, overflow: 'hidden' as const,
+        }}>
+          <thead>
+            <tr style={{ backgroundColor: FIGMA_COLORS.tealDark }}>
+              {colunas.map((col, i) => (
+                <th key={i} style={{
+                  padding: '12px 14px', textAlign: 'left' as const,
+                  color: '#FFFFFF', fontFamily: "'Sora', sans-serif",
+                  fontWeight: 700, fontSize: 12, letterSpacing: '0.5px',
+                  textTransform: 'uppercase' as const,
+                }}>
+                  {col}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {linhas.slice(0, 8).map((row, ri) => (
+              <tr key={ri} style={{
+                backgroundColor: ri % 2 === 0 ? '#FFFFFF' : (FIGMA_COLORS.lightBg),
+              }}>
+                {row.slice(0, colunas.length).map((cell, ci) => (
+                  <td key={ci} style={{
+                    padding: '12px 14px',
+                    color: FIGMA_COLORS.darkText,
+                    lineHeight: 1.4,
+                    borderBottom: `1px solid ${FIGMA_COLORS.lightBg}`,
+                    verticalAlign: 'top' as const,
+                  }}>
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// ============================================================
+// TEMPLATE: Imagem em destaque (full-width topo + título + body)
+// layout_tipo: A4_4_imagem_destaque
+// Imagem grande no topo (banner ~280px), título e texto embaixo
+// ============================================================
+export function TemplateImagemDestaque({
+  titulo, subtitulo, paragrafos, citacao, imagemUrl, numeroPagina,
+}: TemplateProps) {
+  const hasImage = isRenderableImageUrl(imagemUrl);
+  return (
+    <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      {/* Imagem banner full-width topo */}
+      {hasImage ? (
+        <div style={{
+          width: '100%', height: 280, flexShrink: 0,
+          backgroundColor: FIGMA_COLORS.lightBg, overflow: 'hidden' as const,
+        }}>
+          <img src={imagemUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      ) : (
+        <div style={{ width: '100%', height: 6, backgroundColor: FIGMA_COLORS.tealAccent, flexShrink: 0 }} />
+      )}
+      {/* Header + body */}
+      <div style={{
+        flex: 1, padding: '32px 50px 56px 50px',
+        display: 'flex', flexDirection: 'column', gap: 16,
+        boxSizing: 'border-box' as const, overflow: 'hidden' as const,
+      }}>
+        <h1 style={{ ...FIGMA_CSS.h1Teal, color: FIGMA_COLORS.tealDark, margin: 0 }}>{titulo}</h1>
+        {subtitulo && (
+          <p style={{ ...FIGMA_CSS.bodyGray, opacity: 0.8, margin: 0 }}>{subtitulo}</p>
+        )}
+        <div style={{ width: 56, height: 3, backgroundColor: FIGMA_COLORS.tealAccent, marginTop: 4, marginBottom: 4 }} />
+        {paragrafos.map((p, i) => (
+          <p key={i} style={{ ...FIGMA_CSS.bodyGray, margin: 0 }}>{p}</p>
+        ))}
+        {citacao && (
+          <blockquote style={{ ...FIGMA_CSS.quoteBlock, marginTop: 8 }}>{citacao}</blockquote>
+        )}
+      </div>
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// ============================================================
+// TEMPLATE: Imagem com overlay editorial (full-page background)
+// layout_tipo: A4_2_imagem_overlay
+// Imagem cobre toda a página, overlay escuro semi-transparente,
+// título grande + body curto em branco sobreposto. Visual dramático.
+// ============================================================
+export function TemplateImagemOverlay({
+  titulo, subtitulo, paragrafos, citacao, imagemUrl, numeroPagina,
+}: TemplateProps) {
+  const hasImage = isRenderableImageUrl(imagemUrl);
+  // Limita o body — esse layout é editorial, com pouca palavra
+  const bodyParas = paragrafos.slice(0, 2);
+  return (
+    <div
+      className="page-a4 relative overflow-hidden flex flex-col"
+      style={{ ...FIGMA_CSS.page, backgroundColor: FIGMA_COLORS.tealDark }}
+    >
+      {/* Imagem de fundo */}
+      {hasImage && (
+        <img
+          src={imagemUrl}
+          alt=""
+          style={{
+            position: 'absolute' as const, inset: 0,
+            width: '100%', height: '100%', objectFit: 'cover' as const,
+            zIndex: 0,
+          }}
+        />
+      )}
+      {/* Overlay escuro pra legibilidade do texto */}
+      <div
+        style={{
+          position: 'absolute' as const, inset: 0,
+          background: 'linear-gradient(180deg, rgba(2,84,104,0.55) 0%, rgba(2,84,104,0.85) 100%)',
+          zIndex: 1,
+        }}
+        aria-hidden
+      />
+      {/* Texto sobreposto, alinhado ao rodapé */}
+      <div
+        style={{
+          position: 'relative' as const, zIndex: 2,
+          flex: 1, display: 'flex', flexDirection: 'column',
+          justifyContent: 'flex-end',
+          padding: '60px 50px 80px 50px', boxSizing: 'border-box' as const,
+          gap: 16,
+        }}
+      >
+        {subtitulo && (
+          <p style={{
+            fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 11,
+            letterSpacing: '3px', textTransform: 'uppercase' as const,
+            color: FIGMA_COLORS.cyanLight, margin: 0,
+          }}>
+            {subtitulo}
+          </p>
+        )}
+        <h1 style={{
+          fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 44,
+          lineHeight: 1.1, color: '#FFFFFF', margin: 0,
+          letterSpacing: '-0.02em', maxWidth: 460,
+        }}>
+          {titulo}
+        </h1>
+        <div style={{ width: 56, height: 3, backgroundColor: FIGMA_COLORS.cyanLight }} />
+        {bodyParas.map((p, i) => (
+          <p key={i} style={{
+            fontFamily: "'Inter', sans-serif", fontSize: 13, lineHeight: 1.55,
+            color: 'rgba(255,255,255,0.95)', margin: 0, maxWidth: 480,
+          }}>{p}</p>
+        ))}
+        {citacao && (
+          <p style={{
+            fontFamily: "'Inter', sans-serif", fontSize: 13, lineHeight: 1.55,
+            fontStyle: 'italic' as const, color: FIGMA_COLORS.cyanLight, margin: 0, maxWidth: 480,
+          }}>
+            "{citacao}"
+          </p>
+        )}
+      </div>
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// ============================================================
+// TEMPLATE: Imagem flutuante com texto reflowing (CSS float)
+// layout_tipo: A4_2_imagem_flutuante
+// Imagem com float left/right, texto envolve naturalmente.
+// Tamanho controlado por imageWidthPct (% da coluna), default 50%.
+// ============================================================
+export function TemplateImagemFlutuante({
+  titulo, subtitulo, paragrafos, citacao, imagemUrl,
+  imageWidthPct = 50, floatSide = 'right', numeroPagina,
+}: TemplateProps) {
+  const hasImage = isRenderableImageUrl(imagemUrl);
+  // Limites razoáveis: 25% mínimo (legibilidade), 75% máximo (texto não some)
+  const widthPct = Math.min(75, Math.max(25, imageWidthPct));
+  return (
+    <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      {/* Header */}
+      <div style={{ padding: '50px 50px 16px 50px', flexShrink: 0 }}>
+        <h1 style={{ ...FIGMA_CSS.h1Teal, color: FIGMA_COLORS.tealDark, margin: 0 }}>{titulo}</h1>
+        {subtitulo && (
+          <p style={{ ...FIGMA_CSS.bodyGray, marginTop: 8, opacity: 0.85 }}>{subtitulo}</p>
+        )}
+        <div style={{ width: 56, height: 3, backgroundColor: FIGMA_COLORS.tealAccent, marginTop: 12 }} />
+      </div>
+      {/* Body com float */}
+      <div
+        data-image-flutuante-body
+        data-image-width-pct={widthPct}
+        data-image-float-side={floatSide}
+        style={{
+          flex: 1,
+          padding: '24px 50px 56px 50px',
+          boxSizing: 'border-box' as const,
+          overflow: 'hidden' as const,
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 13,
+          lineHeight: 1.7,
+          color: FIGMA_COLORS.darkText,
+          textAlign: 'justify' as const,
+          // hyphens helps wrap nicely around the float
+          hyphens: 'auto' as const,
+        }}
+      >
+        {hasImage && (
+          <div
+            data-image-flutuante-target
+            style={{
+              float: floatSide,
+              width: `${widthPct}%`,
+              [floatSide === 'left' ? 'marginRight' : 'marginLeft']: 16,
+              marginBottom: 12,
+              marginTop: 4,
+              shapeOutside: 'margin-box',
+              overflow: 'hidden' as const,
+              borderRadius: 4,
+              backgroundColor: FIGMA_COLORS.lightBg,
+              position: 'relative' as const,
+            }}
+          >
+            <img
+              src={imagemUrl}
+              alt=""
+              style={{
+                width: '100%',
+                height: 'auto',
+                display: 'block',
+                objectFit: 'cover' as const,
+              }}
+            />
+          </div>
+        )}
+        {/* Texto que envolve a imagem */}
+        {paragrafos.map((p, i) => (
+          <p key={i} style={{ margin: '0 0 10px 0' }}>{p}</p>
+        ))}
+        {citacao && (
+          <blockquote style={{
+            ...FIGMA_CSS.quoteBlock,
+            marginTop: 12,
+            clear: 'both' as const,
+          }}>
+            {citacao}
+          </blockquote>
+        )}
+      </div>
+      <Badge numero={numeroPagina} />
+    </div>
+  );
+}
+
+// ============================================================
+// TEMPLATE: Imagem Livre — usuário desenha o retângulo onde a imagem entra
+// layout_tipo: A4_imagem_livre
+// Posição/tamanho vêm de imagemBox (em % da página A4).
+// ============================================================
+export function TemplateImagemLivre({
+  titulo, subtitulo, paragrafos, citacao, imagemUrl, imagemBox, numeroPagina,
+}: TemplateProps) {
+  const hasImage = isRenderableImageUrl(imagemUrl);
+  const box = imagemBox || { xPct: 60, yPct: 20, wPct: 35, hPct: 35 };
+  return (
+    <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      <div style={{ padding: '50px 50px 16px 50px', flexShrink: 0 }}>
+        {titulo && (
+          <h1 style={{ ...FIGMA_CSS.h1Teal, color: FIGMA_COLORS.tealDark, margin: 0 }}>{titulo}</h1>
+        )}
+        {subtitulo && (
+          <p style={{ ...FIGMA_CSS.bodyGray, marginTop: 8, opacity: 0.85 }}>{subtitulo}</p>
+        )}
+        {(titulo || subtitulo) && (
+          <div style={{ width: 56, height: 3, backgroundColor: FIGMA_COLORS.tealAccent, marginTop: 12 }} />
+        )}
+      </div>
+      <div
+        style={{
+          flex: 1,
+          padding: '24px 50px 56px 50px',
+          boxSizing: 'border-box' as const,
+          overflow: 'hidden' as const,
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 13,
+          lineHeight: 1.7,
+          color: FIGMA_COLORS.darkText,
+          textAlign: 'justify' as const,
+          position: 'relative' as const,
+        }}
+      >
+        {paragrafos.map((p, i) => (
+          <p key={i} style={{ margin: '0 0 10px 0' }}>{p}</p>
+        ))}
+        {citacao && (
+          <blockquote style={{ ...FIGMA_CSS.quoteBlock, marginTop: 12 }}>{citacao}</blockquote>
+        )}
+      </div>
+      {/* Imagem (ou placeholder) posicionada absolutamente sobre a página inteira */}
+      <div
+        style={{
+          position: 'absolute',
+          left: `${box.xPct}%`,
+          top: `${box.yPct}%`,
+          width: `${box.wPct}%`,
+          height: `${box.hPct}%`,
+          borderRadius: 4,
+          overflow: 'hidden',
+          backgroundColor: FIGMA_COLORS.lightBg,
+          border: hasImage ? 'none' : `2px dashed ${FIGMA_COLORS.tealAccent}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {hasImage ? (
+          <img
+            src={imagemUrl}
+            alt=""
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+        ) : (
+          <span style={{ fontSize: 11, fontWeight: 600, color: FIGMA_COLORS.tealDark, opacity: 0.7 }}>
+            Imagem
+          </span>
         )}
       </div>
       <Badge numero={numeroPagina} />
@@ -1006,6 +1652,27 @@ export function renderFigmaTemplate(
       return <TemplateMagazine {...props} />;
     case 'A4_7_sidebar_conteudo':
       return <TemplateSidebarConteudo {...props} />;
+
+    // --- Visuais didáticos novos (turno 2) ---
+    case 'A4_3_processo_etapas':
+      return <TemplateProcessoEtapas {...props} />;
+    case 'A4_4_pros_contras':
+      return <TemplateProsContras {...props} />;
+    case 'A4_4_comparativo':
+      return <TemplateComparativo {...props} />;
+    case 'A4_5_tabela':
+      return <TemplateTabelaCriterios {...props} />;
+
+    // --- Layouts com imagem (variantes além do magazine) ---
+    case 'A4_4_imagem_destaque':
+      return <TemplateImagemDestaque {...props} />;
+    case 'A4_2_imagem_overlay':
+      return <TemplateImagemOverlay {...props} />;
+    case 'A4_2_imagem_flutuante':
+      return <TemplateImagemFlutuante {...props} />;
+    case 'A4_imagem_livre':
+      return <TemplateImagemLivre {...props} />;
+
     case 'A4_2_continuacao':
       return <TemplateContinuacao {...props} />;
 

@@ -25,8 +25,14 @@ export function getAspectRatioForLayout(
   switch (layoutTipo) {
     case 'A4_4_magazine':
     case 'A4_2_imagem_texto':
+    case 'A4_4_imagem_destaque':
+    case 'A4_7_sidebar_conteudo':
     case 'imagem_top':
       return 'wide';
+    case 'A4_2_imagem_overlay':
+      return 'portrait'; // full A4 background
+    case 'A4_2_imagem_flutuante':
+      return 'square'; // float-friendly: largura ajustável, square encaixa em ambos lados
     case 'A4_2_texto_imagem':
     case 'imagem_lateral':
       return 'portrait';

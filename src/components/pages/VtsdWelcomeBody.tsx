@@ -32,7 +32,6 @@ export function VtsdWelcomeBody({ className = '', variant = 'print' }: VtsdWelco
             <span className="block">{VTSD_WELCOME_TITLE_LINE_1}</span>
             <span className="block">{VTSD_WELCOME_TITLE_LINE_2}</span>
           </h2>
-          <div className="w-36 h-[3px] bg-white rounded-sm mt-4 mb-6" aria-hidden />
         </header>
         <div className="space-y-4 text-[15px] leading-relaxed text-white">
           {VTSD_INTRO_BODY_PARAGRAPHS.map((p, i) => (
@@ -60,7 +59,6 @@ export function VtsdWelcomeBody({ className = '', variant = 'print' }: VtsdWelco
           <span className="vtsd-welcome-title-line">{VTSD_WELCOME_TITLE_LINE_1}</span>
           <span className="vtsd-welcome-title-line">{VTSD_WELCOME_TITLE_LINE_2}</span>
         </h2>
-        <div className="vtsd-welcome-title-accent" aria-hidden />
       </header>
       {renderParagraphParts(VTSD_INTRO_BODY_PARAGRAPHS, 'vtsd-welcome-para')}
       <div className="vtsd-welcome-signoff">

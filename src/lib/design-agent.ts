@@ -32,6 +32,11 @@ export type LayoutTipo =
   | 'A4_4_destaque_numerico'
   | 'A4_4_comparativo'
   | 'A4_4_pros_contras'
+  | 'A4_4_imagem_destaque'
+  // Layouts editoriais com imagem
+  | 'A4_2_imagem_overlay'
+  | 'A4_2_imagem_flutuante'
+  | 'A4_imagem_livre'
   // Diagramas / Visuais
   | 'A4_5_tabela'
   | 'A4_5_organograma'

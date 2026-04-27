@@ -17,6 +17,7 @@ import { generateThreeStudyQuestions } from '@/lib/study-questions-agent';
 import { paginateWithValidation } from '@/lib/paginate-with-validation';
 import { scanVisualHints } from '@/lib/visual-hints-scanner';
 import { injectTopicOpeners } from '@/lib/inject-topic-openers';
+import { autoMergeSparsePages } from '@/lib/merge-sparse-pages';
 import { VTSD_CONCLUSAO_TITULO, vtsdConclusaoBlocoPrincipal } from '@/lib/vtsd-conclusao-copy';
 import { applyNanoBananaImagesToPaginas } from '@/lib/gemini-nano-banana-images';
 
@@ -706,8 +707,10 @@ export async function POST(request: NextRequest) {
       conteudoComLayoutCompativel,
       previewBaseUrl,
     );
+    /** Auto-merge de páginas magras adjacentes (mesmo tópico) — evita continuações com 30 chars. */
+    const conteudoCompactado = autoMergeSparsePages(conteudoPaginado);
     /** Injeta páginas de abertura (A4_1_abertura) antes de cada novo tópico. */
-    const conteudoComOpeners = injectTopicOpeners(conteudoPaginado);
+    const conteudoComOpeners = injectTopicOpeners(conteudoCompactado);
     const normalized = normalizePaginas(conteudoComOpeners) as Record<string, unknown>;
     /** Páginas de continuação ganham A4_2_continuacao — garantir lista fechada após paginar. */
     const normalizedLayouts = sanitizeConteudoLayouts(normalized, cursoId === 'geral');
@@ -718,10 +721,14 @@ export async function POST(request: NextRequest) {
     const finalNorm =
       cursoId === 'geral' ? injectVtsdConclusaoPage(withAtividades) : withAtividades;
 
-    // Garantir que pelo menos 2 páginas de conteúdo tenham sugestao_imagem
+    // Garantir que pelo menos 2 páginas de conteúdo tenham sugestao_imagem.
+    // Pula openers de tópico (são divisórias visuais — imagem fica estranha lá)
+    // e continuações (são extensões, não conteúdo principal).
     const finalPaginas = finalNorm.paginas as Array<Record<string, unknown>> | undefined;
     if (Array.isArray(finalPaginas)) {
-      const contentPages = finalPaginas.filter(p => (p.tipo as string) === 'conteudo' && !p.continuacao);
+      const isElegivelParaImagem = (p: Record<string, unknown>) =>
+        (p.tipo as string) === 'conteudo' && !p.continuacao && !p._isTopicOpener;
+      const contentPages = finalPaginas.filter(isElegivelParaImagem);
       const pagesWithImage = contentPages.filter(p => p.sugestao_imagem || p.prompt_imagem);
       const MAX_IMAGES = 2;
       if (pagesWithImage.length < MAX_IMAGES && contentPages.length >= 3) {

@@ -1,9 +1,29 @@
 /**
  * Persistência do preview no cliente: localStorage + IndexedDB para payloads com imagens base64
  * (localStorage ~5MB costuma falhar e o fallback anterior removia as imagens).
+ *
+ * Emite evento via BroadcastChannel após cada save, pra UI captar quando
+ * uma fetch terminou em componente remontado (Fast Refresh / unmount race).
  */
 
 export const PREVIEW_STORAGE_KEY = 'rtg-preview-data';
+
+/** Nome do canal pra notificar a UI quando o preview é atualizado no storage. */
+export const PREVIEW_BROADCAST_CHANNEL = 'scribo-preview-data';
+
+/** Tipo da mensagem propagada no canal — UI pode discriminar saved vs cleared. */
+export type PreviewBroadcastEvent = { type: 'saved' | 'cleared'; ts: number };
+
+function broadcastPreviewEvent(type: PreviewBroadcastEvent['type']): void {
+  if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') return;
+  try {
+    const ch = new BroadcastChannel(PREVIEW_BROADCAST_CHANNEL);
+    ch.postMessage({ type, ts: Date.now() } satisfies PreviewBroadcastEvent);
+    ch.close();
+  } catch {
+    /* navegador antigo ou contexto sem BroadcastChannel — ignora */
+  }
+}
 
 /** Valor em localStorage quando o JSON completo está só no IndexedDB. */
 export const PREVIEW_IN_IDB_MARKER = '__SCRIBO_PREVIEW_IN_IDB__';
@@ -133,12 +153,14 @@ export async function savePreviewDataToClient(data: unknown): Promise<void> {
     } catch {
       /* marker falhou — preview ainda acessível via IDB se load usar idb */
     }
+    broadcastPreviewEvent('saved');
     return;
   }
 
   try {
     localStorage.setItem(PREVIEW_STORAGE_KEY, json);
     await idbClear().catch(() => {});
+    broadcastPreviewEvent('saved');
   } catch {
     if (typeof indexedDB === 'undefined') {
       console.warn('[preview-storage] Sem IndexedDB; não foi possível persistir o preview completo.');
@@ -150,6 +172,7 @@ export async function savePreviewDataToClient(data: unknown): Promise<void> {
     } catch {
       /* último recurso: sem LS o loadPreviewDataFromClient ainda pode ler só IDB se expormos getRaw */
     }
+    broadcastPreviewEvent('saved');
   }
 }
 
@@ -210,4 +233,5 @@ export function clearPreviewDataFromClient(): void {
     /* ignore */
   }
   void idbClear().catch(() => {});
+  broadcastPreviewEvent('cleared');
 }

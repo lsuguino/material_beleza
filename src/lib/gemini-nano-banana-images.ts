@@ -236,6 +236,16 @@ export async function applyNanoBananaImagesToPaginas(
 ): Promise<void> {
   const cacheLocal = cache ?? new Map<string, string>();
   let imagesSoFar = countExistingImages(paginas);
+  /**
+   * Alterna o layout das páginas que receberem imagem. Em vez de mandar tudo
+   * pra A4_4_magazine, rotaciona entre 3 templates editoriais com slots distintos.
+   */
+  const LAYOUT_IMAGE_ROTATION = [
+    'A4_4_magazine',
+    'A4_4_imagem_destaque',
+    'A4_2_imagem_overlay',
+  ] as const;
+  let layoutCursor = 0;
 
   if (imagesSoFar >= MAX_IMAGES_PER_MATERIAL) {
     console.log(
@@ -309,6 +319,29 @@ export async function applyNanoBananaImagesToPaginas(
     const url = await generateCached(pagePrompt, ratio);
     if (url) {
       pagina.imagem_url = url;
+      /**
+       * Garantir que a página tem layout que RENDERIZA a imagem. Se a layout atual
+       * não mostra imagem, ROTACIONA entre 3 layouts editoriais (magazine, destaque,
+       * overlay) pra variedade visual. Tipos especiais (capa etc.) são preservados.
+       */
+      const tipoStr = String(pagina.tipo ?? '');
+      const layoutAtual = String(pagina.layout_tipo ?? '');
+      const layoutsComImagem = new Set([
+        'A4_4_magazine',
+        'A4_4_imagem_destaque',
+        'A4_2_imagem_overlay',
+        'A4_2_imagem_flutuante',
+        'A4_2_imagem_texto',
+        'A4_2_texto_imagem',
+        'A4_7_sidebar_conteudo',
+        'imagem_top',
+        'imagem_lateral',
+      ]);
+      const tiposEspeciais = new Set(['capa', 'intro_ref', 'sumario_ref', 'atividades_finais']);
+      if (tipoStr === 'conteudo' && !layoutsComImagem.has(layoutAtual) && !tiposEspeciais.has(tipoStr)) {
+        pagina.layout_tipo = LAYOUT_IMAGE_ROTATION[layoutCursor % LAYOUT_IMAGE_ROTATION.length];
+        layoutCursor += 1;
+      }
       imagesSoFar += 1;
     }
   }

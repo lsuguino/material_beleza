@@ -26,7 +26,11 @@ export default function PreviewPage() {
   const rawPaginas = design?.paginas ?? (design as { pages?: unknown[] })?.pages;
   const paginas = Array.isArray(rawPaginas) ? rawPaginas : [];
 
-  const { currentPage, scale, scrollToPage } = usePreviewScroll(canvasRef, pageRefs, paginas.length);
+  const { currentPage, scale, userZoom, setUserZoom, scrollToPage } = usePreviewScroll(
+    canvasRef,
+    pageRefs,
+    paginas.length,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -214,15 +218,61 @@ export default function PreviewPage() {
         <ScriboLogo className="h-6 shrink-0 text-[#1a2dc2] dark:text-[#7B9CFF]" />
         <Link
           href="/"
-          className={`text-sm font-medium transition-colors ${
-            isVtsdPreview ? 'text-neutral-700 hover:text-neutral-900' : 'text-white/80 hover:text-white'
-          }`}
+          className="flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#446EFF' }}
+          title="Voltar à home pra gerar um novo material"
         >
-          ← Novo material
+          <span className="material-symbols-outlined text-[16px]">add</span>
+          Gerar novo material
         </Link>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        {/* Barra de zoom flutuante — fica fixa no canto inferior esquerdo da viewport */}
+        <div
+          className="no-print fixed bottom-24 left-6 z-30 flex items-center gap-2 rounded-full border border-black/10 bg-white/95 px-3 py-1.5 shadow-lg backdrop-blur dark:border-white/10 dark:bg-[#1a1a24]/95"
+          aria-label="Controle de zoom do preview"
+        >
+          <button
+            type="button"
+            onClick={() => setUserZoom(userZoom - 0.1)}
+            disabled={userZoom <= 0.5}
+            aria-label="Diminuir zoom"
+            title="Diminuir zoom"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-neutral-100 disabled:opacity-40 dark:text-white/80 dark:hover:bg-white/10"
+          >
+            <span className="material-symbols-outlined text-[18px]">remove</span>
+          </button>
+          <input
+            type="range"
+            min={0.5}
+            max={2}
+            step={0.05}
+            value={userZoom}
+            onChange={(e) => setUserZoom(Number(e.target.value))}
+            className="h-1 w-32 cursor-pointer accent-[#446EFF]"
+            aria-label="Slider de zoom"
+          />
+          <button
+            type="button"
+            onClick={() => setUserZoom(userZoom + 0.1)}
+            disabled={userZoom >= 2}
+            aria-label="Aumentar zoom"
+            title="Aumentar zoom"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-neutral-100 disabled:opacity-40 dark:text-white/80 dark:hover:bg-white/10"
+          >
+            <span className="material-symbols-outlined text-[18px]">add</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setUserZoom(1)}
+            title="Voltar ao tamanho padrão (100%)"
+            className="ml-1 min-w-[44px] rounded-md px-2 py-0.5 text-xs font-semibold tabular-nums text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-white/80 dark:hover:bg-white/10"
+          >
+            {Math.round(userZoom * 100)}%
+          </button>
+        </div>
+
         {/* Vista principal: rolagem grande */}
         <div
           ref={canvasRef}

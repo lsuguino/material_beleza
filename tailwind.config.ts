@@ -9,6 +9,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        '3xl': '1920px',
+        '4xl': '2560px',
+        '5xl': '3200px',
+      },
       fontFamily: {
         headline: ['var(--font-headline)', 'Manrope', 'system-ui', 'sans-serif'],
         display: ['var(--font-display)', 'Inter', 'system-ui', 'sans-serif'],

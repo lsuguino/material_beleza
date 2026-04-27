@@ -22,7 +22,28 @@ import {
 // FigmaTemplateRenderer (política de fidelidade Figma — ver PR "Figma fiel no app").
 import { PageConclusaoVtsd } from '@/components/pages/PageConclusaoVtsd';
 import { PageAtividadesFinais } from '@/components/pages/PageAtividadesFinais';
-import { renderFigmaTemplate } from '@/components/pages/FigmaTemplateRenderer';
+import { renderFigmaTemplate, type TemplateProps } from '@/components/pages/FigmaTemplateRenderer';
+
+/**
+ * Coerce qualquer valor pra string segura — defesa contra dados antigos do IDB
+ * onde o LLM (ou um fluxo legado) pode ter retornado objetos `{tipo, titulo, conteudo}`
+ * em campos esperados como string. Sem isso, React crasha ao renderizar objeto como child.
+ */
+function coerceToString(v: unknown): string {
+  if (v == null) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'object') {
+    const o = v as Record<string, unknown>;
+    const fallback = o.conteudo ?? o.content ?? o.titulo ?? o.title ?? o.text ?? '';
+    return String(fallback);
+  }
+  return String(v);
+}
+
+function coerceToStringArray(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v.map(coerceToString).filter((s) => s.length > 0);
+}
 import type { LayoutTipo } from '@/lib/design-agent';
 
 export type { ContentBlockItem };
@@ -387,16 +408,22 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
             paragrafos.length > 0 ? paragrafos : introParagraphs,
           );
           return wrap(renderFigmaTemplate(lt, {
-            titulo,
-            subtitulo: pagina.subtitulo as string | undefined,
-            paragrafos: figmaParagraphs,
-            destaques: (pagina.destaques as string[]) || [],
-            citacao: pagina.citacao as string | undefined,
-            itens: (pagina.itens as string[]) || [],
+            titulo: coerceToString(titulo),
+            subtitulo: coerceToString(pagina.subtitulo) || undefined,
+            paragrafos: coerceToStringArray(figmaParagraphs),
+            destaques: coerceToStringArray(pagina.destaques),
+            citacao: coerceToString(pagina.citacao) || undefined,
+            itens: coerceToStringArray(pagina.itens),
             numeroPagina: pageNumber ?? index + 1,
             imagemUrl: heroImageUrl,
             capituloNumero,
-            iconId: (pagina.icone_sugerido as string) || undefined,
+            iconId: coerceToString(pagina.icone_sugerido) || undefined,
+            // Visuais estruturados — usados pelos templates novos (tabela, comparativo, prós/contras)
+            sugestaoTabela: pagina.sugestao_tabela as TemplateProps['sugestaoTabela'],
+            sugestaoGrafico: pagina.sugestao_grafico as TemplateProps['sugestaoGrafico'],
+            sugestaoFluxograma: pagina.sugestao_fluxograma as TemplateProps['sugestaoFluxograma'],
+            // Posição livre da imagem (layout A4_imagem_livre)
+            imagemBox: pagina.imagem_box as TemplateProps['imagemBox'],
           }));
         }
 

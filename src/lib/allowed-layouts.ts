@@ -148,6 +148,8 @@ export const VTSD_ALTERNATION_POOL: readonly string[] = [
   'A4_2_texto_sidebar',
   'A4_3_sidebar_steps',
   'A4_4_magazine',
+  'A4_4_imagem_destaque',
+  'A4_2_imagem_overlay',
   'A4_7_sidebar_conteudo',
 ];
 

@@ -4,6 +4,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { MaterialPreviewBlocks, type PreviewData } from '@/components/MaterialPreviewBlocks';
 import { PageThumbnail } from '@/components/PageThumbnail';
 import { MermaidInit } from '@/components/MermaidInit';
+import { ImageCropModal } from '@/components/ImageCropModal';
+import { ImageResizeOverlay } from '@/components/ImageResizeOverlay';
+import { FreeDrawOverlay } from '@/components/FreeDrawOverlay';
 import { usePreviewScroll } from '@/hooks/usePreviewScroll';
 import { savePreviewDataToClient } from '@/lib/preview-storage';
 import { TRANSCRIPTION_MAX_CHARS } from '@/lib/api-payload-limits';
@@ -71,13 +74,25 @@ const LAYOUT_OPTIONS_ALL: LayoutOptionItem[] = [
   { value: 'A4_3_sidebar_steps', label: 'Etapas', icon: 'format_list_numbered' },
   { value: 'A4_4_magazine', label: 'Magazine', icon: 'auto_stories' },
   { value: 'A4_7_sidebar_conteudo', label: 'Conteúdo', icon: 'view_sidebar' },
+  { value: 'A4_2_imagem_flutuante', label: 'Imagem flutuante', icon: 'photo' },
   { value: 'A4_1_abertura', label: 'Abertura', icon: 'title' },
 ];
 
-/** Miolo: tudo exceto abertura de capítulo. */
-const LAYOUT_IDS_MIOLO = new Set(
-  LAYOUT_OPTIONS_ALL.filter((o) => !o.value.startsWith('A4_1_')).map((o) => o.value)
-);
+/**
+ * Miolo "safe": layouts que NÃO têm sidebar teal larga + display number,
+ * pra evitar que página de miolo fique com cara de abertura de capítulo.
+ * Os layouts excluídos (A4_3_sidebar_steps, A4_7_sidebar_conteudo) ainda
+ * são usados automaticamente pelo design-agent quando o conteúdo pede,
+ * mas não aparecem como opção manual no editor pra evitar confusão visual.
+ */
+const LAYOUT_IDS_MIOLO = new Set([
+  'A4_2_conteudo_misto',
+  'A4_2_texto_corrido',
+  'A4_2_texto_citacao',
+  'A4_2_texto_sidebar',
+  'A4_4_magazine',
+  'A4_2_imagem_flutuante',
+]);
 
 /** Atividades finais: leitura e blocos compatíveis com perguntas (sem abertura nem etapas pesadas). */
 const LAYOUT_IDS_ATIVIDADES = new Set([
@@ -131,12 +146,19 @@ function layoutEditorSubtitle(tipo: string | undefined): string {
   }
 }
 
-/** Layouts que suportam imagem, com descrição da posição visual */
+/** Sentinel layout value: "Livre" — usuário desenha o retângulo sobre a página. */
+const FREE_DRAW_LAYOUT = '__draw_free__';
+
+/**
+ * Layouts que suportam imagem com renderização real.
+ * Nota: removidos `A4_2_conteudo_misto` (Direita) e `imagem_lateral` (Lateral)
+ * porque seus templates não renderizam a imagem (eram dead-options).
+ */
 const IMAGE_POSITION_OPTIONS: Array<{ layout: string; label: string; icon: string; description: string }> = [
   { layout: 'A4_1_abertura', label: 'Topo', icon: 'vertical_align_top', description: 'Imagem grande no topo da página' },
-  { layout: 'A4_4_magazine', label: 'Esquerda', icon: 'align_horizontal_left', description: 'Imagem na coluna esquerda, texto à direita' },
-  { layout: 'A4_2_conteudo_misto', label: 'Direita', icon: 'align_horizontal_right', description: 'Imagem pequena à direita do texto' },
-  { layout: 'imagem_lateral', label: 'Lateral', icon: 'view_column', description: 'Imagem lateral (50%), texto ao lado' },
+  { layout: 'A4_4_magazine', label: 'Magazine', icon: 'view_quilt', description: 'Imagem grande + texto e callout' },
+  { layout: 'A4_2_imagem_flutuante', label: 'Flutuante', icon: 'wrap_text', description: 'Imagem com texto refluindo (drag/resize natural)' },
+  { layout: FREE_DRAW_LAYOUT, label: 'Livre', icon: 'crop_free', description: 'Desenhe o retângulo onde a imagem vai entrar' },
 ];
 
 export function InlinePreview({
@@ -172,6 +194,8 @@ export function InlinePreview({
   const [editInstruction, setEditInstruction] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showImagePanel, setShowImagePanel] = useState(false);
+  /** Quando ativo, usuário arrasta sobre a página selecionada pra definir o retângulo da imagem. */
+  const [drawingMode, setDrawingMode] = useState(false);
 
   const togglePageSelection = useCallback((index: number) => {
     setSelectedPages((prev) => {
@@ -305,6 +329,80 @@ export function InlinePreview({
     }
   }, [selectedPages, editInstruction, data, file, modo, applyUpdate]);
 
+  // --- Single-page: unir com a próxima (client-side merge) ---
+  const handleMergeWithNext = useCallback(async () => {
+    if (selectedPages.size !== 1) return;
+    const pageIndex = Array.from(selectedPages)[0];
+    if (pageIndex < 0 || pageIndex >= paginas.length - 1) return;
+
+    const current = paginas[pageIndex] as Record<string, unknown>;
+    const next = paginas[pageIndex + 1] as Record<string, unknown>;
+
+    // Só faz merge se a próxima também for conteúdo (ou continuação dessa)
+    const nextTipo = String(next.tipo ?? 'conteudo');
+    if (nextTipo !== 'conteudo') return;
+
+    const concatString = (a: unknown, b: unknown, sep = '\n\n') => {
+      const aS = String(a ?? '').trim();
+      const bS = String(b ?? '').trim();
+      return [aS, bS].filter(Boolean).join(sep);
+    };
+    const concatArray = <T,>(a: unknown, b: unknown, max: number): T[] => {
+      const aA = Array.isArray(a) ? (a as T[]) : [];
+      const bA = Array.isArray(b) ? (b as T[]) : [];
+      // Dedupe stringificável + corta no máximo
+      const seen = new Set<string>();
+      const out: T[] = [];
+      for (const item of [...aA, ...bA]) {
+        const key = typeof item === 'string' ? item.trim() : JSON.stringify(item);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(item);
+        if (out.length >= max) break;
+      }
+      return out;
+    };
+
+    const merged: Record<string, unknown> = {
+      ...current,
+      bloco_principal: concatString(current.bloco_principal, next.bloco_principal),
+      itens: concatArray<string>(current.itens, next.itens, 8),
+      destaques: concatArray<string>(current.destaques, next.destaques, 4),
+      // citacao: mantém a da current; usa a próxima só se a atual estiver vazia
+      citacao: current.citacao || next.citacao || undefined,
+      // content_blocks: concat preservando ordem
+      content_blocks: (() => {
+        const a = Array.isArray(current.content_blocks) ? current.content_blocks : [];
+        const b = Array.isArray(next.content_blocks) ? next.content_blocks : [];
+        const all = [...a, ...b];
+        return all.length > 0 ? all : undefined;
+      })(),
+    };
+    // Limpa flags estruturais que não fazem mais sentido
+    delete (merged as Record<string, unknown>).continuacao;
+
+    const updatePaginas = (arr: unknown[] | undefined) => {
+      if (!Array.isArray(arr)) return arr;
+      const copy = [...arr];
+      copy[pageIndex] = merged;
+      copy.splice(pageIndex + 1, 1);
+      return copy;
+    };
+
+    const newDesignPaginas = updatePaginas(data.design?.paginas);
+    const newConteudoPaginas = updatePaginas(data.conteudo?.paginas);
+
+    const updated: PreviewData = {
+      ...data,
+      design: data.design ? { ...data.design, paginas: newDesignPaginas as never } : undefined,
+      conteudo: data.conteudo ? { ...data.conteudo, paginas: newConteudoPaginas as never } : undefined,
+    };
+
+    await applyUpdate(updated);
+    // Mantém a seleção na nova página unida
+    setSelectedPages(new Set([pageIndex]));
+  }, [selectedPages, paginas, data, applyUpdate]);
+
   // --- Single-page: change layout (client-side) ---
   const handleChangeLayout = useCallback(
     async (newLayout: string) => {
@@ -393,6 +491,65 @@ export function InlinePreview({
     [selectedPages, data, handleChangeLayout, applyUpdate],
   );
 
+  /** Recebe o retângulo desenhado (em % da página A4) e dispara a geração da imagem com posição livre. */
+  const handleApplyFreeBox = useCallback(
+    async (box: { xPct: number; yPct: number; wPct: number; hPct: number }) => {
+      if (selectedPages.size !== 1) return;
+      const pageIndex = Array.from(selectedPages)[0];
+      setDrawingMode(false);
+      setActionLoading('image');
+      setRegeneratingPages(new Set([pageIndex]));
+      try {
+        const baseDesign = data.design || data.conteudo;
+        const basePaginas = baseDesign?.paginas ? [...baseDesign.paginas] : [];
+        if (pageIndex >= basePaginas.length) return;
+        basePaginas[pageIndex] = {
+          ...basePaginas[pageIndex],
+          layout_tipo: 'A4_imagem_livre',
+          imagem_box: box,
+        };
+        const dataWithBox: PreviewData = {
+          ...data,
+          design: baseDesign ? { ...baseDesign, paginas: basePaginas } : undefined,
+          conteudo: data.conteudo ? { ...data.conteudo, paginas: basePaginas } : undefined,
+        };
+        const action = basePaginas[pageIndex]?.imagem_url ? 'regenerate' : 'generate';
+        const res = await fetch('/api/page-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ existingData: dataWithBox, pageIndex, action }),
+        });
+        if (!res.ok) {
+          throw new Error(await readApiErrorMessage(res, 'Erro ao gerar imagem.'));
+        }
+        const updated = (await res.json()) as PreviewData;
+        // Garante que imagem_box e layout_tipo continuam aplicados após a resposta
+        const updatedDesign = updated.design || updated.conteudo;
+        const updatedPaginas = updatedDesign?.paginas ? [...updatedDesign.paginas] : [];
+        if (pageIndex < updatedPaginas.length) {
+          updatedPaginas[pageIndex] = {
+            ...updatedPaginas[pageIndex],
+            layout_tipo: 'A4_imagem_livre',
+            imagem_box: box,
+          };
+        }
+        const finalData: PreviewData = {
+          ...updated,
+          design: updatedDesign ? { ...updatedDesign, paginas: updatedPaginas } : undefined,
+          conteudo: updated.conteudo ? { ...updated.conteudo, paginas: updatedPaginas } : undefined,
+        };
+        await applyUpdate(finalData);
+      } catch (err) {
+        console.error('[handleApplyFreeBox]', err);
+        alert(err instanceof Error ? err.message : 'Erro ao gerar imagem.');
+      } finally {
+        setActionLoading(null);
+        setRegeneratingPages(new Set());
+      }
+    },
+    [selectedPages, data, applyUpdate],
+  );
+
   // --- Single-page: remove image ---
   const handleRemoveImage = useCallback(async () => {
     if (selectedPages.size !== 1) return;
@@ -425,32 +582,6 @@ export function InlinePreview({
   }, [selectedPages, data, applyUpdate]);
 
   // --- Single-page: resize image dimensions ---
-  const handleResizeImage = useCallback(
-    async (dimension: 'width' | 'height', value: number) => {
-      if (selectedPages.size !== 1) return;
-      const pageIndex = Array.from(selectedPages)[0];
-      const dd = data.design || data.conteudo;
-      if (!dd?.paginas) return;
-
-      const field = dimension === 'width' ? 'imagem_width' : 'imagem_height';
-      const newPaginas = [...dd.paginas];
-      newPaginas[pageIndex] = { ...newPaginas[pageIndex], [field]: value };
-
-      const cd = data.conteudo;
-      const newConteudo = cd?.paginas ? [...cd.paginas] : null;
-      if (newConteudo && pageIndex < newConteudo.length) {
-        newConteudo[pageIndex] = { ...newConteudo[pageIndex], [field]: value };
-      }
-
-      const updated: PreviewData = {
-        ...data,
-        design: dd ? { ...dd, paginas: newPaginas } : undefined,
-        conteudo: cd ? { ...cd, paginas: newConteudo || newPaginas } : undefined,
-      };
-      await applyUpdate(updated);
-    },
-    [selectedPages, data, applyUpdate],
-  );
 
   // --- Derived state for single-page editor ---
   const isSingleSelected = selectionMode && selectedPages.size === 1;
@@ -474,9 +605,131 @@ export function InlinePreview({
   const selectedPageHasImage = selectedPageData
     ? !!(selectedPageData.imagem_url)
     : false;
+  const selectedPageImageUrl = selectedPageData
+    ? (selectedPageData.imagem_url as string | undefined)
+    : undefined;
+  /**
+   * Original intacto da imagem (preservado na 1ª edição). Quando existe,
+   * o modal de crop trabalha A PARTIR DELE — assim crops sucessivos não
+   * degradam a qualidade nem reduzem a área disponível.
+   */
+  const selectedPageImageOriginal = selectedPageData
+    ? (selectedPageData.imagem_url_original as string | undefined)
+    : undefined;
   const selectedPageCurrentLayout = selectedPageData
     ? (selectedPageData.layout_tipo as string) || 'A4_2_conteudo_misto'
     : '';
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+
+  /**
+   * Commit do drag/resize livre: sempre converte a página pra `A4_imagem_livre`
+   * (posicionamento absoluto). Texto não trava mais a imagem — ela pode ir
+   * pra qualquer lugar da página.
+   */
+  const handleImageBoxCommit = useCallback(
+    async (box: { xPct: number; yPct: number; wPct: number; hPct: number }) => {
+      if (selectedPageIndex < 0) return;
+      const fullPatch: Record<string, unknown> = {
+        layout_tipo: 'A4_imagem_livre',
+        imagem_box: box,
+      };
+      const newPaginas = [...paginas];
+      newPaginas[selectedPageIndex] = { ...newPaginas[selectedPageIndex], ...fullPatch };
+      const updated: PreviewData = {
+        ...data,
+        design: data.design ? { ...data.design, paginas: newPaginas as never } : undefined,
+        conteudo: (() => {
+          if (!data.conteudo?.paginas) return data.conteudo;
+          const cp = [...data.conteudo.paginas];
+          if (selectedPageIndex < cp.length) {
+            cp[selectedPageIndex] = { ...cp[selectedPageIndex], ...fullPatch };
+          }
+          return { ...data.conteudo, paginas: cp as never };
+        })(),
+      };
+      await applyUpdate(updated);
+    },
+    [selectedPageIndex, paginas, data, applyUpdate],
+  );
+
+  /**
+   * Click numa imagem do preview: ativa o modo de seleção e seleciona a página
+   * — sem alterar o layout. O overlay aparece sobre a imagem atual e qualquer
+   * mudança real (drag/resize) é commitada via `applyImagePatch`, que aí sim
+   * converte o layout pra flutuante.
+   *
+   * Antes essa função convertia o layout no clique, o que fazia a imagem
+   * "encolher" sem o usuário ter editado nada.
+   */
+  const handleImageClickEdit = useCallback(
+    (pageIndex: number) => {
+      if (pageIndex < 0 || pageIndex >= paginas.length) return;
+      setSelectionMode(true);
+      setSelectedPages(new Set([pageIndex]));
+    },
+    [paginas.length],
+  );
+
+  /**
+   * Event delegation: clique em qualquer `<img>` dentro de uma página do preview
+   * dispara o modo de edição flutuante (drag/resize com reflow de texto).
+   */
+  useEffect(() => {
+    const root = canvasRef.current;
+    if (!root) return;
+    const onClick = (ev: MouseEvent) => {
+      const target = ev.target as HTMLElement | null;
+      if (!target) return;
+      const img = target.closest('img') as HTMLImageElement | null;
+      if (!img) return;
+      // Ignora cliques no aside/thumbnails — só interessa imagem dentro de uma página
+      const pageEl = img.closest('.page-a4') as HTMLElement | null;
+      if (!pageEl) return;
+      const idx = pageRefs.current.findIndex((el) => el && el.contains(pageEl));
+      if (idx < 0) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      handleImageClickEdit(idx);
+    };
+    root.addEventListener('click', onClick);
+    return () => root.removeEventListener('click', onClick);
+  }, [handleImageClickEdit]);
+
+  const handleSaveCrop = useCallback(
+    async (newDataUrl: string) => {
+      if (selectedPageIndex < 0) return;
+      const currentPage = paginas[selectedPageIndex] as Record<string, unknown>;
+      // Na 1ª edição, preserva a imagem atual como original. Edições subsequentes
+      // mantêm o original intacto — só atualizam imagem_url.
+      const existingOriginal = currentPage.imagem_url_original as string | undefined;
+      const currentImage = currentPage.imagem_url as string | undefined;
+      const originalToKeep = existingOriginal ?? currentImage;
+
+      const patch: Record<string, unknown> = {
+        imagem_url: newDataUrl,
+        imagem_url_original: originalToKeep,
+      };
+
+      const newPaginas = [...paginas];
+      newPaginas[selectedPageIndex] = { ...newPaginas[selectedPageIndex], ...patch };
+
+      const updated: PreviewData = {
+        ...data,
+        design: data.design ? { ...data.design, paginas: newPaginas as never } : undefined,
+        conteudo: (() => {
+          if (!data.conteudo?.paginas) return data.conteudo;
+          const cp = [...data.conteudo.paginas];
+          if (selectedPageIndex < cp.length) {
+            cp[selectedPageIndex] = { ...cp[selectedPageIndex], ...patch };
+          }
+          return { ...data.conteudo, paginas: cp as never };
+        })(),
+      };
+      await applyUpdate(updated);
+      setCropModalOpen(false);
+    },
+    [selectedPageIndex, paginas, data, applyUpdate],
+  );
 
   const layoutOptionsForEditor = React.useMemo(() => {
     if (!selectedPageData) return LAYOUT_OPTIONS_ALL;
@@ -634,14 +887,41 @@ export function InlinePreview({
               <MaterialPreviewBlocks
                 data={data}
                 scale={scale}
-                renderPageWrapper={(pageNode, index) => (
-                  <div
-                    ref={(el) => { pageRefs.current[index] = el; }}
-                    className="preview-page-wrap flex flex-col items-center"
-                  >
-                    {pageNode}
-                  </div>
-                )}
+                renderPageWrapper={(pageNode, index) => {
+                  const pageData = paginas[index] as Record<string, unknown> | undefined;
+                  // Overlay aparece em qualquer página com imagem que esteja selecionada,
+                  // não só no layout flutuante. A conversão de layout (se necessária)
+                  // só acontece no commit do drag, evitando o "encolhimento ao clicar".
+                  const showResizeOverlay = !!pageData?.imagem_url && index === selectedPageIndex;
+                  const showDrawOverlay = drawingMode && index === selectedPageIndex;
+                  return (
+                    <div
+                      ref={(el) => { pageRefs.current[index] = el; }}
+                      className="preview-page-wrap flex flex-col items-center relative"
+                    >
+                      {pageNode}
+                      {showResizeOverlay && (
+                        <ImageResizeOverlay
+                          containerRef={{
+                            current: pageRefs.current[index] as HTMLElement | null,
+                          }}
+                          currentBox={(pageData?.imagem_box as { xPct: number; yPct: number; wPct: number; hPct: number } | undefined) ?? null}
+                          scale={scale}
+                          onCommit={handleImageBoxCommit}
+                        />
+                      )}
+                      {showDrawOverlay && (
+                        <FreeDrawOverlay
+                          containerRef={{
+                            current: pageRefs.current[index] as HTMLElement | null,
+                          }}
+                          onCommit={handleApplyFreeBox}
+                          onCancel={() => setDrawingMode(false)}
+                        />
+                      )}
+                    </div>
+                  );
+                }}
               />
             )}
           </MermaidInit>
@@ -796,10 +1076,17 @@ export function InlinePreview({
                         <button
                           key={pos.layout}
                           type="button"
-                          onClick={() => handleImageWithPosition(
-                            selectedPageHasImage ? 'regenerate' : 'generate',
-                            pos.layout,
-                          )}
+                          onClick={() => {
+                            if (pos.layout === FREE_DRAW_LAYOUT) {
+                              setDrawingMode(true);
+                              setShowImagePanel(false);
+                              return;
+                            }
+                            handleImageWithPosition(
+                              selectedPageHasImage ? 'regenerate' : 'generate',
+                              pos.layout,
+                            );
+                          }}
                           disabled={!!actionLoading}
                           title={pos.description}
                           className={`flex flex-col items-center gap-1 rounded-lg border p-2 text-center transition-all disabled:opacity-50 ${
@@ -827,49 +1114,6 @@ export function InlinePreview({
                         </button>
                       ))}
                     </div>
-                    {/* Resize sliders (only when image exists) */}
-                    {selectedPageHasImage && (() => {
-                      // Default dimensions per layout
-                      const defaults: Record<string, { w: number; h: number; maxW: number; maxH: number }> = {
-                        'A4_1_abertura': { w: 595, h: 340, maxW: 595, maxH: 500 },
-                        'A4_4_magazine': { w: 308, h: 500, maxW: 500, maxH: 700 },
-                        'A4_2_conteudo_misto': { w: 180, h: 140, maxW: 350, maxH: 300 },
-                      };
-                      const d = defaults[selectedPageCurrentLayout] || { w: 200, h: 160, maxW: 400, maxH: 400 };
-                      const currentW = (selectedPageData?.imagem_width as number) || d.w;
-                      const currentH = (selectedPageData?.imagem_height as number) || d.h;
-                      const sliderBg = isVtsd ? 'accent-neutral-600' : 'accent-white';
-                      return (
-                        <div className="mt-2 flex flex-col gap-2">
-                          <p className={`text-[11px] font-semibold ${textMuted}`}>Tamanho da imagem</p>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[10px] w-9 ${textMuted}`}>Larg.</span>
-                            <input
-                              type="range"
-                              min={80}
-                              max={d.maxW}
-                              value={currentW}
-                              onChange={(e) => handleResizeImage('width', Number(e.target.value))}
-                              className={`flex-1 h-1 rounded-full cursor-pointer ${sliderBg}`}
-                            />
-                            <span className={`text-[10px] w-8 text-right ${textMuted}`}>{currentW}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[10px] w-9 ${textMuted}`}>Alt.</span>
-                            <input
-                              type="range"
-                              min={60}
-                              max={d.maxH}
-                              value={currentH}
-                              onChange={(e) => handleResizeImage('height', Number(e.target.value))}
-                              className={`flex-1 h-1 rounded-full cursor-pointer ${sliderBg}`}
-                            />
-                            <span className={`text-[10px] w-8 text-right ${textMuted}`}>{currentH}</span>
-                          </div>
-                        </div>
-                      );
-                    })()}
-
                     {/* Gallery: reuse existing images */}
                     {materialImages.length > 0 && (
                       <div className="mt-2">
@@ -950,6 +1194,57 @@ export function InlinePreview({
                     </button>
                   ))}
                 </div>
+
+                {/* Unir páginas: ativa quando há próxima página de conteúdo */}
+                {(() => {
+                  const canMerge =
+                    selectedPageIndex >= 0 &&
+                    selectedPageIndex < paginas.length - 1 &&
+                    String(
+                      (paginas[selectedPageIndex + 1] as Record<string, unknown>)?.tipo ?? 'conteudo',
+                    ) === 'conteudo' &&
+                    String(
+                      (paginas[selectedPageIndex] as Record<string, unknown>)?.tipo ?? 'conteudo',
+                    ) === 'conteudo';
+                  return (
+                    <button
+                      type="button"
+                      onClick={handleMergeWithNext}
+                      disabled={!canMerge || !!actionLoading}
+                      title={
+                        canMerge
+                          ? 'Une o conteúdo desta página com o da próxima'
+                          : 'Sem próxima página de conteúdo pra unir'
+                      }
+                      className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border py-2 text-[11px] font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
+                        isVtsd
+                          ? 'border-black/15 bg-black/5 text-neutral-700 hover:bg-black/10'
+                          : 'border-white/15 bg-white/5 text-white/85 hover:bg-white/10'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">merge</span>
+                      Unir páginas
+                    </button>
+                  );
+                })()}
+
+                {/* Editar imagem: só aparece quando a página selecionada já tem imagem */}
+                {selectedPageHasImage && selectedPageImageUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setCropModalOpen(true)}
+                    disabled={!!actionLoading}
+                    title="Reposicionar, dar zoom e cortar a imagem desta página"
+                    className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border py-2 text-[11px] font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
+                      isVtsd
+                        ? 'border-black/15 bg-black/5 text-neutral-700 hover:bg-black/10'
+                        : 'border-white/15 bg-white/5 text-white/85 hover:bg-white/10'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">crop</span>
+                    Editar imagem
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -971,6 +1266,18 @@ export function InlinePreview({
           )}
         </aside>
       </div>
+      {selectedPageImageUrl && (
+        <ImageCropModal
+          open={cropModalOpen}
+          /* Sempre que houver original preservado, edita a partir dele;
+             se for a 1ª edição, abre com a imagem atual (que vira o original). */
+          imageUrl={selectedPageImageOriginal ?? selectedPageImageUrl}
+          layoutTipo={selectedPageCurrentLayout}
+          pageTipo={(selectedPageData?.tipo as string) || 'conteudo'}
+          onCancel={() => setCropModalOpen(false)}
+          onSave={handleSaveCrop}
+        />
+      )}
     </div>
   );
 }

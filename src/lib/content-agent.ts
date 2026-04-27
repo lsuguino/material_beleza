@@ -4,6 +4,7 @@ import { parseJsonFromAI } from '@/lib/parse-json-from-ai';
 import { getSkillsSummaryForPrompt } from '@/lib/skills/load-skills';
 import { getFewShotSuffixForScriboContent } from '@/lib/training-few-shot';
 import { formatHintsForPrompt, type VisualHint } from '@/lib/visual-hints-scanner';
+import { stripTravessao, stripTravessaoFromConteudo } from '@/lib/strip-travessao';
 
 /** Regra de idioma compartilhada entre todos os prompts de geração. */
 const IDIOMA_RULE = `TODO conteúdo DEVE estar em PORTUGUÊS BRASILEIRO. EXCEÇÃO: termos técnicos de marketing digital, negócios e produtos digitais que são usados em inglês no cotidiano brasileiro devem ser MANTIDOS em inglês, exatamente como o professor falou na transcrição. Exemplos: lead, copy, headline, landing page, VSL, CTA, upsell, downsell, funnel, follow-up, e-mail marketing, opt-in, webinar, masterclass, feedback, briefing, brainstorming, branding, storytelling, pitch, insight, mindset, networking, ROI, KPI, SEO, CPC, ROAS, LTV, CAC, churn, dropshipping, e-commerce, marketplace, infoproduto, Facebook Ads, Google Ads, pixel, remarketing, retargeting, lookalike, criativo, thumbnail, reels, dashboard, analytics, template, framework, script, hook, offer, closer, setter, onboarding, mockup, layout, UI, UX, MVP, SaaS, API, startup, upgrade, premium, freemium, launch, entre outros. Na dúvida, se o professor usou o termo em inglês na transcrição, mantenha em inglês.`;
@@ -69,9 +70,9 @@ Primeira página de conteúdo: situa o leitor. Por que o tema importa, que probl
 
 ## O QUE NÃO FAZER
 
-- Travessão como recurso de ênfase recorrente
+- **PROIBIDO TRAVESSÃO**: NUNCA use travessão (— em-dash U+2014 nem – en-dash U+2013) em NENHUMA parte do texto. Substitua sempre por vírgula, parênteses, ponto final ou dois-pontos. Travessão é o clichê mais óbvio de IA — qualquer ocorrência será removida automaticamente, então não escreva mesmo.
 - Abrir seções/parágrafos com "É importante ressaltar que...", "Nesse contexto...", "Além disso..." como conectores automáticos
-- Dar o mesmo tamanho a todas as seções — ideias mais densas merecem mais espaço
+- Dar o mesmo tamanho a todas as seções (ideias mais densas merecem mais espaço)
 - Encerrar com parágrafo que resume o que acabou de ser dito
 - Adjetivos inflados: "extremamente relevante", "profundamente impactante", "absolutamente essencial"
 - Transformar conteúdo narrativo em bullets (exceto quando o professor explicitamente listou)
@@ -301,7 +302,9 @@ ATENÇÃO: a tentativa anterior ficou curta para estudo autossuficiente.
       const avgWords = averageWordsPerContentPage(parsed);
       const minAvgWords = modo === 'completo' ? 105 : 80;
       if ((chars >= minCharsTarget && avgWords >= minAvgWords) || attempt === 2) {
-        return parsed;
+        return stripTravessaoFromConteudo(
+          parsed as unknown as Record<string, unknown>,
+        ) as unknown as ContentAgentResult;
       }
     } catch (err) {
       if (err instanceof SyntaxError) {
@@ -354,7 +357,7 @@ Tom
 - Não transforme em lista de tópicos.
 - Não abra com definição genérica ou frase grandiloquente.
 - Não encerre repetindo.
-- Não use travessão como ênfase recorrente.
+- **PROIBIDO travessão (— ou –)** em qualquer lugar. Use vírgula, parênteses ou ponto final. Será removido automaticamente.
 - Não equilibre artificialmente o peso das ideias: algumas merecem mais espaço.
 
 ## REGRAS TÉCNICAS
@@ -410,7 +413,10 @@ Retorne APENAS o JSON puro, sem cercas de código (sem \`\`\`json ou \`\`\`). Ne
   });
   if (!raw) throw new Error('Resposta vazia do modelo.');
 
-  return parseJsonFromAI<ContentAgentResult>(raw);
+  const parsed = parseJsonFromAI<ContentAgentResult>(raw);
+  return stripTravessaoFromConteudo(
+    parsed as unknown as Record<string, unknown>,
+  ) as unknown as ContentAgentResult;
 }
 
 /**
@@ -609,6 +615,165 @@ function validateEditChanges(raw: unknown): Partial<Record<AllowedEditField, unk
 }
 
 /**
+ * Reorganiza uma página: ENRIQUECE o conteúdo (mais texto, novos itens, citação),
+ * sugere VISUAL estruturado (mermaid/chart/tabela), sugere IMAGEM se útil,
+ * e indica layout adequado. Nunca remove conteúdo — só adiciona/sugere.
+ *
+ * Usado pelo botão "Reorganizar" no editor: transforma uma página magra ou genérica
+ * em uma página rica com elementos visuais e densidade pedagógica.
+ */
+export interface ReorganizePageResult {
+  bloco_principal: string;
+  itens: string[];
+  destaques: string[];
+  citacao: string;
+  sugestao_tabela?: SugestaoTabela;
+  /** Sugestão de imagem (descrição em PT-BR pra geração). Vazio se não recomenda. */
+  sugestao_imagem?: string;
+  /** Bloco visual estruturado: mermaid (fluxograma/organograma) ou chart (gráfico). */
+  content_block_visual?: { type: 'mermaid' | 'chart'; content: string };
+  /** Layout sugerido (string do catálogo). Vazio = manter o atual. */
+  layout_tipo_sugerido?: string;
+}
+
+const LAYOUTS_DISPONIVEIS = [
+  'A4_2_conteudo_misto',
+  'A4_2_texto_corrido',
+  'A4_2_texto_citacao',
+  'A4_2_texto_sidebar',
+  'A4_3_sidebar_steps',
+  'A4_3_processo_etapas',
+  'A4_4_magazine',
+  'A4_4_imagem_destaque',
+  'A4_4_pros_contras',
+  'A4_4_comparativo',
+  'A4_5_tabela',
+  'A4_2_imagem_overlay',
+  'A4_7_sidebar_conteudo',
+] as const;
+
+export async function reorganizePageRich(
+  existingPage: Record<string, unknown>,
+  transcricao: string,
+  modo: ModoContent,
+): Promise<ReorganizePageResult> {
+  const tituloBloco = String(existingPage.titulo_bloco ?? existingPage.titulo ?? '').trim();
+  const existingText = extractPageText(existingPage);
+  const existingItens = Array.isArray(existingPage.itens)
+    ? (existingPage.itens as unknown[]).map(String).filter(Boolean)
+    : [];
+  const existingDestaques = Array.isArray(existingPage.destaques)
+    ? (existingPage.destaques as unknown[]).map(String).filter(Boolean)
+    : [];
+  const existingCitacao = String(existingPage.citacao ?? '').trim();
+  const layoutAtual = String(existingPage.layout_tipo ?? '').trim();
+  const transcricaoEnviada = transcricao.slice(0, 60000);
+  const modeInstruction = MODE_INSTRUCTIONS[modo];
+
+  const systemPrompt = `Você reorganiza uma página de material didático: ENRIQUECE o conteúdo, propõe visual estruturado quando o tema pedir, e sugere layout adequado. Princípio central: NUNCA REMOVER conteúdo — só adicionar e melhorar.
+
+REGRAS:
+1. Use EXCLUSIVAMENTE o conteúdo da transcrição fornecida. Não invente.
+2. PRESERVE TUDO do conteúdo atual. ADICIONE mais texto, mais itens, mais nuance — extraídos da transcrição.
+3. O bloco_principal final deve ser MAIS LONGO que o atual (mais profundidade, mais exemplos), nunca mais curto.
+4. Sugira UM visual estruturado (mermaid OU chart) se o tema da página naturalmente pede:
+   - mermaid: fluxograma/organograma — quando há processo, etapas, hierarquia
+   - chart: gráfico — quando há dados numéricos, comparações de quantidades
+   - Se nenhum cabe, omita o campo.
+5. Sugira sugestao_tabela se o conteúdo tem natureza tabular (etapas com colunas, comparação multi-coluna).
+6. Sugira sugestao_imagem (descrição em PT-BR) APENAS se uma foto/ilustração realmente agrega — pessoas, lugares, objetos concretos. Para conceitos abstratos, prefira visual estruturado.
+7. Sugira layout_tipo_sugerido se houver outro layout MAIS adequado pro novo conteúdo enriquecido. Layouts disponíveis: ${LAYOUTS_DISPONIVEIS.join(', ')}. Se o atual (${layoutAtual || 'nenhum'}) ainda é o melhor, omita o campo.
+8. ${modeInstruction}
+9. IDIOMA: ${IDIOMA_RULE}
+10. **PROIBIDO travessão (— ou –)** — use vírgula, parênteses ou ponto.
+11. Retorne APENAS JSON válido, sem cercas de código.
+
+ESTRUTURA DE RETORNO:
+{
+  "bloco_principal": "texto enriquecido (preservou existente + adicionou mais)",
+  "itens": ["passos/takeaways acionáveis quando aplicável"],
+  "destaques": ["dica/exercício explícito do professor (se houver)"],
+  "citacao": "trecho fiel marcante da transcrição (diferente do bloco_principal)",
+  "sugestao_tabela": { "titulo": "...", "colunas": [...], "linhas": [[...]] },
+  "sugestao_imagem": "descrição da imagem em PT-BR (omita se não agrega)",
+  "content_block_visual": { "type": "mermaid", "content": "flowchart LR\\n  A[Início]-->B[Fim]" },
+  "layout_tipo_sugerido": "A4_X_xxx (omita se mantém o atual)"
+}`;
+
+  const userContent = `Transcrição da aula (fonte exclusiva):
+
+${transcricaoEnviada}
+
+---
+Tópico da página: "${tituloBloco || '(sem título)'}"
+Layout atual: ${layoutAtual || '(nenhum)'}
+
+Conteúdo ATUAL (preserve e enriqueça):
+- bloco_principal: ${JSON.stringify(existingText)}
+- itens: ${JSON.stringify(existingItens)}
+- destaques: ${JSON.stringify(existingDestaques)}
+- citacao: ${JSON.stringify(existingCitacao)}
+
+Reorganize esta página: enriqueça o texto, sugira visual estruturado se cabe, sugira imagem se agrega, sugira layout se houver melhor. Use SÓ a transcrição.`;
+
+  let raw: string;
+  try {
+    raw = await openRouterChatByTask('text_material', {
+      system: systemPrompt,
+      user: userContent,
+      max_tokens: 4096,
+    });
+  } catch (err) {
+    console.error('[reorganizePageRich] erro OpenRouter:', err);
+    return {
+      bloco_principal: existingText,
+      itens: existingItens,
+      destaques: existingDestaques,
+      citacao: existingCitacao,
+    };
+  }
+  if (!raw) {
+    return {
+      bloco_principal: existingText,
+      itens: existingItens,
+      destaques: existingDestaques,
+      citacao: existingCitacao,
+    };
+  }
+
+  try {
+    const parsed = parseJsonFromAI<ReorganizePageResult>(raw);
+    // Garantia: nunca encolhe abaixo do que já tinha
+    const newText = String(parsed?.bloco_principal ?? '').trim();
+    const finalBloco = newText.length >= existingText.length ? newText : existingText;
+    return {
+      bloco_principal: stripTravessao(finalBloco),
+      itens: Array.isArray(parsed?.itens) && parsed.itens.length >= existingItens.length
+        ? parsed.itens.map((s) => stripTravessao(String(s)))
+        : existingItens.map(stripTravessao),
+      destaques: Array.isArray(parsed?.destaques) && parsed.destaques.length >= existingDestaques.length
+        ? parsed.destaques.map((s) => stripTravessao(String(s)))
+        : existingDestaques.map(stripTravessao),
+      citacao: stripTravessao(String(parsed?.citacao ?? existingCitacao)),
+      sugestao_tabela: parsed?.sugestao_tabela,
+      sugestao_imagem: parsed?.sugestao_imagem
+        ? stripTravessao(String(parsed.sugestao_imagem))
+        : undefined,
+      content_block_visual: parsed?.content_block_visual,
+      layout_tipo_sugerido: parsed?.layout_tipo_sugerido,
+    };
+  } catch (err) {
+    console.error('[reorganizePageRich] JSON inválido:', err);
+    return {
+      bloco_principal: existingText,
+      itens: existingItens,
+      destaques: existingDestaques,
+      citacao: existingCitacao,
+    };
+  }
+}
+
+/**
  * Aplica uma instrução pontual do usuário a uma página existente,
  * fazendo edit CIRÚRGICO por campo: a LLM devolve só o DIFF, o código merge.
  *
@@ -707,8 +872,22 @@ Retorne JSON com apenas os campos alterados dentro de "changes".`;
     Object.keys(validChanges).join(', '),
   );
 
+  // Aplica strip de travessão nos campos textuais alterados antes do merge
+  const cleanedChanges: Partial<Record<AllowedEditField, unknown>> = {};
+  for (const [k, v] of Object.entries(validChanges)) {
+    if (typeof v === 'string') {
+      cleanedChanges[k as AllowedEditField] = stripTravessao(v);
+    } else if (Array.isArray(v)) {
+      cleanedChanges[k as AllowedEditField] = v.map((s) =>
+        typeof s === 'string' ? stripTravessao(s) : s,
+      );
+    } else {
+      cleanedChanges[k as AllowedEditField] = v;
+    }
+  }
+
   return {
     ...existingPage,
-    ...validChanges,
+    ...cleanedChanges,
   };
 }
