@@ -9,12 +9,12 @@
  */
 
 /** Fator de preenchimento máximo da área útil — mais permissivo para reduzir folhas com branco excessivo. */
-const MAX_FILL_RATIO = 1.08;
+const MAX_FILL_RATIO = 1.15;
 /**
  * Tolerância menor de overflow:
  * quando passar do limite, tende a quebrar antes para evitar páginas visualmente apertadas.
  */
-const SOFT_SPLIT_OVERFLOW_CHARS = 100;
+const SOFT_SPLIT_OVERFLOW_CHARS = 80;
 /**
  * Permite continuação mesmo quando o bloco restante é menor,
  * evitando espremer texto no fim da página atual.
@@ -298,27 +298,27 @@ function verticalExtrasReserve(layout: string, page: Record<string, unknown>): n
 
   if (layout === 'A4_7_sidebar_conteudo') {
     if (q.length) {
-      r += 540;
-      r += Math.min(520, Math.floor(q.length * 0.38));
+      r += 620;
+      r += Math.min(620, Math.floor(q.length * 0.44));
     }
     const steps = itens.length > 0 ? itens : dest;
     for (const line of steps) {
-      r += 210 + Math.min(130, Math.floor(String(line).length * 0.14));
+      r += 250 + Math.min(180, Math.floor(String(line).length * 0.2));
     }
     return r;
   }
 
   if (layout === 'A4_3_sidebar_steps') {
     if (q.length) {
-      r += 500;
-      r += Math.min(450, Math.floor(q.length * 0.32));
+      r += 620;
+      r += Math.min(520, Math.floor(q.length * 0.4));
     }
     const steps = itens.length > 0 ? itens : dest;
     if (steps.length > 0) {
       const n = Math.min(4, steps.length);
       for (let i = 0; i < n; i++) {
         const line = String(steps[i] ?? '');
-        r += 215 + Math.min(110, Math.floor(line.length * 0.13));
+        r += 270 + Math.min(190, Math.floor(line.length * 0.22));
       }
     } else {
       r += 640;
@@ -343,8 +343,8 @@ function effectiveBodyCharBudget(layout: string, page: Record<string, unknown>):
    * - teto absoluto menor
    * - piso de caracteres maior para evitar páginas "vazias"
    */
-  const reserve = Math.min(1300, Math.ceil(raw * 0.68));
-  return Math.max(340, base - reserve);
+  const reserve = Math.min(1500, Math.ceil(raw * 0.74));
+  return Math.max(280, base - reserve);
 }
 
 function collectStepItems(page: Record<string, unknown>): string[] {
@@ -364,7 +364,7 @@ function shouldMoveStepsToContinuation(layout: string, page: Record<string, unkn
   if (!steps.length) return false;
   const totalChars = steps.reduce((acc, s) => acc + s.length, 0);
   const longest = steps.reduce((acc, s) => Math.max(acc, s.length), 0);
-  return steps.length >= 4 || totalChars > 260 || longest > 95;
+  return steps.length >= 4 || totalChars > 210 || longest > 78;
 }
 
 /**
