@@ -298,30 +298,30 @@ function verticalExtrasReserve(layout: string, page: Record<string, unknown>): n
 
   if (layout === 'A4_7_sidebar_conteudo') {
     if (q.length) {
-      r += 620;
-      r += Math.min(620, Math.floor(q.length * 0.44));
+      r += 420;
+      r += Math.min(360, Math.floor(q.length * 0.3));
     }
     const steps = itens.length > 0 ? itens : dest;
     for (const line of steps) {
-      r += 250 + Math.min(180, Math.floor(String(line).length * 0.2));
+      r += 170 + Math.min(120, Math.floor(String(line).length * 0.14));
     }
     return r;
   }
 
   if (layout === 'A4_3_sidebar_steps') {
     if (q.length) {
-      r += 620;
-      r += Math.min(520, Math.floor(q.length * 0.4));
+      r += 420;
+      r += Math.min(300, Math.floor(q.length * 0.28));
     }
     const steps = itens.length > 0 ? itens : dest;
     if (steps.length > 0) {
       const n = Math.min(4, steps.length);
       for (let i = 0; i < n; i++) {
         const line = String(steps[i] ?? '');
-        r += 270 + Math.min(190, Math.floor(line.length * 0.22));
+        r += 190 + Math.min(130, Math.floor(line.length * 0.16));
       }
     } else {
-      r += 640;
+      r += 420;
     }
     return r;
   }
@@ -343,8 +343,20 @@ function effectiveBodyCharBudget(layout: string, page: Record<string, unknown>):
    * - teto absoluto menor
    * - piso de caracteres maior para evitar páginas "vazias"
    */
-  const reserve = Math.min(1500, Math.ceil(raw * 0.74));
-  return Math.max(280, base - reserve);
+  const reserve = Math.min(900, Math.ceil(raw * 0.55));
+  return Math.max(360, base - reserve);
+}
+
+function mergeTinyTailChunk(chunks: string[], minChars: number): string[] {
+  if (chunks.length < 2) return chunks;
+  const out = [...chunks];
+  while (out.length >= 2) {
+    const tail = String(out[out.length - 1] ?? '').trim();
+    if (tail.length >= minChars) break;
+    const last = out.pop() ?? '';
+    out[out.length - 1] = `${String(out[out.length - 1] ?? '').trim()}\n\n${last.trim()}`.trim();
+  }
+  return out;
 }
 
 function collectStepItems(page: Record<string, unknown>): string[] {
@@ -432,12 +444,15 @@ export function paginateLongContentPages(conteudo: Record<string, unknown>): Rec
       continue;
     }
 
-    const chunks = vtsd
+    const chunksRaw = vtsd
       ? splitVtsdFirstAndRest(text, firstMax, restMax)
       : splitBlocoPrincipalIntoChunks(text, firstMax);
-    if (chunks.length === 2 && chunks[1].trim().length < MIN_SECOND_CHUNK_CHARS) {
+    const chunks = mergeTinyTailChunk(chunksRaw, MIN_SECOND_CHUNK_CHARS);
+
+    if (chunks.length === 1) {
       out.push({
         ...row,
+        bloco_principal: chunks[0],
         capitulo_seq,
         continuacao: false,
         ...(moveStepsToContinuation ? { itens: [], destaques: [] } : {}),

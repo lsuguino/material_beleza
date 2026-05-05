@@ -447,7 +447,7 @@ export function PageConteudo({
     if (!filteredParagrafos.length) return;
     // Executa fit apenas para layouts VTSD que hoje truncam agressivamente.
     const layout = String(layout_tipo || '');
-    if (layout !== 'A4_2_continuacao' && layout !== 'A4_2_conteudo_misto' && layout !== 'A4_7_sidebar_conteudo') return;
+    if (layout !== 'A4_1_abertura' && layout !== 'A4_2_continuacao' && layout !== 'A4_2_conteudo_misto' && layout !== 'A4_7_sidebar_conteudo') return;
     if (fitParasState[fitKey]) return;
 
     try {
@@ -456,6 +456,21 @@ export function PageConteudo({
       const areaTop = VTSD_MARGENS_A4.margens.topo_px;
       const areaBottom = VTSD_MARGENS_A4.margens.base_px;
       const areaH = pageH - areaTop - areaBottom;
+
+      if (layout === 'A4_1_abertura') {
+        const headerH = 370;
+        const imgH = imagemGerada ? (typeof customImgH === 'number' ? customImgH : 340) : 0;
+        const textTop = headerH + imgH;
+        const maxH = Math.max(120, pageH - textTop - VTSD_MARGENS_A4.margens.base_px - 8);
+        const fitted = fitParagraphsByMeasuring({
+          paragraphs: filteredParagrafos,
+          widthPx: VTSD_MARGENS_A4.area_util.largura_px,
+          maxHeightPx: maxH,
+          buildStatic: (_root) => {},
+        });
+        setFitParasState((s) => ({ ...s, [fitKey]: fitted }));
+        return;
+      }
 
       if (layout === 'A4_2_continuacao') {
         // Continuacao: barra 6px + paddingTop 30 + paddingBottom PG dentro do body.
@@ -529,7 +544,7 @@ export function PageConteudo({
     } catch {
       // Se medição falhar (fonts não carregadas, etc.), mantém fallback por chars.
     }
-  }, [layout_tipo, filteredParagrafos, fitKey, fitParasState, imagemGerada, citacao, destaques, itens]);
+  }, [layout_tipo, filteredParagrafos, fitKey, fitParasState, imagemGerada, customImgH, citacao, destaques, itens]);
 
   const proporcao = getProporcaoClasses(pagina.proporcao_colunas);
   const blocoEscuro = tema.primaryDark || VTSD_COLOR.primary_darker;
@@ -560,6 +575,7 @@ export function PageConteudo({
     const hasHeroImage = Boolean(imagemGerada);
     const TEXT_TOP = HEADER_H + (hasHeroImage ? IMG_H : 0);
     const TEXT_MAX_H = VTSD_MARGENS_A4.area_util.y_fim_px - TEXT_TOP;
+    const bodyAbertura = fitParasState[fitKey] ?? limitParagraphs(filteredParagrafos, 520);
     return (
       <div
         className="page-a4 relative overflow-hidden"
@@ -628,7 +644,7 @@ export function PageConteudo({
             boxSizing: 'border-box',
           }}
         >
-          {limitParagraphs(filteredParagrafos, 220).slice(0, 2).map((p, i) => (
+          {bodyAbertura.map((p, i) => (
             <p key={i} className="font-display text-[13px] leading-[22px] mb-3 m-0 text-justify hyphens-auto" style={{ color: VTSD_COLOR.texto_800 }}>
               {p}
             </p>
