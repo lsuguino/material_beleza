@@ -5,6 +5,7 @@ import {
   extractVisualMeta,
   enrichPageFromTranscription,
   type ModoContent,
+  type SugestaoTabela,
 } from '@/lib/content-agent';
 import { COURSE_THEMES, type CourseId } from '@/lib/courseThemes';
 import { VTSD_COLOR } from '@/lib/vtsd-design-system';
@@ -205,7 +206,7 @@ export async function POST(req: NextRequest) {
       itens: string[];
       destaques: string[];
       citacao: string;
-      sugestao_tabela?: Record<string, unknown>;
+      sugestao_tabela?: SugestaoTabela;
       visualBlocks: Array<Record<string, unknown>>;
       visualMeta: Record<string, unknown>;
     }
@@ -223,7 +224,7 @@ export async function POST(req: NextRequest) {
         citacao: String(page.citacao ?? ''),
         sugestao_tabela:
           page.sugestao_tabela && typeof page.sugestao_tabela === 'object'
-            ? (page.sugestao_tabela as Record<string, unknown>)
+            ? (page.sugestao_tabela as SugestaoTabela)
             : undefined,
         visualBlocks: extractVisualBlocks(page),
         visualMeta: extractVisualMeta(page),
@@ -267,8 +268,8 @@ export async function POST(req: NextRequest) {
           if (enriched.citacao && enriched.citacao.length > target.citacao.length) {
             target.citacao = enriched.citacao;
           }
-          if (enriched.sugestao_tabela && typeof enriched.sugestao_tabela === 'object') {
-            target.sugestao_tabela = enriched.sugestao_tabela as Record<string, unknown>;
+          if (enriched.sugestao_tabela) {
+            target.sugestao_tabela = enriched.sugestao_tabela;
           }
         }
       }

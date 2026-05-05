@@ -205,7 +205,7 @@ function compactSparseContentPages(conteudo: Record<string, unknown>): Record<st
     const combinedWords = toWordCount(curText) + toWordCount(nextText);
 
     // Só compacta quando os dois blocos são curtos e cabem confortavelmente numa página.
-    if (combinedWords <= 420) {
+    if (combinedWords <= 480) {
       const nextTitle = String(next.titulo_bloco ?? next.titulo ?? '').trim();
       current.bloco_principal = `${curText.trim()}\n\n${nextTitle ? `${nextTitle}\n` : ''}${nextText.trim()}`.trim();
       const curD = Array.isArray(current.destaques) ? (current.destaques as string[]) : [];
