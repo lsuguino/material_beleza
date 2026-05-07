@@ -34,8 +34,42 @@ interface TemplateProps {
   itens: string[];
   numeroPagina: number;
   imagemUrl?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  imageX?: number;
+  imageY?: number;
   capituloNumero?: number;
   iconId?: string;
+}
+
+type ImageBox = { left: number; top: number; width: number; height: number };
+
+function resolveImageBox(
+  base: ImageBox,
+  opts: Pick<TemplateProps, 'imageWidth' | 'imageHeight' | 'imageX' | 'imageY'>,
+): React.CSSProperties {
+  const width = typeof opts.imageWidth === 'number' ? opts.imageWidth : base.width;
+  const height = typeof opts.imageHeight === 'number' ? opts.imageHeight : base.height;
+  const useAbsolute = typeof opts.imageX === 'number' || typeof opts.imageY === 'number';
+  const left = typeof opts.imageX === 'number' ? opts.imageX : base.left;
+  const top = typeof opts.imageY === 'number' ? opts.imageY : base.top;
+  return {
+    position: 'absolute',
+    left,
+    top,
+    width,
+    height,
+    zIndex: 4,
+    overflow: 'hidden',
+    borderRadius: 4,
+    backgroundColor: FIGMA_COLORS.lightBg,
+    pointerEvents: 'auto',
+    cursor: 'grab',
+  };
+}
+
+function hasCustomImagePosition(opts: Pick<TemplateProps, 'imageX' | 'imageY'>): boolean {
+  return typeof opts.imageX === 'number' || typeof opts.imageY === 'number';
 }
 
 /** Badge de página — arredondado no topo, colado no fundo */
@@ -86,10 +120,15 @@ export function TemplateTealHeaderBody({
 // Figma: "Miolo - Texto com Dica e Exercício"
 // ============================================================
 export function TemplateDicaExercicio({
-  titulo, paragrafos, destaques, citacao, itens, numeroPagina
+  titulo, paragrafos, destaques, citacao, itens, numeroPagina, imagemUrl, imageWidth, imageHeight, imageX, imageY
 }: TemplateProps) {
   const dica = destaques[0] || '';
   const exercicio = destaques[1] || itens[0] || '';
+  const hasImage = isRenderableImageUrl(imagemUrl);
+  const imageBox = resolveImageBox(
+    { left: 365, top: 250, width: 180, height: 140 },
+    { imageWidth, imageHeight, imageX, imageY },
+  );
   return (
     <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
       {/* Dica do Autor */}
@@ -99,6 +138,11 @@ export function TemplateDicaExercicio({
       </div>
       {/* Body */}
       <div style={{ ...FIGMA_CSS.bodyBlock, gap: '12px' }} className="flex flex-col overflow-hidden">
+        {hasImage && (
+          <div data-draggable-image="true" style={imageBox}>
+            <img src={imagemUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+        )}
         {paragrafos.map((p, i) => (
           <p key={i} style={{ ...FIGMA_CSS.bodyGray, marginBottom: 12 }}>{p}</p>
         ))}
@@ -220,15 +264,30 @@ export function TemplateFraseImpacto({
 // Figma: "Miolo - Imagem com Texto"
 // ============================================================
 export function TemplateImagemTexto({
-  titulo, paragrafos, imagemUrl, numeroPagina
+  titulo, paragrafos, imagemUrl, numeroPagina, imageWidth, imageHeight, imageX, imageY
 }: TemplateProps) {
   const hasImage = isRenderableImageUrl(imagemUrl);
+  const isFreePosition = hasCustomImagePosition({ imageX, imageY });
+  const imageBox = resolveImageBox(
+    { left: 0, top: 0, width: 595, height: 420 },
+    { imageWidth, imageHeight, imageX, imageY },
+  );
+  const flowWidth = typeof imageWidth === 'number' ? imageWidth : 595;
+  const flowHeight = typeof imageHeight === 'number' ? imageHeight : 420;
   return (
     <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      {hasImage && isFreePosition && (
+        <div data-draggable-image="true" style={imageBox}>
+          <img src={imagemUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      )}
       {/* Imagem + legenda só quando houver mídia, evitando área vazia grande */}
-      {hasImage && (
+      {hasImage && !isFreePosition && (
         <>
-          <div style={{ width: '100%', height: 420, backgroundColor: FIGMA_COLORS.lightBg, flexShrink: 0, overflow: 'hidden' }}>
+          <div
+            data-draggable-image="true"
+            style={{ width: flowWidth, height: flowHeight, backgroundColor: FIGMA_COLORS.lightBg, flexShrink: 0, overflow: 'hidden', cursor: 'grab' }}
+          >
             <img src={imagemUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <div style={{ ...FIGMA_CSS.footerTeal, padding: '10px 50px' }} className="flex-shrink-0">
@@ -286,11 +345,23 @@ export function TemplateDestaqueNumerico({
 // Figma: "Início de Capítulo" (A4_1_abertura)
 // ============================================================
 export function TemplateAberturaCapitulo({
-  titulo, subtitulo, paragrafos, imagemUrl, numeroPagina, capituloNumero
+  titulo, subtitulo, paragrafos, imagemUrl, numeroPagina, capituloNumero, imageWidth, imageHeight, imageX, imageY
 }: TemplateProps) {
   const hasImage = isRenderableImageUrl(imagemUrl);
+  const isFreePosition = hasCustomImagePosition({ imageX, imageY });
+  const imageBox = resolveImageBox(
+    { left: 50, top: 220, width: 495, height: 260 },
+    { imageWidth, imageHeight, imageX, imageY },
+  );
+  const flowWidth = typeof imageWidth === 'number' ? imageWidth : 495;
+  const flowHeight = typeof imageHeight === 'number' ? imageHeight : 260;
   return (
     <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      {hasImage && isFreePosition && (
+        <div data-draggable-image="true" style={imageBox}>
+          <img src={imagemUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      )}
       {/* Header teal */}
       <div style={FIGMA_CSS.headerTeal} className="flex-shrink-0">
         {capituloNumero !== undefined && (
@@ -303,11 +374,11 @@ export function TemplateAberturaCapitulo({
       </div>
       {/* Body */}
       <div style={FIGMA_CSS.bodyBlock} className="flex flex-col overflow-hidden">
-        {hasImage && (
-          <div style={{
-            width: '100%', height: 260, backgroundColor: FIGMA_COLORS.lightBg,
-            borderRadius: 4, overflow: 'hidden', marginBottom: 20, flexShrink: 0,
-          }}>
+        {hasImage && !isFreePosition && (
+          <div
+            data-draggable-image="true"
+            style={{ width: flowWidth, height: flowHeight, backgroundColor: FIGMA_COLORS.lightBg, borderRadius: 4, overflow: 'hidden', marginBottom: 20, flexShrink: 0, cursor: 'grab' }}
+          >
             <img src={imagemUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
         )}
@@ -419,12 +490,24 @@ export function TemplateSidebarSteps({
 // Figma: "Miolo - Texto com Gráfico" (A4_4_magazine)
 // ============================================================
 export function TemplateMagazine({
-  titulo, paragrafos, destaques, imagemUrl, numeroPagina
+  titulo, paragrafos, destaques, imagemUrl, numeroPagina, imageWidth, imageHeight, imageX, imageY
 }: TemplateProps) {
   const hasImage = isRenderableImageUrl(imagemUrl);
   const conceitoChave = destaques[0];
+  const isFreePosition = hasCustomImagePosition({ imageX, imageY });
+  const imageBox = resolveImageBox(
+    { left: 50, top: 130, width: 495, height: 220 },
+    { imageWidth, imageHeight, imageX, imageY },
+  );
+  const flowWidth = typeof imageWidth === 'number' ? imageWidth : 495;
+  const flowHeight = typeof imageHeight === 'number' ? imageHeight : 220;
   return (
     <div className="page-a4 relative overflow-hidden flex flex-col" style={FIGMA_CSS.page}>
+      {hasImage && isFreePosition && (
+        <div data-draggable-image="true" style={imageBox}>
+          <img src={imagemUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      )}
       {/* Header */}
       <div style={{ padding: '50px 50px 20px 50px' }} className="flex-shrink-0">
         <h1 style={FIGMA_CSS.h1Teal}>{titulo}</h1>
@@ -435,11 +518,11 @@ export function TemplateMagazine({
         display: 'flex', flexDirection: 'column', gap: 20,
         overflow: 'hidden', boxSizing: 'border-box',
       }}>
-        {hasImage && (
-          <div style={{
-            width: '100%', height: 220, backgroundColor: FIGMA_COLORS.lightBg,
-            borderRadius: 4, overflow: 'hidden', flexShrink: 0,
-          }}>
+        {hasImage && !isFreePosition && (
+          <div
+            data-draggable-image="true"
+            style={{ width: flowWidth, height: flowHeight, backgroundColor: FIGMA_COLORS.lightBg, borderRadius: 4, overflow: 'hidden', flexShrink: 0, cursor: 'grab' }}
+          >
             <img src={imagemUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
         )}

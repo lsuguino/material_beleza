@@ -139,6 +139,9 @@ const IMAGE_POSITION_OPTIONS: Array<{ layout: string; label: string; icon: strin
   { layout: 'imagem_lateral', label: 'Lateral', icon: 'view_column', description: 'Imagem lateral (50%), texto ao lado' },
 ];
 
+const PAGE_WIDTH = 595;
+const PAGE_HEIGHT = 842;
+
 export function InlinePreview({
   data,
   onClose,
@@ -200,6 +203,40 @@ export function InlinePreview({
       await savePreviewDataToClient(updated);
     },
     [onDataUpdate],
+  );
+
+  const applyImageTransform = useCallback(
+    async (
+      pageIndex: number,
+      fields: Partial<{
+        imagem_width: number;
+        imagem_height: number;
+        imagem_x: number;
+        imagem_y: number;
+      }>,
+      persist: boolean,
+    ) => {
+      const dd = data.design || data.conteudo;
+      if (!dd?.paginas || pageIndex < 0 || pageIndex >= dd.paginas.length) return;
+
+      const newPaginas = [...dd.paginas];
+      newPaginas[pageIndex] = { ...newPaginas[pageIndex], ...fields };
+      const cd = data.conteudo;
+      const newConteudo = cd?.paginas ? [...cd.paginas] : null;
+      if (newConteudo && pageIndex < newConteudo.length) {
+        newConteudo[pageIndex] = { ...newConteudo[pageIndex], ...fields };
+      }
+
+      const updated: PreviewData = {
+        ...data,
+        design: dd ? { ...dd, paginas: newPaginas } : undefined,
+        conteudo: cd ? { ...cd, paginas: newConteudo || newPaginas } : undefined,
+      };
+
+      onDataUpdate(updated);
+      if (persist) await savePreviewDataToClient(updated);
+    },
+    [data, onDataUpdate],
   );
 
   // --- Multi-page reorganize ---
@@ -433,23 +470,9 @@ export function InlinePreview({
       if (!dd?.paginas) return;
 
       const field = dimension === 'width' ? 'imagem_width' : 'imagem_height';
-      const newPaginas = [...dd.paginas];
-      newPaginas[pageIndex] = { ...newPaginas[pageIndex], [field]: value };
-
-      const cd = data.conteudo;
-      const newConteudo = cd?.paginas ? [...cd.paginas] : null;
-      if (newConteudo && pageIndex < newConteudo.length) {
-        newConteudo[pageIndex] = { ...newConteudo[pageIndex], [field]: value };
-      }
-
-      const updated: PreviewData = {
-        ...data,
-        design: dd ? { ...dd, paginas: newPaginas } : undefined,
-        conteudo: cd ? { ...cd, paginas: newConteudo || newPaginas } : undefined,
-      };
-      await applyUpdate(updated);
+      await applyImageTransform(pageIndex, { [field]: value }, true);
     },
-    [selectedPages, data, applyUpdate],
+    [selectedPages, data, applyImageTransform],
   );
 
   // --- Derived state for single-page editor ---
@@ -477,6 +500,66 @@ export function InlinePreview({
   const selectedPageCurrentLayout = selectedPageData
     ? (selectedPageData.layout_tipo as string) || 'A4_2_conteudo_misto'
     : '';
+
+  // --- Single-page: drag image directly on the page ---
+  const handleCanvasPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isSingleSelected || !selectedPageData?.imagem_url) return;
+    const target = (e.target as HTMLElement).closest('[data-draggable-image="true"]');
+    if (!(target instanceof HTMLElement)) return;
+    const pageEl = target.closest('[data-page-index]');
+    if (!(pageEl instanceof HTMLElement)) return;
+
+    const pageIndex = Number(pageEl.dataset.pageIndex ?? '-1');
+    if (pageIndex !== selectedPageIndex) return;
+
+    const pageRect = pageEl.getBoundingClientRect();
+    const imageRect = target.getBoundingClientRect();
+    if (!pageRect.width || !pageRect.height) return;
+
+    const sx = PAGE_WIDTH / pageRect.width;
+    const sy = PAGE_HEIGHT / pageRect.height;
+    const startX = (imageRect.left - pageRect.left) * sx;
+    const startY = (imageRect.top - pageRect.top) * sy;
+    const startW = imageRect.width * sx;
+    const startH = imageRect.height * sy;
+    const pointerStartX = e.clientX;
+    const pointerStartY = e.clientY;
+
+    const onMove = (ev: PointerEvent) => {
+      const dx = (ev.clientX - pointerStartX) * sx;
+      const dy = (ev.clientY - pointerStartY) * sy;
+      const maxX = Math.max(0, PAGE_WIDTH - startW);
+      const maxY = Math.max(0, PAGE_HEIGHT - startH);
+      const nextX = Math.max(0, Math.min(maxX, Math.round(startX + dx)));
+      const nextY = Math.max(0, Math.min(maxY, Math.round(startY + dy)));
+      void applyImageTransform(pageIndex, {
+        imagem_x: nextX,
+        imagem_y: nextY,
+        imagem_width: Math.round(startW),
+        imagem_height: Math.round(startH),
+      }, false);
+    };
+
+    const onUp = (ev: PointerEvent) => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      const dx = (ev.clientX - pointerStartX) * sx;
+      const dy = (ev.clientY - pointerStartY) * sy;
+      const maxX = Math.max(0, PAGE_WIDTH - startW);
+      const maxY = Math.max(0, PAGE_HEIGHT - startH);
+      const nextX = Math.max(0, Math.min(maxX, Math.round(startX + dx)));
+      const nextY = Math.max(0, Math.min(maxY, Math.round(startY + dy)));
+      void applyImageTransform(pageIndex, {
+        imagem_x: nextX,
+        imagem_y: nextY,
+        imagem_width: Math.round(startW),
+        imagem_height: Math.round(startH),
+      }, true);
+    };
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+  }, [isSingleSelected, selectedPageData, selectedPageIndex, applyImageTransform]);
 
   const layoutOptionsForEditor = React.useMemo(() => {
     if (!selectedPageData) return LAYOUT_OPTIONS_ALL;
@@ -623,6 +706,7 @@ export function InlinePreview({
         {/* Canvas */}
         <div
           ref={canvasRef}
+          onPointerDown={handleCanvasPointerDown}
           className={`preview-canvas flex min-h-0 flex-1 flex-col items-center gap-8 overflow-y-auto overflow-x-hidden p-6 sm:p-8 ${shellBg}`}
         >
           <MermaidInit className="flex w-full flex-col items-center gap-8">
@@ -637,6 +721,7 @@ export function InlinePreview({
                 renderPageWrapper={(pageNode, index) => (
                   <div
                     ref={(el) => { pageRefs.current[index] = el; }}
+                    data-page-index={index}
                     className="preview-page-wrap flex flex-col items-center"
                   >
                     {pageNode}

@@ -732,7 +732,7 @@ export default function Home() {
                 {loading ? (
                   <div
                     ref={workspaceRef}
-                    className="generation-workspace-breath relative flex min-h-[320px] lg:min-h-[400px] xl:min-h-[480px] w-full flex-col overflow-hidden rounded-xl border-2 border-dashed border-primary/35 bg-surface-container-lowest shadow-lg shadow-on-surface/3 dark:border-primary/25 dark:bg-surface-container-low/90 dark:ring-1 dark:ring-outline-variant/25"
+                    className="generation-workspace-breath relative flex min-h-[160px] w-full flex-col overflow-hidden rounded-xl border-2 border-dashed border-primary/35 bg-surface-container-lowest shadow-lg shadow-on-surface/3 dark:border-primary/25 dark:bg-surface-container-low/90 dark:ring-1 dark:ring-outline-variant/25 sm:min-h-[240px] lg:min-h-[280px]"
                   >
                     <div className="absolute inset-0 opacity-[0.06] dark:opacity-[0.08]">
                       <img
@@ -746,7 +746,7 @@ export default function Home() {
                       hasFile={!!file || !!currentBatchFile}
                       generating
                     />
-                    <div className="relative z-10 flex min-h-[280px] lg:min-h-[360px] flex-col items-center justify-center px-4 py-10 text-center sm:px-8">
+                    <div className="relative z-10 flex min-h-[160px] flex-col items-center justify-center px-4 py-8 text-center sm:min-h-[240px] sm:px-8 lg:min-h-[280px]">
                       <p
                         key={genPhraseIndex}
                         className="font-headline max-w-xl text-lg font-semibold leading-snug text-on-surface transition-opacity duration-500 dark:text-white sm:text-xl"

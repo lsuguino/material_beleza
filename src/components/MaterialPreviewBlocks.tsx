@@ -56,6 +56,11 @@ export interface PaginaDesign {
   prompt_imagem?: string;
   /** Data URL após geração Gemini (Nano Banana) */
   imagem_url?: string;
+  /** Ajustes manuais da imagem no editor */
+  imagem_width?: number;
+  imagem_height?: number;
+  imagem_x?: number;
+  imagem_y?: number;
   sugestao_grafico?: { tipo: string; titulo: string; labels: string[]; valores: number[] };
   sugestao_fluxograma?: { titulo: string; etapas: string[] };
   sugestao_tabela?: { titulo: string; colunas: string[]; linhas: string[][] };
@@ -392,6 +397,10 @@ export function MaterialPreviewBlocks({ data, className = '', scale = 0.4, rende
             itens: (pagina.itens as string[]) || [],
             numeroPagina: pageNumber ?? index + 1,
             imagemUrl: heroImageUrl,
+            imageWidth: typeof pagina.imagem_width === 'number' ? pagina.imagem_width : undefined,
+            imageHeight: typeof pagina.imagem_height === 'number' ? pagina.imagem_height : undefined,
+            imageX: typeof pagina.imagem_x === 'number' ? pagina.imagem_x : undefined,
+            imageY: typeof pagina.imagem_y === 'number' ? pagina.imagem_y : undefined,
             capituloNumero,
             iconId: (pagina.icone_sugerido as string) || undefined,
           }));
