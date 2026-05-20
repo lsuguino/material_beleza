@@ -48,6 +48,53 @@ function SettingsSwitch({
   );
 }
 
+type Modo = 'completo' | 'resumido' | 'design_only';
+
+const MODO_LABELS: Record<Modo, string> = {
+  completo: 'Completo',
+  resumido: 'Resumo',
+  design_only: 'Design',
+};
+
+const CURSO_SHORT_LABELS: Record<string, string> = {
+  geral: 'Santodia',
+  'master-fluxo': 'Master Fluxo',
+  lightcopy: 'LightCopy',
+  'stories-10x': 'Stories 10x',
+  'super-ads': 'Super Ads',
+  'automacoes-inteligentes': 'Automações',
+};
+
+const COURSE_LOGO_FILTER =
+  '[filter:brightness(0)_saturate(100%)_invert(12%)_sepia(98%)_saturate(6000%)_hue-rotate(234deg)_brightness(0.8)] dark:[filter:brightness(0)_saturate(100%)_invert(72%)_sepia(30%)_saturate(800%)_hue-rotate(196deg)_brightness(1.05)]';
+
+function SidebarAccountFooter({ collapsed }: { collapsed?: boolean }) {
+  return (
+    <div
+      className={`mt-auto shrink-0 border-t border-outline-variant/20 dark:border-white/10 ${
+        collapsed ? 'flex flex-col items-center px-2 py-3' : 'flex items-center gap-3 px-5 py-4'
+      }`}
+    >
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
+        N
+      </div>
+      {!collapsed && (
+        <>
+          <span className="min-w-0 flex-1 text-sm font-semibold text-on-surface dark:text-white/90">Conta</span>
+          <button
+            type="button"
+            className="rounded-lg p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary dark:hover:bg-zinc-700/60"
+            title="Configurações da conta"
+            aria-label="Configurações da conta"
+          >
+            <IconSettings size={18} />
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 /** Extensões aceitas para arquivo de texto, PDF ou DOCX. */
 const TEXT_EXTENSIONS = ['.txt', '.vtt', '.srt', '.md', '.csv', '.json', '.xml'];
 const PDF_EXTENSION = '.pdf';
@@ -62,8 +109,6 @@ function isAcceptedFile(f: File): boolean {
   const okType = (f.type || '').startsWith('text/') || f.type === 'application/x-subrip' || f.type === '';
   return okText || okPdf || okDocx || okType;
 }
-
-type Modo = 'completo' | 'resumido' | 'design_only';
 
 function playNotificationSound() {
   if (typeof window === 'undefined') return;
@@ -483,93 +528,53 @@ export default function Home() {
           />
         )}
 
-        <aside className={`
+        <aside
+          className={`
           ${mobileMenuOpen ? 'max-lg:fixed max-lg:inset-0 max-lg:z-50' : 'max-lg:hidden'}
           flex shrink-0 flex-col overflow-y-auto bg-[#eef0f4] font-body text-sm font-medium dark:bg-[#1e2028]
           lg:order-1 lg:h-auto lg:max-h-none lg:rounded-r-2xl transition-all duration-300
-          ${sidebarCollapsed ? 'lg:w-24' : 'lg:w-80'}
-        `}>
-          {/* Controle de toggle */}
-          <div className={`flex items-center transition-all duration-300 ${sidebarCollapsed ? 'justify-center px-2 py-3' : 'justify-between px-5 py-3'}`}>
-            {/* Botão fechar — mobile only */}
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container dark:hover:bg-zinc-700/60 transition-colors lg:hidden"
-              title="Fechar"
-            >
-              <IconMinimize size={24} className="scale-x-[-1]" />
-            </button>
-            {/* Botão collapse — desktop only */}
-            <button
-              type="button"
-              onClick={() => setSidebarCollapsed(v => !v)}
-              title={sidebarCollapsed ? 'Expandir' : 'Recolher'}
-              className="hidden lg:block p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container dark:hover:bg-zinc-700/60 transition-colors ml-auto"
-            >
-              {sidebarCollapsed ? <IconMaximize size={20} /> : <IconMinimize size={20} />}
-            </button>
-          </div>
-
-          {/* Logo colapsada — sempre renderizada, animada com scale/opacity */}
+          ${sidebarCollapsed ? 'lg:w-[4.5rem]' : 'lg:w-80'}
+        `}
+        >
+          {/* Rail colapsado — desktop */}
           <div
-            className="flex flex-col items-center justify-start px-2 py-4 transition-all duration-300 ease-in-out"
-            style={{
-              transformOrigin: 'top center',
-              opacity: sidebarCollapsed ? 1 : 0,
-              transform: sidebarCollapsed ? 'scale(1)' : 'scale(0.5)',
-              maxHeight: sidebarCollapsed ? '80px' : '0px',
-              overflow: 'hidden',
-              pointerEvents: sidebarCollapsed ? 'auto' : 'none',
-            }}
+            className={`hidden flex-1 flex-col transition-opacity duration-300 ${
+              sidebarCollapsed ? 'lg:flex' : 'lg:hidden'
+            }`}
           >
-            {(() => { const opt = COURSE_PICKER_OPTIONS.find(o => o.id === cursoId); return opt?.logoSrc ? (
-              <button type="button" onClick={() => setSidebarCollapsed(false)} className="cursor-pointer transition-transform hover:scale-110">
-                <img
-                  src={opt.logoSrc}
-                  alt={opt.ariaLabel}
-                  className="h-auto w-full max-h-9 object-contain [filter:brightness(0)_saturate(100%)_invert(12%)_sepia(98%)_saturate(6000%)_hue-rotate(234deg)_brightness(0.8)] dark:[filter:brightness(0)_saturate(100%)_invert(72%)_sepia(30%)_saturate(800%)_hue-rotate(196deg)_brightness(1.05)]"
-                />
+            <div className="flex shrink-0 items-center justify-end border-b border-outline-variant/15 px-2 py-3.5 dark:border-white/8">
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(false)}
+                className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary dark:hover:bg-zinc-700/60"
+                title="Expandir configurações"
+                aria-label="Expandir configurações"
+              >
+                <IconMaximize size={28} />
               </button>
-            ) : null; })()}
-          </div>
-
-          {/* Conteúdo expandido — animado com scale/opacity a partir do topo (posição da logo) */}
-          <div
-            className="flex flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out"
-            style={{
-              transformOrigin: 'top left',
-              opacity: sidebarCollapsed ? 0 : 1,
-              transform: sidebarCollapsed ? 'scale(0.85) translateY(-10px)' : 'scale(1) translateY(0)',
-              pointerEvents: sidebarCollapsed ? 'none' : 'auto',
-            }}
-          >
-          <nav className="flex flex-1 flex-col gap-8 pb-6">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 px-6 font-bold text-primary">
-                <IconCourse size={20} />
-                <span>Curso</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 px-6">
-                {COURSE_PICKER_OPTIONS.map((opt) => {
-                  const selected = cursoId === opt.id;
-                  return (
+            </div>
+            <div className="flex flex-col items-center gap-2 px-2 py-4">
+              {COURSE_PICKER_OPTIONS.map((opt) => {
+                const selected = cursoId === opt.id;
+                const configured = opt.enabled && selected;
+                return (
+                  <div key={opt.id} className="group relative w-full">
                     <button
-                      key={opt.id}
                       type="button"
                       disabled={loading || !opt.enabled}
                       aria-label={opt.ariaLabel}
                       aria-pressed={opt.enabled ? selected : undefined}
+                      title={opt.ariaLabel}
                       onClick={() => {
                         if (loading || !opt.enabled) return;
                         setCursoId(opt.id);
                       }}
-                      className={`flex min-h-[3rem] items-center justify-center rounded-xl border-2 px-2 py-2 transition-all ${
+                      className={`relative flex h-11 w-full items-center justify-center rounded-xl transition-all ${
                         !opt.enabled
-                          ? 'cursor-not-allowed border-slate-300/90 bg-slate-200/95 dark:border-zinc-500/55 dark:bg-zinc-600/45'
-                          : selected
-                            ? 'cursor-pointer border-primary bg-primary/10 shadow-md ring-2 ring-primary/40 dark:bg-primary/15'
-                            : 'cursor-pointer border-transparent bg-surface-container-low/90 dark:bg-surface-low/40 hover:border-primary/30'
+                          ? 'cursor-not-allowed opacity-40'
+                          : configured
+                            ? 'bg-primary shadow-md shadow-primary/25'
+                            : 'bg-surface-container-low/90 hover:bg-surface-container dark:bg-zinc-700/50 dark:hover:bg-zinc-600/60'
                       }`}
                     >
                       {opt.logoSrc ? (
@@ -577,121 +582,218 @@ export default function Home() {
                           src={opt.logoSrc}
                           alt=""
                           draggable={false}
-                          className={`h-auto w-full min-h-0 max-h-9 max-w-full object-contain object-center sm:max-h-10 ${
-                            opt.enabled && selected
-                              ? 'brightness-0 dark:brightness-100'
-                              : 'brightness-0 opacity-55 dark:brightness-100 dark:opacity-50'
+                          className={`h-6 w-6 object-contain ${
+                            configured
+                              ? 'brightness-0 invert'
+                              : `opacity-80 ${COURSE_LOGO_FILTER}`
                           }`}
                         />
                       ) : (
-                        <span
-                          className={`px-1 text-center text-[10px] font-bold uppercase leading-tight tracking-wide ${
-                            !opt.enabled ? 'text-zinc-500 dark:text-zinc-400' : 'text-on-surface'
-                          }`}
-                        >
-                          {opt.ariaLabel}
+                        <span className="text-[9px] font-bold uppercase leading-none text-on-surface dark:text-white/80">
+                          {CURSO_SHORT_LABELS[opt.id]?.slice(0, 2) ?? opt.id.slice(0, 2)}
                         </span>
                       )}
+                      {configured && (
+                        <span
+                          className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border-2 border-[#eef0f4] bg-white dark:border-[#1e2028]"
+                          aria-hidden
+                        />
+                      )}
                     </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 px-6 text-on-surface-variant dark:text-white/65">
-                <IconMaterialType size={20} />
-                <span className="font-semibold">Tipo de material</span>
-              </div>
-              <div className="mx-6 flex rounded-full bg-surface-container p-1 dark:bg-zinc-700/60">
-                <button
-                  type="button"
-                  onClick={() => !loading && setModo('completo')}
-                  disabled={loading}
-                  aria-pressed={modo === 'completo'}
-                  aria-label="Material completo"
-                  className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full py-2 px-3 transition-all ${
-                    modo === 'completo'
-                      ? 'bg-white font-bold text-primary shadow-sm dark:bg-zinc-600 dark:shadow-[0_0_0_1px_rgba(100,100,120,0.5)]'
-                      : 'font-medium text-on-surface-variant hover:text-on-surface dark:text-white/70'
-                  }`}
-                >
-                  <IconBookOpen size={16} />
-                  <span className="text-xs">Completo</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => !loading && setModo('resumido')}
-                  disabled={loading}
-                  aria-pressed={modo === 'resumido'}
-                  aria-label="Resumo"
-                  className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full py-2 px-3 transition-all ${
-                    modo === 'resumido'
-                      ? 'bg-white font-bold text-primary shadow-sm dark:bg-zinc-600 dark:shadow-[0_0_0_1px_rgba(100,100,120,0.5)]'
-                      : 'font-medium text-on-surface-variant hover:text-on-surface dark:text-white/70'
-                  }`}
-                >
-                  <IconResume size={16} />
-                  <span className="text-xs">Resumo</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => !loading && setModo('design_only')}
-                  disabled={loading}
-                  aria-pressed={modo === 'design_only'}
-                  aria-label="Aplicar apenas design"
-                  className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full py-2 px-3 transition-all ${
-                    modo === 'design_only'
-                      ? 'bg-white font-bold text-primary shadow-sm dark:bg-zinc-600 dark:shadow-[0_0_0_1px_rgba(100,100,120,0.5)]'
-                      : 'font-medium text-on-surface-variant hover:text-on-surface dark:text-white/70'
-                  }`}
-                  title="Use quando o texto já está pronto e você quer só diagramar"
-                >
-                  <span className="material-symbols-outlined text-[16px]">palette</span>
-                  <span className="text-xs">Só design</span>
-                </button>
-              </div>
-              {modo === 'design_only' && (
-                <div className="mx-6 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2.5 text-[11px] leading-relaxed text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200">
-                  <span className="font-semibold">Atenção:</span>{' '}
-                  no modo <span className="font-semibold">Só design</span>, o arquivo deve estar minimamente
-                  processado e estruturado (títulos, seções e parágrafos claros) para o material final
-                  ter boa qualidade.
-                  <label className="mt-2 flex items-start gap-2 text-[11px] leading-snug">
-                    <input
-                      type="checkbox"
-                      className="mt-0.5 h-3.5 w-3.5 rounded border-amber-500/60 text-primary focus:ring-primary"
-                      checked={designOnlyAcknowledged}
-                      onChange={(e) => {
-                        setDesignOnlyAcknowledged(e.target.checked);
-                        setError(null);
-                      }}
-                    />
-                    <span>
-                      Li o aviso e confirmo que o arquivo já está minimamente processado.
+                    <span
+                      role="tooltip"
+                      className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-on-surface px-2.5 py-1 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:bg-zinc-800"
+                    >
+                      {opt.ariaLabel}
+                      {selected && opt.enabled ? ` · ${MODO_LABELS[modo]}` : ''}
                     </span>
-                  </label>
-                </div>
-              )}
+                  </div>
+                );
+              })}
+            </div>
+            <SidebarAccountFooter collapsed />
+          </div>
+
+          {/* Painel expandido — mobile drawer ou desktop expandido */}
+          <div
+            className={`flex min-h-0 flex-1 flex-col overflow-hidden transition-opacity duration-300 ${
+              sidebarCollapsed ? 'max-lg:flex lg:hidden' : 'flex'
+            }`}
+          >
+            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-outline-variant/15 px-5 py-3.5 dark:border-white/8">
+              <h2 className="text-base font-bold text-on-surface dark:text-white">Configurar geração</h2>
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary dark:hover:bg-zinc-700/60 lg:hidden"
+                  title="Fechar"
+                  aria-label="Fechar menu"
+                >
+                  <IconMinimize size={28} className="scale-x-[-1]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSidebarCollapsed(true)}
+                  title="Recolher"
+                  className="hidden rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary dark:hover:bg-zinc-700/60 lg:block"
+                  aria-label="Recolher sidebar"
+                >
+                  <IconMinimize size={28} />
+                </button>
+              </div>
             </div>
 
-            <div className="px-6">
-              <div className="flex items-center justify-between gap-3 text-on-surface-variant dark:text-white/65">
-                <div className="flex min-w-0 items-center gap-2">
-                  <IconActivity size={20} className="shrink-0" />
-                  <span className="text-left text-sm font-semibold leading-snug">
+            <nav className="flex flex-1 flex-col gap-7 overflow-y-auto px-0 py-5">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 px-5 text-xs font-bold uppercase tracking-wider text-primary">
+                  <IconCourse size={18} />
+                  <span>Curso</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 px-5">
+                  {COURSE_PICKER_OPTIONS.map((opt) => {
+                    const selected = cursoId === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        disabled={loading || !opt.enabled}
+                        aria-label={opt.ariaLabel}
+                        aria-pressed={opt.enabled ? selected : undefined}
+                        onClick={() => {
+                          if (loading || !opt.enabled) return;
+                          setCursoId(opt.id);
+                        }}
+                        className={`flex min-h-[3rem] items-center justify-center rounded-xl border-2 px-2 py-2 transition-all ${
+                          !opt.enabled
+                            ? 'cursor-not-allowed border-dashed border-slate-300/70 bg-slate-200/60 opacity-60 dark:border-zinc-500/40 dark:bg-zinc-600/30'
+                            : selected
+                              ? 'cursor-pointer border-primary bg-primary/10 shadow-sm ring-1 ring-primary/30 dark:bg-primary/15'
+                              : 'cursor-pointer border-transparent bg-surface-container-low/90 dark:bg-surface-low/40 hover:border-primary/25'
+                        }`}
+                      >
+                        {opt.logoSrc ? (
+                          <img
+                            src={opt.logoSrc}
+                            alt=""
+                            draggable={false}
+                            className={`h-auto w-full min-h-0 max-h-9 max-w-full object-contain object-center sm:max-h-10 ${
+                              opt.enabled && selected
+                                ? 'brightness-0 dark:brightness-100'
+                                : 'brightness-0 opacity-55 dark:brightness-100 dark:opacity-50'
+                            }`}
+                          />
+                        ) : (
+                          <span
+                            className={`px-1 text-center text-[10px] font-bold uppercase leading-tight tracking-wide ${
+                              !opt.enabled ? 'text-zinc-500 dark:text-zinc-400' : 'text-on-surface'
+                            }`}
+                          >
+                            {opt.ariaLabel}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    disabled
+                    title="Em breve"
+                    className="flex min-h-[3rem] cursor-not-allowed items-center justify-center rounded-xl border-2 border-dashed border-outline-variant/50 bg-transparent px-2 py-2 text-xs font-semibold text-on-surface-variant opacity-60 dark:border-white/20 dark:text-white/45"
+                  >
+                    + Novo
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 px-5 text-xs font-bold uppercase tracking-wider text-on-surface-variant dark:text-white/55">
+                  <IconMaterialType size={18} />
+                  <span>Tipo de material</span>
+                </div>
+                <div className="flex flex-wrap gap-2 px-5">
+                  {(
+                    [
+                      { id: 'completo' as Modo, label: 'Completo', icon: <IconBookOpen size={16} /> },
+                      { id: 'resumido' as Modo, label: 'Resumo', icon: <IconResume size={16} /> },
+                      {
+                        id: 'design_only' as Modo,
+                        label: 'Design',
+                        icon: <span className="material-symbols-outlined text-[16px]">palette</span>,
+                      },
+                    ] as const
+                  ).map((item) => {
+                    const active = modo === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => !loading && setModo(item.id)}
+                        disabled={loading}
+                        aria-pressed={active}
+                        aria-label={item.label}
+                        title={item.id === 'design_only' ? 'Use quando o texto já está pronto e você quer só diagramar' : undefined}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all ${
+                          active
+                            ? 'border-primary bg-primary text-white shadow-sm'
+                            : 'border-outline-variant/40 bg-surface-container-low/90 text-on-surface-variant hover:border-primary/30 dark:border-white/15 dark:bg-zinc-700/40 dark:text-white/70'
+                        }`}
+                      >
+                        {active && (
+                          <span className="material-symbols-outlined text-[14px] leading-none" aria-hidden>
+                            check
+                          </span>
+                        )}
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {modo === 'design_only' && (
+                  <div className="mx-5 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2.5 text-[11px] leading-relaxed text-amber-900 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200">
+                    <span className="font-semibold">Atenção:</span>{' '}
+                    no modo <span className="font-semibold">Só design</span>, o arquivo deve estar minimamente
+                    processado e estruturado (títulos, seções e parágrafos claros) para o material final
+                    ter boa qualidade.
+                    <label className="mt-2 flex items-start gap-2 text-[11px] leading-snug">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 h-3.5 w-3.5 rounded border-amber-500/60 text-primary focus:ring-primary"
+                        checked={designOnlyAcknowledged}
+                        onChange={(e) => {
+                          setDesignOnlyAcknowledged(e.target.checked);
+                          setError(null);
+                        }}
+                      />
+                      <span>
+                        Li o aviso e confirmo que o arquivo já está minimamente processado.
+                      </span>
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3 px-5">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant dark:text-white/55">
+                  <IconActivity size={18} />
+                  <span>Extras</span>
+                </div>
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-outline-variant/25 bg-surface-container-low/60 px-3 py-2.5 dark:border-white/10 dark:bg-zinc-700/35">
+                  <span className="text-left text-sm font-semibold leading-snug text-on-surface dark:text-white/85">
                     Atividades ao final
                   </span>
+                  <SettingsSwitch
+                    checked={comPerguntas}
+                    disabled={loading}
+                    onToggle={() => !loading && setComPerguntas((v) => !v)}
+                    id="switch-perguntas-arquivo"
+                  />
                 </div>
-                <SettingsSwitch
-                  checked={comPerguntas}
-                  disabled={loading}
-                  onToggle={() => !loading && setComPerguntas((v) => !v)}
-                  id="switch-perguntas-arquivo"
-                />
               </div>
-            </div>
-          </nav>
+            </nav>
+
+            <SidebarAccountFooter />
           </div>
         </aside>
 
